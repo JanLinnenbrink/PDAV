@@ -1,0 +1,19 @@
+---
+title: "Prediction-domain-adaptive-validation"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Prediction-domain-adaptive-validation}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(PDAV)
+```

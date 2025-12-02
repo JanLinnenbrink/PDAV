@@ -41,6 +41,7 @@ A data frame with columns:
 }
 \description{
 Performs spatially-aware cross-validation (SP-CV) by splitting samples into folds.
+Used by the da_cv function.
 Supports three methods:
 \itemize{
 \item \strong{"SP1"}: Stage 1 spatial CV (hierarchical clustering, clusters assigned randomly to folds).

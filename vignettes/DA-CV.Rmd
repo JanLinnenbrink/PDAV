@@ -1,0 +1,90 @@
+---
+title: "PDAV"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{PDAV}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+	collapse = TRUE,
+	comment = "#>"
+)
+```
+
+```{r setup}
+library(PDAV)
+library(terra)
+library(sf)
+library(dplyr)
+library(purrr)
+library(simsam)
+```
+
+
+```{r}
+study_area <- st_read("~/git/FeatureVSGeo/simulation2_AGB/data/study_area.gpkg")
+study_area_west <- st_read("~/git/FeatureVSGeo/simulation2_AGB/data/study_area_west.gpkg")
+study_area_east <- st_read("~/git/FeatureVSGeo/simulation2_AGB/data/study_area_east.gpkg")
+
+r <- rast(dir("~/git/FeatureVSGeo/simulation2_AGB/data/raster_data/", pattern = "\\.tif$", full.names = TRUE))
+
+response_name <- "ABG1" # column in the sample points containing the target
+```
+
+
+
+```{r}
+set.seed(123)
+sample_random <- sam_field(
+	x = r,
+	size = 100,
+	type = "random",
+	na.rm = TRUE
+) |>
+	terra::extract(x = r, bind = TRUE) |>
+	st_as_sf()
+
+
+# Clustered sampling
+set.seed(456)
+sample_clustered <- sam_field(
+	x = r,
+	size = 100,
+	type = "clustered",
+	type_opts = list(nclusters = 5, radius = 60000),
+	na.rm = TRUE
+) |>
+	terra::extract(x = r, bind = TRUE) |>
+	st_as_sf()
+
+
+```
+
+
+```{r}
+result_random <- da_cv(
+	samples = sample_random,
+	predictors = r,
+	response = response_name,
+	folds_k = 5,
+	autoc_threshold = 350,
+	cate_num = 0
+)
+
+# Using clustered samples
+result_clustered <- da_cv(
+	samples = sample_clustered,
+	predictors = r,
+	response = response_name,
+	folds_k = 5,
+	autoc_threshold = 350,
+	cate_num = 0
+)
+
+plot(result_random)
+plot(result_clustered)
+
+```

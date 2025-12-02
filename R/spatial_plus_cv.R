@@ -1,6 +1,7 @@
 #' Spatially-Aware Cross-Validation (SP-CV) Split
 #'
 #' Performs spatially-aware cross-validation (SP-CV) by splitting samples into folds.
+#' Used by the da_cv function.
 #' Supports three methods:
 #' \itemize{
 #'   \item \strong{"SP1"}: Stage 1 spatial CV (hierarchical clustering, clusters assigned randomly to folds).
@@ -101,6 +102,12 @@ spatial_plus_cv <- function(
 	response_name_avg <- matrix(unlist(lapply(clusters, function(cl) mean(pts_df[cl$ids, response_name]))), ncol = 1)
 
 	# --- K-means / K-modes on averages ---
+	if (nrow(coords_avg) < k) {
+		stop(
+			"Spatial clustering resulted in fewer clusters than k. 
+          Reduce sp_threshold or reduce k."
+		)
+	}
 	coords_k <- stats::kmeans(coords_avg, centers = k)$cluster
 	env_k <- if (cate_col_start < cate_col_end) {
 		klaR::kmodes(env_avg, modes = k)$cluster

@@ -11,8 +11,8 @@
 #'   aligned to the study area.
 #' @param response Name of the response column in `samples`.
 #' @param folds_k Integer. Number of folds for cross-validation.
-#' @param autoc_threshold Numeric. Spatial autocorrelation threshold for spatial+ CV.
-#' @param cate_num Integer. Number of spatial clusters (used in spatial+ CV).
+#' @param autoc_threshold Numeric. Spatial autocorrelation threshold used in \code{spatial_plus_cv}.
+#' @param cate_num Integer. Number of categorical variables (passed to \code{spatial_plus_cv}).
 #' @param seed Optional integer. Random seed for reproducibility (passed to \code{set.seed()}).
 #' @return A list with components:
 #' \describe{
@@ -36,7 +36,7 @@
 #'   \item Threshold map at T(D) = D * 0.5 to classify cells into
 #'   \{similar, different\}.
 #'   \item Calculate random and spatial+ cross-validation splits
-#'   \item Combine RMSEs via weighted average by area proportion. (Needs to be done manually after running \code{DA_CV()})
+#'   \item Combine RMSEs via weighted average by area proportion. (Needs to be done manually after running \code{da_cv()})
 #' }
 #'
 #' @examples
@@ -56,19 +56,19 @@
 #' values(r) <- runif(ncell(r))
 #'
 #' # Run DA-CV (RDM_CV and spatial_plus_cv (must be available)
-#' result <- DA_CV(
+#' result <- da_cv(
 #'   samples = pts,
 #'   predictors = r,
 #'   response = "yvar",
 #'   folds_k = 5,
 #'   autoc_threshold = 0.2,
-#'   cate_num = 5
+#'   cate_num = 0
 #' )
 #' print(result$weights)
 #' }
 #'
 #' @export
-DA_CV <- function(
+da_cv <- function(
 	samples,
 	predictors,
 	response,
@@ -221,15 +221,19 @@ DA_CV <- function(
 		sp_threshold = autoc_threshold
 	)
 
-	# return
-	return(list(
+	# return result
+	res <- list(
 		dissimilarity = D_val,
 		auc = auc_val,
 		threshold = threshold,
 		similarity_raster = prob_raster,
-		category_raster = category_raster,
+		category_raster = terra::as.factor(category_raster),
 		weights = c(similar = sim_ratio, different = diff_ratio),
 		folds_RDM = folds_rdm$fold,
 		folds_SP = folds_sp$fold
-	))
+	)
+
+	class(res) <- c("da_cv", "list")
+
+	return(res)
 }
