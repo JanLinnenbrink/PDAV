@@ -3,7 +3,6 @@
 S3method(plot,da_cv)
 S3method(plot,knndm)
 S3method(plot,nndm)
-export(RDM_CV)
 export(da_cv)
 export(knndm)
 export(nndm)

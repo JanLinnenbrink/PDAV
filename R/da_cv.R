@@ -211,7 +211,8 @@ da_cv <- function(
 	# prob_raster[samp_cells] <- NA
 
 	# 12) Obtain random and spatial+ folds (to calculate weighted RMSE afterwards)
-	folds_rdm <- RDM_CV(samples = samples, folds_k = folds_k)
+	folds_rdm <- sample(rep(1:folds_k, ceiling(nrow(samples) / folds_k)), size = nrow(samples), replace = F)
+
 	folds_sp <- spatial_plus_cv(
 		samples = samples,
 		response_name = response,
@@ -229,7 +230,7 @@ da_cv <- function(
 		similarity_raster = prob_raster,
 		category_raster = terra::as.factor(category_raster),
 		weights = c(similar = sim_ratio, different = diff_ratio),
-		folds_RDM = folds_rdm$fold,
+		folds_RDM = folds_rdm,
 		folds_SP = folds_sp$fold
 	)
 
