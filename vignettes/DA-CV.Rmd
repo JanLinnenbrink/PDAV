@@ -34,7 +34,7 @@ Spatial+ CV works as follows:
 	3.1. K-Means clustering of the coordinates
 
 	3.2. K-Prototypes clustering of the predictor values
-	
+
 	3.3. K-Means clustering of the response
 
 4. Combine the three clustering results into k folds using the cluster ensemble function "Hybrid Bipartite Graph Formulation" that finds consistency between the three clustering results.
@@ -217,8 +217,8 @@ samples_long <- st_drop_geometry(samples) |>
 	mutate(
 		weight = case_when(
 			sampling == "random" & name == "randomCV" ~ round(result_random$weights[["similar"]], 1),
-			sampling == "random" & name == "spatialCV" ~ round(result_clustered$weights[["similar"]], 1),
-			sampling == "clustered" & name == "randomCV" ~ round(result_random$weights[["different"]], 1),
+			sampling == "random" & name == "spatialCV" ~ round(result_random$weights[["different"]], 1),
+			sampling == "clustered" & name == "randomCV" ~ round(result_clustered$weights[["similar"]], 1),
 			sampling == "clustered" & name == "spatialCV" ~ round(result_clustered$weights[["different"]], 1)
 		),
 		sampling = factor(sampling, levels = c("random", "clustered"))
@@ -233,7 +233,7 @@ ggplot() +
 		check_overlap = TRUE
 	) +
 	coord_sf(expand = FALSE, datum = st_crs(sample_clustered)) +
-	facet_grid(name ~ sampling) +
+	facet_grid(sampling ~ name) +
 	scale_color_brewer("Fold", palette = "Set1") +
 	theme_bw() +
 	theme(panel.grid = element_blank(), legend.position = "right") +
