@@ -14,6 +14,7 @@
 #' @param autoc_threshold Numeric. Spatial autocorrelation threshold used in \code{spatial_plus_cv}.
 #' @param cate_num Integer. Number of categorical variables (passed to \code{spatial_plus_cv}).
 #' @param seed Optional integer. Random seed for reproducibility (passed to \code{set.seed()}).
+#' @param ... Parameters passed to \code{spatial_plus_cv()}. Most importantly `method`.
 #' @return A list with components:
 #' \describe{
 #'   \item{dissimilarity}{Dissimilarity index D; ranging from 0 to 1}

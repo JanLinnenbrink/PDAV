@@ -11,7 +11,8 @@ da_cv(
   folds_k = 5,
   autoc_threshold = 0.2,
   cate_num = 5,
-  seed = NULL
+  seed = NULL,
+  ...
 )
 }
 \arguments{
@@ -30,6 +31,8 @@ aligned to the study area.}
 \item{cate_num}{Integer. Number of categorical variables (passed to \code{spatial_plus_cv}).}
 
 \item{seed}{Optional integer. Random seed for reproducibility (passed to \code{set.seed()}).}
+
+\item{...}{Parameters passed to \code{spatial_plus_cv()}. Most importantly \code{method}.}
 }
 \value{
 A list with components:
