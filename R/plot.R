@@ -203,7 +203,6 @@ plot.da_cv <- function(x, ...) {
 	}
 
 	ggplot2::ggplot() +
-		# 1) Similarity raster first
 		tidyterra::geom_spatraster(data = sim_rast) +
 		ggplot2::scale_fill_viridis_c(
 			"Similarity",
@@ -211,11 +210,8 @@ plot.da_cv <- function(x, ...) {
 			na.value = NA,
 			guide = ggplot2::guide_colorbar(order = 1)
 		) +
-
-		# 2) New fill scale for categorical overlay
 		ggnewscale::new_scale_fill() +
 		tidyterra::geom_spatraster(data = cat_rast) +
-		# Only show title, not factor levels
 		ggplot2::scale_fill_manual(
 			name = legend_title,
 			values = vals,
@@ -224,7 +220,6 @@ plot.da_cv <- function(x, ...) {
 			na.translate = FALSE,
 			guide = ggplot2::guide_legend(order = 2)
 		) +
-
 		ggplot2::theme_bw() +
 		ggplot2::theme(
 			legend.position = "bottom",

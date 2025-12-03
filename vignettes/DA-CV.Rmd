@@ -18,24 +18,33 @@ knitr::opts_chunk$set(
 library(PDAV)
 library(terra)
 library(sf)
-library(dplyr)
-library(purrr)
 library(simsam)
+library(ggplot2)
+library(tidyterra)
 ```
 
-
+## Example data
+### Simulate predictors and response
 ```{r}
-study_area <- st_read("~/git/FeatureVSGeo/simulation2_AGB/data/study_area.gpkg")
-study_area_west <- st_read("~/git/FeatureVSGeo/simulation2_AGB/data/study_area_west.gpkg")
-study_area_east <- st_read("~/git/FeatureVSGeo/simulation2_AGB/data/study_area_east.gpkg")
+rast_grid = terra::rast(xmin = 0, xmax = 200, ymin = 0, ymax = 200, ncols = 200, nrows = 200)
+r <- sim_covariates(rast_grid, vgm = gstat::vgm(model = "Exp", psill = 1, range = 20), n = 4)
+outcome <- simsam::blend_rasters(r, ~ cov1 + cov2 + cov3 + cov4)
+r <- c(outcome, r)
+terra::crs(r) <- "EPSG:3857"
 
-r <- rast(dir("~/git/FeatureVSGeo/simulation2_AGB/data/raster_data/", pattern = "\\.tif$", full.names = TRUE))
+response_name <- "outcome" # column in the sample points containing the target
 
-response_name <- "ABG1" # column in the sample points containing the target
+ggplot() +
+	geom_spatraster(data = r) +
+	scale_fill_viridis_c() +
+	facet_wrap(~lyr) +
+	theme_bw() +
+	theme(panel.grid = element_blank())
+
+
 ```
 
-
-
+### Simulate samples
 ```{r}
 set.seed(123)
 sample_random <- sam_field(
@@ -54,23 +63,34 @@ sample_clustered <- sam_field(
 	x = r,
 	size = 100,
 	type = "clustered",
-	type_opts = list(nclusters = 5, radius = 60000),
+	type_opts = list(nclusters = 5, radius = 10),
 	na.rm = TRUE
 ) |>
 	terra::extract(x = r, bind = TRUE) |>
 	st_as_sf()
 
+samples <- rbind(sample_random |> mutate(sampling = "random"), sample_clustered |> mutate(sampling = "clustered"))
+
+ggplot() +
+	geom_spatraster(data = r$outcome) +
+	geom_sf(data = samples) +
+	scale_fill_viridis_c("outcome") +
+	facet_wrap(~sampling) +
+	theme_bw() +
+	theme(panel.grid = element_blank())
+
 
 ```
 
 
+## Run DA-CV
 ```{r}
 result_random <- da_cv(
 	samples = sample_random,
 	predictors = r,
 	response = response_name,
 	folds_k = 5,
-	autoc_threshold = 350,
+	autoc_threshold = 10,
 	cate_num = 0
 )
 
@@ -80,7 +100,7 @@ result_clustered <- da_cv(
 	predictors = r,
 	response = response_name,
 	folds_k = 5,
-	autoc_threshold = 350,
+	autoc_threshold = 10,
 	cate_num = 0
 )
 

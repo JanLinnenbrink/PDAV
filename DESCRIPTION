@@ -28,5 +28,10 @@ Imports:
     RColorBrewer
 Suggests: 
     knitr,
-    rmarkdown
+    rmarkdown,
+    simsam,
+    tidyterra,
+    ggnewscale
 VignetteBuilder: knitr
+Remotes:
+    Nowosad/simsam
