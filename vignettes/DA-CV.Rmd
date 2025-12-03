@@ -1,12 +1,31 @@
 ---
-title: "PDAV"
+title: "DA-CV"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{PDAV}
+  %\VignetteIndexEntry{DA-CV}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
+## Introduction
+Dissimilarity-adaptive cross-validation (DA-CV) was developed by (Wang et al. (2025))[https://doi.org/10.1016/j.ecoinf.2025.103287]. 
+It uses adversial validation (AV) to predict the probability that a prediction location is similar to the training samples.
+Then it calculates a RMSE based on random CV, as well as spatial+ CV [] and weights both of them using the relative area 
+of similar cells (random CV) and dissimilar cells (spatial+ CV). 
+
+The more detailed workflow is:
+
+1. Generate an AV dataset consisting of the training samples and an equal number of randomly sampled prediction locations.
+2. Train the AV classifier based on the available predictors to predict the probability of a data point to belong to the training samples using 50% of the AV dataset.
+3. Evaluate the AV classifier on the other 50% and calcuate the AUC.
+4. Normalize the AUC to [0,1] by starting with 0 at $AUC = 0.5$. This normalized AUC is then interpreted as the overall dissimilarity $D$.
+5. Derive the threshold to distinguish similar from dissimilar areas from the overall dissimilarity as $T(D) = 0.5*D$.
+6. Predict the similarity of all prediction locations using the AV classifier.
+7. Binarize the similarity map using $T(D)$.
+8. Calculate the weighted RMSE as $RMSE_{DA} = \sqrt{W_{RDM} * RMSE^2_{RDM} + W_{SP} * RMSE^2_{SP}}$ 
+
+
+## Setup
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
 	collapse = TRUE,
@@ -21,32 +40,38 @@ library(sf)
 library(simsam)
 library(ggplot2)
 library(tidyterra)
+library(ggnewscale)
 ```
 
 ## Example data
 ### Simulate predictors and response
 ```{r}
+set.seed(100)
 rast_grid = terra::rast(xmin = 0, xmax = 200, ymin = 0, ymax = 200, ncols = 200, nrows = 200)
 r <- sim_covariates(rast_grid, vgm = gstat::vgm(model = "Exp", psill = 1, range = 20), n = 4)
 outcome <- simsam::blend_rasters(r, ~ cov1 + cov2 + cov3 + cov4)
 r <- c(outcome, r)
 terra::crs(r) <- "EPSG:3857"
 
-response_name <- "outcome" # column in the sample points containing the target
+response_name <- "outcome"
+```
+
+```{r}
+#| fig-width: 6
+#| fig-height: 4
+#| echo: false
 
 ggplot() +
 	geom_spatraster(data = r) +
+	coord_sf(expand = FALSE, datum = st_crs(r)) +
 	scale_fill_viridis_c() +
 	facet_wrap(~lyr) +
 	theme_bw() +
 	theme(panel.grid = element_blank())
-
-
 ```
 
 ### Simulate samples
 ```{r}
-set.seed(123)
 sample_random <- sam_field(
 	x = r,
 	size = 100,
@@ -68,22 +93,31 @@ sample_clustered <- sam_field(
 ) |>
 	terra::extract(x = r, bind = TRUE) |>
 	st_as_sf()
+```
+
+```{r}
+#| fig-width: 6
+#| fig-height: 4
+#| echo: false
 
 samples <- rbind(sample_random |> mutate(sampling = "random"), sample_clustered |> mutate(sampling = "clustered"))
 
 ggplot() +
 	geom_spatraster(data = r$outcome) +
-	geom_sf(data = samples) +
 	scale_fill_viridis_c("outcome") +
+	new_scale_fill() +
+	geom_sf(data = samples, shape = 21, aes(fill = "training samples"), size = 1) +
+	coord_sf(expand = FALSE, datum = st_crs(samples)) +
+	scale_fill_manual("", values = "white") +
 	facet_wrap(~sampling) +
 	theme_bw() +
 	theme(panel.grid = element_blank())
-
-
 ```
 
-
 ## Run DA-CV
+
+Now, we use DA-CV to obtain area estimates of interpolation vs extrapolation areas, that can then be used to derive a weighted RMSE.
+
 ```{r}
 result_random <- da_cv(
 	samples = sample_random,
@@ -104,7 +138,28 @@ result_clustered <- da_cv(
 	cate_num = 0
 )
 
-plot(result_random)
-plot(result_clustered)
+```
+
+For randomly distributed samples, the AV classifier has a performance of $AUC = `r round(result_random$auc, 1)`$. This is then normalized to $D = 0$, because the classifier is not better than randomly guessing if a prediction location is similiar or dissimilar. The threshold is then calculated as $T(D) = 0.5 * 0$, which is 0. This means that all prediction locations are similar to the training samples, and no extrapolation is required, as can be seen in the following map. All weights will be given to random CV. 
+
+For clustered samples, the AV classifier achieves a performance of $AUC = `r round(result_clustered$auc, 2)`$. This leads to $D = \frac{`r round(result_clustered$auc, 2)` - 0.5}{1 - 0.5} = `r (round(result_clustered$auc, 2) - 0.5) / 0.5`$. The threshold is then $T(D) = 0.5* `r (round(result_clustered$auc, 2) - 0.5) / 0.5` = `r 0.5*((round(result_clustered$auc, 1) - 0.5) / 0.5)`$. Hence, all prediction cells with a similarity score lower than `r 0.5*((round(result_clustered$auc, 1) - 0.5) / 0.5)` are classified as dissimilar. The relative fraction of prediction locations being similar from the sampling locations is `r round(result_clustered$weights[["similar"]], 2)`, while the fraction being dissimilar is `r round(result_clustered$weights[["different"]], 2)`.
+
+``` {r}
+#| fig-width: 6
+#| fig-height: 4
+
+plot(result_random) +
+	new_scale_fill() +
+	geom_sf(data = sample_random, shape = 21, aes(fill = "sampling locations")) +
+	coord_sf(expand = FALSE, datum = st_crs(sample_random)) +
+	scale_fill_manual("", values = "white") +
+	theme(legend.position = "right")
+
+plot(result_clustered) +
+	new_scale_fill() +
+	geom_sf(data = sample_clustered, shape = 21, aes(fill = "sampling locations")) +
+	coord_sf(expand = FALSE, datum = st_crs(sample_clustered)) +
+	scale_fill_manual("", values = "white") +
+	theme(legend.position = "right")
 
 ```
