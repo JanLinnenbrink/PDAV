@@ -97,8 +97,28 @@ spatial_plus_cv <- function(
 		cate_col_end
 	)
 
-	coords_avg <- do.call(rbind, lapply(clusters, function(cl) colMeans(coords[cl$ids, , drop = FALSE])))
-	env_avg <- do.call(rbind, lapply(clusters, function(cl) colMeans(norm_env[cl$ids, , drop = FALSE])))
+	coords_avg <- do.call(
+		rbind,
+		lapply(clusters, function(cl) {
+			mat <- coords[cl$ids, , drop = FALSE]
+			if (nrow(mat) == 1) {
+				return(matrix(mat, nrow = 1))
+			}
+			colMeans(mat)
+		})
+	)
+
+	env_avg <- do.call(
+		rbind,
+		lapply(clusters, function(cl) {
+			mat <- norm_env[cl$ids, , drop = FALSE]
+			if (nrow(mat) == 1) {
+				return(matrix(mat, nrow = 1))
+			}
+			colMeans(mat)
+		})
+	)
+
 	response_name_avg <- matrix(unlist(lapply(clusters, function(cl) mean(pts_df[cl$ids, response_name]))), ncol = 1)
 
 	# --- K-means / K-modes on averages ---
@@ -128,7 +148,8 @@ spatial_plus_cv <- function(
 			fold <- ensemble_labels[cid]
 			cbind(ID = pts_df$ID[clusters[[cid]]$ids], fold = fold, cluster = cid)
 		})
-	)
+	) |>
+		as.data.frame()
 
-	as.data.frame(res)
+	res
 }

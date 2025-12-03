@@ -42,6 +42,7 @@ library(simsam)
 library(ggplot2)
 library(tidyterra)
 library(ggnewscale)
+library(dplyr)
 ```
 
 ## Example data
@@ -73,6 +74,8 @@ ggplot() +
 
 ### Simulate samples
 ```{r}
+library(gstat)
+library(sp)
 sample_random <- sam_field(
 	x = r,
 	size = 100,
@@ -89,11 +92,23 @@ sample_clustered <- sam_field(
 	x = r,
 	size = 100,
 	type = "clustered",
-	type_opts = list(nclusters = 5, radius = 10),
+	type_opts = list(nclusters = 5, radius = 15),
 	na.rm = TRUE
 ) |>
 	terra::extract(x = r, bind = TRUE) |>
 	st_as_sf()
+```
+
+```{r semivariogram}
+#| eval: false
+#| echo: false
+
+sample_random_sp <- as(sample_random, "Spatial")
+sample_clustered_sp <- as(sample_clustered, "Spatial")
+vg_random <- variogram(as.formula(paste(response_name, "~ 1")), data = sample_random_sp)
+vg_clustered <- variogram(as.formula(paste(response_name, "~ 1")), data = sample_clustered_sp)
+plot(vg_random, main = paste("Semivariance of", response_name, "(Random samples)"))
+plot(vg_clustered, main = paste("Semivariance of", response_name, "(Clustered samples)"))
 ```
 
 ```{r}
@@ -101,7 +116,8 @@ sample_clustered <- sam_field(
 #| fig-height: 4
 #| echo: false
 
-samples <- rbind(sample_random |> mutate(sampling = "random"), sample_clustered |> mutate(sampling = "clustered"))
+samples <- rbind(sample_random |> mutate(sampling = "random"), sample_clustered |> mutate(sampling = "clustered")) |>
+	mutate(sampling = factor(sampling, levels = c("random", "clustered")))
 
 ggplot() +
 	geom_spatraster(data = r$outcome) +
@@ -117,7 +133,7 @@ ggplot() +
 
 ## Run DA-CV
 
-Now, we use DA-CV to obtain area estimates of interpolation vs extrapolation areas, that can then be used to derive a weighted RMSE.
+Now, we use DA-CV to obtain area estimates of interpolation vs extrapolation areas, that can then be used to derive a weighted RMSE. We leave the autocorrelation threshold at 1, despite the sample variogram showing indicating a range of 5-10, because higher autocorrelation thresholds would result in spatial+ CV-splits that has a smaller size than the sample size. Maybe due to empty clusters?
 
 ```{r}
 result_random <- da_cv(
@@ -125,7 +141,7 @@ result_random <- da_cv(
 	predictors = r,
 	response = response_name,
 	folds_k = 5,
-	autoc_threshold = 10,
+	autoc_threshold = 1,
 	cate_num = 0
 )
 
@@ -135,13 +151,13 @@ result_clustered <- da_cv(
 	predictors = r,
 	response = response_name,
 	folds_k = 5,
-	autoc_threshold = 10,
+	autoc_threshold = 1,
 	cate_num = 0
 )
 
 ```
 
-For randomly distributed samples, the AV classifier has a performance of $AUC = `r round(result_random$auc, 1)`$. This is then normalized to $D = 0$, because the classifier is not better than randomly guessing if a prediction location is similiar or dissimilar (see @Wang2025b, section 2.1 for more information). The threshold is then calculated as $T(D) = 0.5 * 0$, which is 0. This means that all prediction locations are similar to the training samples, and no extrapolation is required, as can be seen in the following map. All weights will be given to random CV. 
+For randomly distributed samples, the AV classifier has a performance of $AUC = `r round(result_random$auc, 1)`$. This is then normalized to $D = 0$, because the classifier is not better than randomly guessing if a prediction location is similiar or dissimilar (see @Wang2025b, section 2.1 for more information). The threshold is then calculated as $T(D) = 0.5 * 0$, which is 0. This means that all prediction locations are similar to the training 1, and no extrapolation is required, as can be seen in the following map. All weights will be given to random CV. 
 
 For clustered samples, the AV classifier achieves a performance of $AUC = `r round(result_clustered$auc, 2)`$. This leads to $D = \frac{`r round(result_clustered$auc, 2)` - 0.5}{1 - 0.5} = `r (round(result_clustered$auc, 2) - 0.5) / 0.5`$. The threshold is then $T(D) = 0.5* `r (round(result_clustered$auc, 2) - 0.5) / 0.5` = `r 0.5*((round(result_clustered$auc, 1) - 0.5) / 0.5)`$. Hence, all prediction cells with a similarity score lower than `r 0.5*((round(result_clustered$auc, 1) - 0.5) / 0.5)` are classified as dissimilar. The relative fraction of prediction locations being similar from the sampling locations is `r round(result_clustered$weights[["similar"]], 2)`, while the fraction being dissimilar is `r round(result_clustered$weights[["different"]], 2)`.
 
@@ -168,6 +184,45 @@ plot(result_clustered) +
 Lastly, the resulting cross-validation fold assignments could be used to calculate the weighted RMSE of a spatial predictive model.
 
 ```{r}
-result_random[c("folds_RDM", "folds_SP")]
-result_clustered[c("folds_RDM", "folds_SP")]
+#| fig-width: 8
+#| fig-height: 6
+
+sample_random$randomCV <- result_random$folds_RDM
+sample_random$spatialCV <- result_random$folds_SP
+sample_clustered$randomCV <- result_clustered$folds_RDM
+sample_clustered$spatialCV <- result_clustered$folds_SP
+
+samples <- rbind(sample_random |> mutate(sampling = "random"), sample_clustered |> mutate(sampling = "clustered")) |>
+	select(randomCV, spatialCV, sampling)
+samples$ID <- 1:nrow(samples)
+samples_geom <- select(samples, ID)
+samples_long <- st_drop_geometry(samples) |>
+	pivot_longer(-c(ID, sampling)) |>
+	left_join(samples_geom, by = "ID") |>
+	st_as_sf() |>
+	mutate(
+		weight = case_when(
+			sampling == "random" & name == "randomCV" ~ round(result_random$weights[["similar"]], 1),
+			sampling == "random" & name == "spatialCV" ~ round(result_clustered$weights[["similar"]], 1),
+			sampling == "clustered" & name == "randomCV" ~ round(result_random$weights[["different"]], 1),
+			sampling == "clustered" & name == "spatialCV" ~ round(result_clustered$weights[["different"]], 1)
+		),
+		sampling = factor(sampling, levels = c("random", "clustered"))
+	)
+
+ggplot() +
+	geom_sf(data = samples_long, aes(colour = as.factor(value)), size = 1) +
+	geom_text(
+		data = samples_long,
+		aes(x = 25, y = 180, label = paste0("Weight: ", weight)),
+		size = 3,
+		check_overlap = TRUE
+	) +
+	coord_sf(expand = FALSE, datum = st_crs(sample_clustered)) +
+	facet_grid(name ~ sampling) +
+	scale_color_brewer("Fold", palette = "Set1") +
+	theme_bw() +
+	theme(panel.grid = element_blank(), legend.position = "right") +
+	labs(x = "", y = "")
+
 ```

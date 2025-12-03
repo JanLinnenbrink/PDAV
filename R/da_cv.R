@@ -75,7 +75,8 @@ da_cv <- function(
 	folds_k = 5,
 	autoc_threshold = 0.2,
 	cate_num = 5,
-	seed = NULL
+	seed = NULL,
+	...
 ) {
 	# checks
 	stopifnot(inherits(samples, "sf"))
@@ -219,7 +220,8 @@ da_cv <- function(
 		k = folds_k,
 		cate_col_start = 0,
 		cate_col_end = cate_num,
-		sp_threshold = autoc_threshold
+		sp_threshold = autoc_threshold,
+		...
 	)
 
 	# return result
