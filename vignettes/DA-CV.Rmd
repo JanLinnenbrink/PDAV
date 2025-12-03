@@ -25,6 +25,20 @@ The more detailed workflow is:
 7. Binarize the similarity map using $T(D)$.
 8. Calculate the weighted RMSE as $RMSE_{DA} = \sqrt{W_{RDM} * RMSE^2_{RDM} + W_{SP} * RMSE^2_{SP}}$ 
 
+Spatial+ CV works as follows:
+
+1. Divide samples into blocks using agglomerative hierarchical clustering, where the maximum linkage (i.e., the maximum distance between samples in one cluster / block size) is derived from the semivariogram of the response values measured at the sampling locations (i.e., spatial autocorrelation range)
+2. Average the predictor values, response values and coordinates of all samples belonging to one block.
+3. Cluster the blocks in three ways:
+
+	3.1. K-Means clustering of the coordinates
+
+	3.2. K-Prototypes clustering of the predictor values
+	
+	3.3. K-Means clustering of the response
+
+4. Combine the three clustering results into k folds using the cluster ensemble function "Hybrid Bipartite Graph Formulation" that finds consistency between the three clustering results.
+
 
 ## Setup
 ```{r, include = FALSE}
