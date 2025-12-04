@@ -30,7 +30,7 @@ As a guideline for choosing an appropriate method, the table below summarises so
 
 ## Benchmarking
 
-The following figure shows the results of the benchmarking study:
+The following figure shows the results of the benchmarking study for different sampling designs. The simulation can be reproduced in the [vignette](vignettes/benchmarking.Rmd).
 
 <img src="man/figures/rmse_comp.png" width="100%" />
 
