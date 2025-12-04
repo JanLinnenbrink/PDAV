@@ -11,20 +11,20 @@ As such, the repository is expected to grow and include newly developed methods 
 
 Below, you can find a technical comparison of the different approaches.
 
-| Method      | Authors | Theoretical basis | Critical Parameters | Critical assumptions |
-| ----------- | ----------- | ----------- | ----------- | ----------- |
-| NNDM      | [Milà et al. (2022)](https://doi.org/10.1111/2041-210X.13851) | Point Patterns | - *phi*<br>- *min_train*: fold balancing | ab |
-| kNNDM   | [Linnenbrink & Milà et al. (2024)](https://doi.org/10.5194/gmd-17-5897-2024) | Point Patterns | - *maxp*: fold balancing | ab |
-| DA-CV      |  [Wang et al. (2025)](https://doi.org/10.1016/j.ecoinf.2025.103287) | Adversial Validation | - *autoc_threshold*: block size in spatial cross-validation | ab |
+| Method      | Authors | Theoretical basis | Space | Critical Parameters |
+| ----------- | ----------- | ----------- | ----------- | ----------- | ----------- |
+| NNDM      | [Milà et al. (2022)](https://doi.org/10.1111/2041-210X.13851) | Point Patterns | Geographical or Feature | - *phi*<br>- *min_train*: fold balancing |
+| kNNDM   | [Linnenbrink & Milà et al. (2024)](https://doi.org/10.5194/gmd-17-5897-2024) | Point Patterns | Geographical or Feature | - *maxp*: fold balancing |
+| DA-CV      |  [Wang et al. (2025)](https://doi.org/10.1016/j.ecoinf.2025.103287) | Adversial Validation | Feature for matching the prediction situation, but also mixes in geographical space during fold creation | - *autoc_threshold*: block size in spatial cross-validation |
 
 
 As a guideline for choosing an appropriate method, the table below summarises some advantages and disadvantages of the different methods.
 
-| Method      |  |
-| ----------- | ----------- |
-| NNDM      | ab |
-| kNNDM   | ab |
-| DA-CV      | |
+| Method      | Advantages | Disadvantages |
+| ----------- | ----------- | ----------- |
+| NNDM      | ab | ab |
+| kNNDM   | ab | ab |
+| DA-CV      | ab | ab |
 
 
 The following figure shows the results of the benchmarking study:
