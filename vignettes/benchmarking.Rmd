@@ -282,11 +282,13 @@ cv_diff <- lapply(1:n_iters, function(i) {
 
 ```{r}
 p <- ggplot(cv_diff |> filter(name == "RMSE_diff"), aes(x = method, y = value)) +
-	geom_boxplot() +
+	geom_boxplot(width = 0.5) +
 	geom_hline(yintercept = 0) +
 	facet_wrap(~sampling) +
-	theme_bw()
+	theme_bw(base_size = 12) +
+	theme(panel.grid = element_blank()) +
+	labs(x = "", y = "RMSE difference")
 p
 
-ggsave("man/figures/rmse_comp.png", p)
+ggsave("man/figures/rmse_comp.png", p, width = 8, height = 3)
 ```
