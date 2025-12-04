@@ -3,6 +3,7 @@ title: "Benchmarking"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{benchmarking}
+  %\VignetteEngine{none}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -23,6 +24,7 @@ library(caret)
 library(CAST)
 library(dplyr)
 library(tidyr)
+library(tidyterra)
 
 
 n_samples <- 100
@@ -34,6 +36,8 @@ n_iters <- 10
 
 ### Generate predictors and response
 ```{r}
+#| fig-width: 6
+#| fig-height: 4
 set.seed(100)
 
 rast_grid <- rast(xmin = 0, xmax = 200, ymin = 0, ymax = 200, ncols = 200, nrows = 200)
@@ -86,6 +90,9 @@ plot(c(noise, r))
 ### Generate samples
 
 ```{r}
+#| fig-width: 6
+#| fig-height: 4
+
 set.seed(100)
 
 samples <- lapply(1:n_iters, function(i) {
@@ -99,6 +106,17 @@ samples <- lapply(1:n_iters, function(i) {
 		st_as_sf() |>
 		mutate(sampling = "random")
 
+	sample_biased <- sam_field(
+		x = r,
+		size = n_samples,
+		type = "clustered",
+		type_opts = list(nclusters = 10, radius = 30),
+		na.rm = TRUE
+	) |>
+		terra::extract(x = r, bind = TRUE) |>
+		st_as_sf() |>
+		mutate(sampling = "biased")
+
 	sample_clustered <- sam_field(
 		x = r,
 		size = 100,
@@ -110,8 +128,17 @@ samples <- lapply(1:n_iters, function(i) {
 		st_as_sf() |>
 		mutate(sampling = "clustered")
 
-	rbind(sample_random, sample_clustered)
+	rbind(sample_random, sample_biased, sample_clustered) |>
+		mutate(sampling = factor(sampling, levels = c("random", "biased", "clustered")))
 })
+
+ggplot() +
+	geom_spatraster(data = r$outcome) +
+	geom_sf(data = samples[[1]], shape = 21, aes(colour = "training samples"), fill = "white") +
+	scale_color_manual("", values = c("black")) +
+	scale_fill_viridis_c("outcome") +
+	facet_wrap(~sampling) +
+	theme_bw()
 
 
 ```
@@ -119,6 +146,8 @@ samples <- lapply(1:n_iters, function(i) {
 
 ## CV splits
 ```{r}
+#| fig-width: 6
+#| fig-height: 4
 
 folds <- lapply(1:n_iters, function(i) {
 	train_points_i <- samples[[i]]
@@ -272,7 +301,7 @@ cv_diff <- lapply(1:n_iters, function(i) {
 		do.call(what = "rbind")
 }) |>
 	do.call(what = "rbind") |>
-	mutate(sampling = factor(sampling, levels = c("random", "clustered")))
+	mutate(sampling = factor(sampling, levels = c("random", "biased", "clustered")))
 
 
 ```
@@ -281,6 +310,8 @@ cv_diff <- lapply(1:n_iters, function(i) {
 ## Plot results
 
 ```{r}
+#| fig-width: 6
+#| fig-height: 4
 rmse_diff <- cv_diff |>
 	filter(name == "RMSE_diff") |>
 	mutate(method = factor(method, levels = c("randomCV", "spatialCV", "NNDM LOOCV", "kNNDM CV")))

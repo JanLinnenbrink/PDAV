@@ -31,7 +31,8 @@ Suggests:
     rmarkdown,
     simsam,
     tidyterra,
-    ggnewscale
+    ggnewscale,
+    tidyr
 VignetteBuilder: knitr
 Remotes:
     Nowosad/simsam
