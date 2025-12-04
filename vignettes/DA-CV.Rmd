@@ -88,8 +88,6 @@ ggplot() +
 
 ### Simulate samples
 ```{r}
-library(gstat)
-library(sp)
 sample_random <- sam_field(
 	x = r,
 	size = 100,
@@ -116,6 +114,9 @@ sample_clustered <- sam_field(
 ```{r semivariogram}
 #| eval: false
 #| echo: false
+
+library(sp)
+library(gstat)
 
 sample_random_sp <- as(sample_random, "Spatial")
 sample_clustered_sp <- as(sample_clustered, "Spatial")

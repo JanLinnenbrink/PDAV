@@ -31,3 +31,7 @@ As a guideline for choosing an appropriate method, the table below summarises so
 ## Benchmarking
 
 The following figure shows the results of the benchmarking study:
+
+<img src="man/figures/rmse_comp.png" width="100%" />
+
+This figure shows the computational costs of each method:
