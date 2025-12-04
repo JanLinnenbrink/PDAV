@@ -22,9 +22,9 @@ As a guideline for choosing an appropriate method, the table below summarises so
 
 | Method      | Advantages | Disadvantages |
 | ----------- | ----------- | ----------- |
-| NNDM      | ab | ab |
-| kNNDM   | ab | ab |
-| DA-CV      | ab | ab |
+| NNDM      | - direct quantification of the prediction situation through nearest-neighbour distances | - high computational costs since it uses LOO-CV |
+| kNNDM   | - direct quantification of the prediction situation through nearest-neighbour distances<br>- more computational efficient than NNDM | ab |
+| DA-CV      | - creates a map that depicts areas of inter- vs extrapolation, which can be useful for subsequent sampling or for uncertainty assessment<br>- | - less direct approximation of the prediction situation |
 
 
 The following figure shows the results of the benchmarking study:
