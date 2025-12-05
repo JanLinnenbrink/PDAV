@@ -23,9 +23,9 @@ As a guideline for choosing an appropriate method, the table below summarises so
 
 | Method      | Advantages | Disadvantages |
 | ----------- | ----------- | ----------- |
-| NNDM      | - direct quantification of the prediction situation through nearest-neighbour distances<br>- NND plots reveal situations where prediction situation cannot be matched during CV | - high computational costs since it uses LOO-CV |
-| kNNDM   | - direct quantification of the prediction situation through nearest-neighbour distances<br>- NND plots reveal situations where prediction situation cannot be matched during CV<br>- more computational efficient than NNDM | - less flexible in matching the NND distributions than NNDM |
-| DA-CV      | - creates a map that depicts areas of inter- vs extrapolation, which can be useful for subsequent sampling or for uncertainty assessment<br>- | - less direct approximation of the prediction situation<br>- No inspection method available to assess if the prediction situation can be matched during CV |
+| [NNDM](R/nndm.R)      | - **direct quantification of the prediction situation** through nearest-neighbour distances<br>- **NND plots **reveal situations where prediction situation cannot be matched during CV | - **high computational costs** since it uses LOO-CV |
+| [kNNDM](R/knndm.R)   | - **direct quantification of the prediction situation** through nearest-neighbour distances<br>- **NND plots** reveal situations where prediction situation cannot be matched during CV<br>- more computational efficient than NNDM | - **less flexible** in matching the NND distributions than NNDM |
+| [DA-CV](R/da_cv.R)      | - creates a **map that depicts areas of inter- vs extrapolation**, which can be useful for subsequent sampling or for uncertainty assessment<br>- | - **less direct** approximation of the prediction situation<br>- No inspection method available to **assess if the prediction situation can be matched** during CV |
 
 
 ## Benchmarking
