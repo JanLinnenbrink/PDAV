@@ -35,3 +35,14 @@ The following figure shows the results of the benchmarking study for different s
 <img src="man/figures/rmse_comp.png" width="100%" />
 
 This figure shows the computational costs of each method:
+
+
+## List of research papers
+* Milà, C., Mateu, J., Pebesma, E., Meyer, H. (2022): Nearest Neighbour Distance Matching Leave-One-Out Cross-Validation for map validation. Methods in Ecology and Evolution 00, 1– 13.
+https://doi.org/10.1111/2041-210X.13851
+
+* Linnenbrink, J., Milà, C., Ludwig, M., and Meyer, H. (2024): kNNDM: k-fold Nearest Neighbour Distance Matching Cross-Validation for map accuracy estimation. GMD, 17, 5897–5912.
+https://doi.org/10.5194/gmd-17-5897-2024
+
+* Wang, Y., Khodadadzadeh, M. and Zurita-Milla, R. (2025): A dissimilarity-adaptive cross-validation method for evaluating geospatial machine learning predictions with clustered samples. Ecological Informatics 90, 1574-9541.
+https://doi.org/10.1016/j.ecoinf.2025.103287
