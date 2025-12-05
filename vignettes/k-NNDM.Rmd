@@ -7,13 +7,116 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+
+## Introduction
+k-fold nearest-neighbour distance matching (kNNDM) cross-validation was developed by @Linnenbrink2024.
+It is the k-fold version of NNDM (@Mila2022), and as such much faster and better suited towards medium to large sized datasets.
+As NNDM, kNNDM also matches the distribution of nearest-neighbour distances (NND) between prediction locations and training samples during CV, but opposed to NNDM uses a clustering algorithm instead of excluding training samples.
+
+The more detailed workflow is:
+
+1. Conmpute the distribution of NNDs between training samples ($G_j$), as well as between prediction locations and training samples ($G_{ij}$).
+2. Use the KS-test to evaluate wether $G_j >= G_{ij}$, i.e., wether the samples are randomly distributed in the prediction area.
+3. A) If $G_j >= G_{ij}$; return a random CV split and stop the algorithm here.
+3. B) Otherwise, continue by clustering the training points into $q \in Q$, where $Q = [k, ..., N]$. This yields a gradient from $k$ clusters (i.e., one cluster per fold) to $N$ clusters (i.e., one cluster per training sample).
+4. The $q$ clusters are then merged along the first principal component of the training points coordinates' until $k$ is reached. This means that for $q = N$, nothing happens and a strongly clustered fold configuration is returned. For $q = N$, a random fold assignment is returned. For everything in-between ($q>k<N$), a gradient from strongly to weak clustered folds is returned.
+5.  For each of the $q$ fold configurations, the NND distribution between the unique folds is calculated ($G_{j}^*$), and the distance between $G_j^*$ and $G_{ij}$ is calculated using the Wasserstein statistic (W).
+6. The fold configuration yielding the lowest W is returned.
+
+
+## Setup
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>"
+	collapse = TRUE,
+	comment = "#>"
 )
 ```
 
 ```{r setup}
 library(PDAV)
+library(terra)
+library(sf)
+library(simsam)
+library(ggplot2)
+library(tidyterra)
+library(ggnewscale)
+library(dplyr)
+```
+
+## Example data
+### Simulate predictors and response
+```{r}
+set.seed(100)
+rast_grid = terra::rast(xmin = 0, xmax = 200, ymin = 0, ymax = 200, ncols = 200, nrows = 200)
+r <- sim_covariates(rast_grid, vgm = gstat::vgm(model = "Exp", psill = 1, range = 20), n = 4)
+outcome <- simsam::blend_rasters(r, ~ cov1 + cov2 + cov3 + cov4)
+r <- c(outcome, r)
+terra::crs(r) <- "EPSG:3857"
+
+response_name <- "outcome"
+```
+
+```{r}
+#| fig-width: 6
+#| fig-height: 4
+#| echo: false
+
+ggplot() +
+	geom_spatraster(data = r) +
+	coord_sf(expand = FALSE, datum = st_crs(r)) +
+	scale_fill_viridis_c() +
+	facet_wrap(~lyr) +
+	theme_bw() +
+	theme(panel.grid = element_blank())
+```
+
+### Simulate samples
+```{r}
+sample_random <- sam_field(
+	x = r,
+	size = 100,
+	type = "random",
+	na.rm = TRUE
+) |>
+	terra::extract(x = r, bind = TRUE) |>
+	st_as_sf()
+
+
+# Clustered sampling
+set.seed(456)
+sample_clustered <- sam_field(
+	x = r,
+	size = 100,
+	type = "clustered",
+	type_opts = list(nclusters = 5, radius = 15),
+	na.rm = TRUE
+) |>
+	terra::extract(x = r, bind = TRUE) |>
+	st_as_sf()
+```
+
+```{r}
+#| fig-width: 6
+#| fig-height: 4
+#| echo: false
+
+samples <- rbind(sample_random |> mutate(sampling = "random"), sample_clustered |> mutate(sampling = "clustered")) |>
+	mutate(sampling = factor(sampling, levels = c("random", "clustered")))
+
+ggplot() +
+	geom_spatraster(data = r$outcome) +
+	scale_fill_viridis_c("outcome") +
+	new_scale_fill() +
+	geom_sf(data = samples, shape = 21, aes(fill = "training samples"), size = 1) +
+	coord_sf(expand = FALSE, datum = st_crs(samples)) +
+	scale_fill_manual("", values = "white") +
+	facet_wrap(~sampling) +
+	theme_bw() +
+	theme(panel.grid = element_blank())
+```
+
+## kNNDM CV
+
+```{r}
+
 ```
