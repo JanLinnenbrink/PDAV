@@ -10,7 +10,6 @@ da_cv(
   response,
   folds_k = 5,
   autoc_threshold = 0.2,
-  cate_num = 5,
   seed = NULL,
   ...
 )
@@ -27,8 +26,6 @@ aligned to the study area.}
 \item{folds_k}{Integer. Number of folds for cross-validation.}
 
 \item{autoc_threshold}{Numeric. Spatial autocorrelation threshold used in \code{spatial_plus_cv}.}
-
-\item{cate_num}{Integer. Number of categorical variables (passed to \code{spatial_plus_cv}).}
 
 \item{seed}{Optional integer. Random seed for reproducibility (passed to \code{set.seed()}).}
 
@@ -89,8 +86,7 @@ result <- da_cv(
   predictors = r,
   response = "yvar",
   folds_k = 5,
-  autoc_threshold = 0.2,
-  cate_num = 0
+  autoc_threshold = 0.2
 )
 print(result$weights)
 }

@@ -12,7 +12,6 @@
 #' @param response Name of the response column in `samples`.
 #' @param folds_k Integer. Number of folds for cross-validation.
 #' @param autoc_threshold Numeric. Spatial autocorrelation threshold used in \code{spatial_plus_cv}.
-#' @param cate_num Integer. Number of categorical variables (passed to \code{spatial_plus_cv}).
 #' @param seed Optional integer. Random seed for reproducibility (passed to \code{set.seed()}).
 #' @param ... Parameters passed to \code{spatial_plus_cv()}. Most importantly `method`.
 #' @return A list with components:
@@ -62,8 +61,7 @@
 #'   predictors = r,
 #'   response = "yvar",
 #'   folds_k = 5,
-#'   autoc_threshold = 0.2,
-#'   cate_num = 0
+#'   autoc_threshold = 0.2
 #' )
 #' print(result$weights)
 #' }
@@ -75,7 +73,6 @@ da_cv <- function(
 	response,
 	folds_k = 5,
 	autoc_threshold = 0.2,
-	cate_num = 5,
 	seed = NULL,
 	...
 ) {
@@ -219,8 +216,6 @@ da_cv <- function(
 		samples = samples,
 		response_name = response,
 		k = folds_k,
-		cate_col_start = 0,
-		cate_col_end = cate_num,
 		sp_threshold = autoc_threshold,
 		...
 	)

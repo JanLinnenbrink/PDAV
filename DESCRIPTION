@@ -32,7 +32,9 @@ Suggests:
     simsam,
     tidyterra,
     ggnewscale,
-    tidyr
+    dplyr,
+    tidyr,
+    cowplot
 VignetteBuilder: knitr
 Remotes:
     Nowosad/simsam

@@ -119,7 +119,7 @@ samples <- lapply(1:n_iters, function(i) {
 
 	sample_clustered <- sam_field(
 		x = r,
-		size = 100,
+		size = n_samples,
 		type = "clustered",
 		type_opts = list(nclusters = 5, radius = 15),
 		na.rm = TRUE

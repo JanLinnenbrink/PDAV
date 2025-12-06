@@ -57,19 +57,16 @@ library(ggplot2)
 library(tidyterra)
 library(ggnewscale)
 library(dplyr)
+library(cowplot)
 ```
 
-## Example data
-### Simulate predictors and response
+## Simulate predictors and response
 ```{r}
+#| fig-width: 6
+#| fig-height: 4
 set.seed(100)
-rast_grid = terra::rast(xmin = 0, xmax = 200, ymin = 0, ymax = 200, ncols = 200, nrows = 200)
-r <- sim_covariates(rast_grid, vgm = gstat::vgm(model = "Exp", psill = 1, range = 20), n = 4)
-outcome <- simsam::blend_rasters(r, ~ cov1 + cov2 + cov3 + cov4)
-r <- c(outcome, r)
-terra::crs(r) <- "EPSG:3857"
-
-response_name <- "outcome"
+r <- PDAV:::generate_rast()
+samples <- PDAV:::generate_samples(r, 100)
 ```
 
 ```{r}
@@ -84,31 +81,6 @@ ggplot() +
 	facet_wrap(~lyr) +
 	theme_bw() +
 	theme(panel.grid = element_blank())
-```
-
-### Simulate samples
-```{r}
-sample_random <- sam_field(
-	x = r,
-	size = 100,
-	type = "random",
-	na.rm = TRUE
-) |>
-	terra::extract(x = r, bind = TRUE) |>
-	st_as_sf()
-
-
-# Clustered sampling
-set.seed(456)
-sample_clustered <- sam_field(
-	x = r,
-	size = 100,
-	type = "clustered",
-	type_opts = list(nclusters = 5, radius = 15),
-	na.rm = TRUE
-) |>
-	terra::extract(x = r, bind = TRUE) |>
-	st_as_sf()
 ```
 
 ```{r semivariogram}
@@ -131,9 +103,6 @@ plot(vg_clustered, main = paste("Semivariance of", response_name, "(Clustered sa
 #| fig-height: 4
 #| echo: false
 
-samples <- rbind(sample_random |> mutate(sampling = "random"), sample_clustered |> mutate(sampling = "clustered")) |>
-	mutate(sampling = factor(sampling, levels = c("random", "clustered")))
-
 ggplot() +
 	geom_spatraster(data = r$outcome) +
 	scale_fill_viridis_c("outcome") +
@@ -151,89 +120,86 @@ ggplot() +
 Now, we use DA-CV to obtain area estimates of interpolation vs extrapolation areas, that can then be used to derive a weighted RMSE. We leave the autocorrelation threshold at 1, despite the sample variogram showing indicating a range of 5-10, because higher autocorrelation thresholds would result in spatial+ CV-splits that has a smaller size than the sample size. Maybe due to empty clusters?
 
 ```{r}
-result_random <- da_cv(
-	samples = sample_random,
-	predictors = r,
-	response = response_name,
-	folds_k = 5,
-	autoc_threshold = 1,
-	cate_num = 0
-)
+#| warning: false
 
-# Using clustered samples
-result_clustered <- da_cv(
-	samples = sample_clustered,
-	predictors = r,
-	response = response_name,
-	folds_k = 5,
-	autoc_threshold = 1,
-	cate_num = 0
-)
+results <- lapply(unique(samples$sampling), function(smpling) {
+	samples_smpl <- samples |>
+		filter(sampling == smpling) |>
+		select(!sampling)
+
+	cate_rasters <- which(names(r) %in% c("forest", "grass"))
+	predictor_stack <- r[[setdiff(names(r), "outcome")]]
+
+	da_cv(
+		samples = samples_smpl,
+		predictors = r,
+		response = "outcome",
+		folds_k = 5,
+		autoc_threshold = 1
+		#cate_col_start = min(cate_rasters),
+		#cate_col_end = max(cate_rasters)
+	)
+})
+
+names(results) <- unique(samples$sampling)
 
 ```
 
-For randomly distributed samples, the AV classifier has a performance of $AUC = `r round(result_random$auc, 1)`$. This is then normalized to $D = 0$, because the classifier is not better than randomly guessing if a prediction location is similiar or dissimilar (see @Wang2025b, section 2.1 for more information). The threshold is then calculated as $T(D) = 0.5 * 0$, which is 0. This means that all prediction locations are similar to the training 1, and no extrapolation is required, as can be seen in the following map. All weights will be given to random CV. 
+For randomly distributed samples, the AV classifier has a performance of $AUC = `r round(results$random$auc, 1)`$. This is then normalized to $D = 0$, because the classifier is not better than randomly guessing if a prediction location is similiar or dissimilar (see @Wang2025b, section 2.1 for more information). The threshold is then calculated as $T(D) = 0.5 * 0$, which is 0. This means that all prediction locations are similar to the training 1, and no extrapolation is required, as can be seen in the following map. All weights will be given to random CV. 
 
-For clustered samples, the AV classifier achieves a performance of $AUC = `r round(result_clustered$auc, 2)`$. This leads to $D = \frac{`r round(result_clustered$auc, 2)` - 0.5}{1 - 0.5} = `r (round(result_clustered$auc, 2) - 0.5) / 0.5`$. The threshold is then $T(D) = 0.5* `r (round(result_clustered$auc, 2) - 0.5) / 0.5` = `r 0.5*((round(result_clustered$auc, 1) - 0.5) / 0.5)`$. Hence, all prediction cells with a similarity score lower than `r 0.5*((round(result_clustered$auc, 1) - 0.5) / 0.5)` are classified as dissimilar. The relative fraction of prediction locations being similar from the sampling locations is `r round(result_clustered$weights[["similar"]], 2)`, while the fraction being dissimilar is `r round(result_clustered$weights[["different"]], 2)`.
+For clustered samples, the AV classifier achieves a performance of $AUC = `r round(results$clustered$auc, 2)`$. This leads to $D = \frac{`r round(results$clustered$auc, 2)` - 0.5}{1 - 0.5} = `r (round(results$clustered$auc, 2) - 0.5) / 0.5`$. The threshold is then $T(D) = 0.5* `r (round(results$clustered$auc, 2) - 0.5) / 0.5` = `r 0.5*((round(results$clustered$auc, 1) - 0.5) / 0.5)`$. Hence, all prediction cells with a similarity score lower than `r 0.5*((round(results$clustered$auc, 1) - 0.5) / 0.5)` are classified as dissimilar. The relative fraction of prediction locations being similar from the sampling locations is `r round(results$clustered$weights[["similar"]], 2)`, while the fraction being dissimilar is `r round(results$clustered$weights[["different"]], 2)`.
 
 ``` {r}
 #| fig-width: 6
-#| fig-height: 4
+#| fig-height: 12
 
-plot(result_random) +
-	new_scale_fill() +
-	geom_sf(data = sample_random, shape = 21, aes(fill = "sampling locations")) +
-	coord_sf(expand = FALSE, datum = st_crs(sample_random)) +
-	scale_fill_manual("", values = "white") +
-	theme(legend.position = "right")
-
-plot(result_clustered) +
-	new_scale_fill() +
-	geom_sf(data = sample_clustered, shape = 21, aes(fill = "sampling locations")) +
-	coord_sf(expand = FALSE, datum = st_crs(sample_clustered)) +
-	scale_fill_manual("", values = "white") +
-	theme(legend.position = "right")
+lapply(unique(samples$sampling), function(smpling) {
+	plot(results[[smpling]]) +
+		new_scale_fill() +
+		geom_sf(data = samples[samples$sampling == smpling, ], shape = 21, fill = "white") +
+		coord_sf(expand = FALSE, datum = st_crs(samples[samples$sampling == smpling, ], )) +
+		ggtitle(smpling) +
+		theme(legend.position = "right")
+}) |>
+	plot_grid(plotlist = _, ncol = 1, align = "vh")
 
 ```
 
 Lastly, the resulting cross-validation fold assignments could be used to calculate the weighted RMSE of a spatial predictive model.
 
 ```{r}
-#| fig-width: 8
-#| fig-height: 6
+#| fig-width: 6
+#| fig-height: 8
 
-sample_random$randomCV <- result_random$folds_RDM
-sample_random$spatialCV <- result_random$folds_SP
-sample_clustered$randomCV <- result_clustered$folds_RDM
-sample_clustered$spatialCV <- result_clustered$folds_SP
-
-samples <- rbind(sample_random |> mutate(sampling = "random"), sample_clustered |> mutate(sampling = "clustered")) |>
-	select(randomCV, spatialCV, sampling)
-samples$ID <- 1:nrow(samples)
-samples_geom <- select(samples, ID)
-samples_long <- st_drop_geometry(samples) |>
-	pivot_longer(-c(ID, sampling)) |>
-	left_join(samples_geom, by = "ID") |>
-	st_as_sf() |>
-	mutate(
-		weight = case_when(
-			sampling == "random" & name == "randomCV" ~ round(result_random$weights[["similar"]], 1),
-			sampling == "random" & name == "spatialCV" ~ round(result_random$weights[["different"]], 1),
-			sampling == "clustered" & name == "randomCV" ~ round(result_clustered$weights[["similar"]], 1),
-			sampling == "clustered" & name == "spatialCV" ~ round(result_clustered$weights[["different"]], 1)
-		),
-		sampling = factor(sampling, levels = c("random", "clustered"))
-	)
+samples_long <- lapply(unique(samples$sampling), function(smpling) {
+	samples_smpl <- samples |>
+		filter(sampling == smpling) |>
+		mutate("randomCV" = results[[smpling]]$folds_RDM, "spatialCV" = results[[smpling]]$folds_SP) |>
+		select(randomCV, spatialCV, sampling)
+	samples_smpl$ID <- 1:nrow(samples_smpl)
+	samples_geom <- select(samples_smpl, ID)
+	st_drop_geometry(samples_smpl) |>
+		pivot_longer(-c(ID, sampling)) |>
+		left_join(samples_geom, by = "ID") |>
+		st_as_sf() |>
+		mutate(
+			weight = case_when(
+				name == "randomCV" ~ round(results[[smpling]]$weights[["similar"]], 1),
+				name == "spatialCV" ~ round(results[[smpling]]$weights[["different"]], 1)
+			)
+		)
+}) |>
+	do.call(what = "rbind")
 
 ggplot() +
 	geom_sf(data = samples_long, aes(colour = as.factor(value)), size = 1) +
 	geom_text(
 		data = samples_long,
-		aes(x = 25, y = 180, label = paste0("Weight: ", weight)),
+		aes(x = 35, y = 180, label = paste0("Weight: ", weight)),
 		size = 3,
 		check_overlap = TRUE
 	) +
-	coord_sf(expand = FALSE, datum = st_crs(sample_clustered)) +
+	coord_sf(expand = FALSE, datum = st_crs(samples_long)) +
 	facet_grid(sampling ~ name) +
 	scale_color_brewer("Fold", palette = "Set1") +
 	theme_bw() +
