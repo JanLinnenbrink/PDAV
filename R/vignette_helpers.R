@@ -1,6 +1,8 @@
 #' @keywords internal
 #' @noRd
 generate_rast <- function() {
+	set.seed(100)
+
 	rast_grid <- rast(xmin = 0, xmax = 200, ymin = 0, ymax = 200, ncols = 200, nrows = 200)
 
 	grad_predictors <- sim_covariates(rast_grid, vgm = gstat::vgm(psill = 1, model = "Exp", range = 50), n = 8)
@@ -15,7 +17,7 @@ generate_rast <- function() {
 	predictors <- c(grad_predictors, landcover)
 	names(predictors) <- c("temp", "moisture", "ph", "elev", "slope", "solar", "dist_road", "prod", "forest", "grass")
 
-	outcome <- blend_rasters(
+	outcome_pred <- blend_rasters(
 		predictors,
 		~
 			# species/habitat suitability score (unscaled)
@@ -29,6 +31,10 @@ generate_rast <- function() {
 		# forest boosts, grass reduces, small slope term
 	)
 
+	noise <- sim_covariates(rast_grid, vgm = gstat::vgm(psill = 0.001, model = "Exp", range = 5), n = 1)
+	names(noise) <- "noise"
+	outcome <- outcome_pred + noise
+
 	r <- c(predictors, outcome)
 	terra::crs(r) <- "EPSG:3857"
 	return(r)
@@ -37,6 +43,7 @@ generate_rast <- function() {
 #' @keywords internal
 #' @noRd
 generate_samples <- function(r, n_samples) {
+	set.seed(100)
 	sample_random <- sam_field(
 		x = r,
 		size = n_samples,

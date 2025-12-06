@@ -50,21 +50,21 @@ knitr::opts_chunk$set(
 
 ```{r setup}
 library(PDAV)
+library(dplyr)
+library(caret)
 library(terra)
 library(sf)
 library(simsam)
 library(ggplot2)
+library(cowplot)
 library(tidyterra)
 library(ggnewscale)
-library(dplyr)
-library(cowplot)
 ```
 
 ## Simulate predictors and response
 ```{r}
 #| fig-width: 6
 #| fig-height: 4
-set.seed(100)
 r <- PDAV:::generate_rast()
 samples <- PDAV:::generate_samples(r, 100)
 ```
@@ -119,8 +119,12 @@ ggplot() +
 
 Now, we use DA-CV to obtain area estimates of interpolation vs extrapolation areas, that can then be used to derive a weighted RMSE. We leave the autocorrelation threshold at 1, despite the sample variogram showing indicating a range of 5-10, because higher autocorrelation thresholds would result in spatial+ CV-splits that has a smaller size than the sample size. Maybe due to empty clusters?
 
+### Adversial validation to obtain relative area size of inter- vs extrapolation
+
 ```{r}
 #| warning: false
+
+predictor_stack <- r[[setdiff(names(r), "outcome")]]
 
 results <- lapply(unique(samples$sampling), function(smpling) {
 	samples_smpl <- samples |>
@@ -128,7 +132,6 @@ results <- lapply(unique(samples$sampling), function(smpling) {
 		select(!sampling)
 
 	cate_rasters <- which(names(r) %in% c("forest", "grass"))
-	predictor_stack <- r[[setdiff(names(r), "outcome")]]
 
 	da_cv(
 		samples = samples_smpl,
@@ -159,17 +162,81 @@ lapply(unique(samples$sampling), function(smpling) {
 		geom_sf(data = samples[samples$sampling == smpling, ], shape = 21, fill = "white") +
 		coord_sf(expand = FALSE, datum = st_crs(samples[samples$sampling == smpling, ], )) +
 		ggtitle(smpling) +
-		theme(legend.position = "right")
+		theme(
+			legend.position = "right",
+			plot.title = element_text(face = "bold", hjust = 0.5)
+		)
 }) |>
 	plot_grid(plotlist = _, ncol = 1, align = "vh")
 
 ```
 
+### Calculate CV results and weigh them according to the area proportions
 Lastly, the resulting cross-validation fold assignments could be used to calculate the weighted RMSE of a spatial predictive model.
+
+```{r}
+
+form <- as.formula(paste0("outcome~", paste0(names(predictor_stack), collapse = "+")))
+pgrid <- data.frame(mtry = 6, splitrule = "variance", min.node.size = 5)
+
+weighted_RMSE <- lapply(unique(samples$sampling), function(smpling) {
+	samples_smpl <- samples |>
+		filter(sampling == smpling) |>
+		mutate("randomCV" = results[[smpling]]$folds_RDM, "spatialCV" = results[[smpling]]$folds_SP) |>
+		st_drop_geometry()
+
+	folds_random <- CAST::CreateSpacetimeFolds(samples_smpl, spacevar = "randomCV", k = 5)
+	folds_spatial <- CAST::CreateSpacetimeFolds(samples_smpl, spacevar = "spatialCV", k = 5)
+
+	train_cntrl_random <- trainControl(
+		method = "CV",
+		index = folds_random$index,
+		indexOut = folds_random$indexOut,
+		savePredictions = TRUE
+	)
+
+	train_cntrl_SP <- trainControl(
+		method = "CV",
+		index = folds_spatial$index,
+		indexOut = folds_spatial$indexOut,
+		savePredictions = TRUE
+	)
+
+	rand_mod <- train(
+		form,
+		data = samples_smpl,
+		method = "ranger",
+		trControl = train_cntrl_random,
+		tuneGrid = pgrid
+	)
+
+	spat_mod <- train(
+		form,
+		data = samples_smpl,
+		method = "ranger",
+		trControl = train_cntrl_SP,
+		tuneGrid = pgrid
+	)
+
+	err_stats_rand <- CAST::global_validation(rand_mod)
+	err_stats_SP <- CAST::global_validation(spat_mod)
+
+	err_stats_weighted <- sqrt(
+		results[[smpling]]$weights[["similar"]] *
+			(err_stats_rand[["RMSE"]]^2) +
+			results[[smpling]]$weights[["different"]] * (err_stats_SP[["RMSE"]]^2)
+	)
+
+	prediction <- predict(r, rand_mod)
+	list(err_stats_weighted, prediction)
+})
+
+```
 
 ```{r}
 #| fig-width: 6
 #| fig-height: 8
+#| echo: false
 
 samples_long <- lapply(unique(samples$sampling), function(smpling) {
 	samples_smpl <- samples |>
@@ -184,8 +251,8 @@ samples_long <- lapply(unique(samples$sampling), function(smpling) {
 		st_as_sf() |>
 		mutate(
 			weight = case_when(
-				name == "randomCV" ~ round(results[[smpling]]$weights[["similar"]], 1),
-				name == "spatialCV" ~ round(results[[smpling]]$weights[["different"]], 1)
+				name == "randomCV" ~ round(results[[smpling]]$weights[["similar"]], 2),
+				name == "spatialCV" ~ round(results[[smpling]]$weights[["different"]], 2)
 			)
 		)
 }) |>
@@ -195,8 +262,9 @@ ggplot() +
 	geom_sf(data = samples_long, aes(colour = as.factor(value)), size = 1) +
 	geom_text(
 		data = samples_long,
-		aes(x = 35, y = 180, label = paste0("Weight: ", weight)),
+		aes(x = 45, y = 180, label = paste0("Weight: ", weight)),
 		size = 3,
+		fontface = "bold",
 		check_overlap = TRUE
 	) +
 	coord_sf(expand = FALSE, datum = st_crs(samples_long)) +
@@ -205,5 +273,34 @@ ggplot() +
 	theme_bw() +
 	theme(panel.grid = element_blank(), legend.position = "right") +
 	labs(x = "", y = "")
+
+```
+
+The RMSE obtained by DA-CV are `r round(weighted_RMSE[[1]][[1]], 3)` for the random sampling design, `r round(weighted_RMSE[[2]][[1]], 3)` for the biased sampling and `r round(weighted_RMSE[[3]][[1]], 3)` for the clustered design. The maps below depict the difference between predicted and true response:
+
+```{r}
+#| fig-width: 6
+#| fig-height: 3
+#| echo: false
+
+names(weighted_RMSE) <- unique(samples$sampling)
+prediction_rasters <- lapply(weighted_RMSE, function(x) return(x[[2]])) |>
+	rast()
+diff_rasters <- prediction_rasters - r$outcome
+
+
+rmse <- lapply(weighted_RMSE, function(x) return(x[[1]])) |>
+	do.call(what = "rbind") |>
+	as.data.frame()
+rmse$lyr <- rownames(rmse)
+rmse$lyr <- factor(rmse$lyr, levels = c("random", "biased", "clustered"))
+
+ggplot() +
+	geom_spatraster(data = diff_rasters) +
+	scale_fill_distiller("predicted - true", type = "div") +
+	geom_sf(data = samples |> mutate(lyr = sampling), fill = "white", colour = "black", shape = 21, size = 1) +
+	coord_sf(expand = FALSE, datum = st_crs(prediction_rasters)) +
+	labs(x = "", y = "") +
+	facet_wrap(~lyr)
 
 ```
