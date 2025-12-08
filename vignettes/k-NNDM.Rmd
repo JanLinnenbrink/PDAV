@@ -38,20 +38,26 @@ library(terra)
 library(sf)
 library(simsam)
 library(ggplot2)
+library(cowplot)
 library(tidyterra)
 library(ggnewscale)
 library(dplyr)
+
+k = 2
 ```
 
 ## Example data
 ### Simulate predictors and response
 ```{r}
 r <- PDAV:::generate_rast()
-samples <- PDAV:::generate_samples(r, 100)
+samples <- PDAV:::generate_samples(r, 100) |>
+	filter(sampling == "biased")
+samples$point_id <- 1:nrow(samples)
+samples <- select(samples, point_id)
 ```
 
 ```{r}
-#| fig-width: 6
+#| fig-width: 8
 #| fig-height: 4
 #| echo: false
 
@@ -67,30 +73,574 @@ ggplot() +
 	geom_spatraster(data = r$outcome) +
 	scale_fill_viridis_c("outcome") +
 	new_scale_fill() +
-	geom_sf(data = samples, shape = 21, aes(fill = "training samples"), size = 1) +
+	geom_sf(data = samples, shape = 21, aes(fill = "training samples"), size = 2) +
 	coord_sf(expand = FALSE, datum = st_crs(samples)) +
 	scale_fill_manual("", values = "white") +
-	facet_wrap(~sampling) +
 	theme_bw() +
 	theme(panel.grid = element_blank())
 ```
 
-## kNNDM CV
+
+## kNNDM in geographical space
+
+
+### 1. Compute $G_j$ and $G_{ij}$
+
+Firstly, the kNNDM algorithm calcuates the distribution of NND between samples ($G_j$), as well as the distribution of NNDs between prediction points and samples ($G_{ij}$). The calculation of NNDs is shown in the following figure: the nearest neighbour distance between samples is shown in the left panel, while the right panel shows nearest neighbour distances between prediction points and samples.
 
 ```{r}
+#| fig-width: 8
+#| fig-height: 4
+#| echo: false
+
+prediction_points <- spatSample(r, size = 1000, method = "regular", as.points = TRUE) |>
+	st_as_sf()
+
+pred_coords <- st_coordinates(prediction_points)
+sample_coords <- st_coordinates(samples)
+
+# Gj
+idx_nn_s <- st_nearest_feature(samples)
+nearest_samples_s <- samples[idx_nn_s, ]
+samp_coords_s <- st_coordinates(nearest_samples_s)
+lines_s <- mapply(
+	function(i) {
+		st_linestring(rbind(sample_coords[i, ], samp_coords_s[i, ]))
+	},
+	seq_len(nrow(sample_coords)),
+	SIMPLIFY = FALSE
+)
+lines_sf_s <- st_sf(
+	geometry = st_sfc(lines_s, crs = st_crs(prediction_points))
+)
+
+# Gij
+idx_nn <- st_nearest_feature(prediction_points, samples)
+nearest_samples <- samples[idx_nn, ]
+samp_coords <- st_coordinates(nearest_samples)
+lines <- mapply(
+	function(i) {
+		st_linestring(rbind(pred_coords[i, ], samp_coords[i, ]))
+	},
+	seq_len(nrow(pred_coords)),
+	SIMPLIFY = FALSE
+)
+lines_sf <- st_sf(
+	geometry = st_sfc(lines, crs = st_crs(prediction_points))
+)
+
+
+NND_samples <- ggplot() +
+	geom_sf(data = prediction_points, alpha = 0) +
+	geom_sf(data = samples, shape = 4) +
+	geom_sf(data = lines_sf_s, linewidth = 0.2, color = "black") +
+	scale_shape_manual("", values = c(1, 4)) +
+	coord_sf(expand = FALSE, datum = st_crs(prediction_points)) +
+	ggtitle("NND between samples") +
+	theme_bw() +
+	theme(legend.position = "None", panel.grid = element_blank(), plot.title = element_text(size = 12))
+
+NND_pred_samples <- ggplot() +
+	geom_sf(data = prediction_points, aes(shape = "prediction points"), color = "lightblue") +
+	geom_sf(data = samples, aes(shape = "samples")) +
+	geom_sf(data = lines_sf, linewidth = 0.2, color = "lightblue") +
+	scale_shape_manual("", values = c(1, 4)) +
+	coord_sf(expand = FALSE, datum = st_crs(prediction_points)) +
+	ggtitle("NND between prediction points and samples") +
+	theme_bw() +
+	theme(legend.position = "None", panel.grid = element_blank(), plot.title = element_text(size = 12))
+
+plot_grid(NND_samples, NND_pred_samples, nrow = 1, align = "vh")
+```
+
+To characterize the distribution of these NNDs, their empirical cumulative density functions (ECDFs) are calculated:
+
+```{r}
+Gj <- c(FNN::knn.dist(sample_coords, k = 1))
+Gij <- c(FNN::knnx.dist(
+	query = pred_coords,
+	data = sample_coords,
+	k = 1
+))
+```
+
+```{r}
+#| fig-width: 4
+#| fig-height: 4
+#| echo: false
 #| warning: false
 
-predictor_stack <- r[[setdiff(names(r), "outcome")]]
+myColors <- RColorBrewer::brewer.pal(3, "Dark2")
 
-results <- lapply(unique(samples$sampling), function(smpling) {
-	samples_smpl <- samples |>
-		filter(sampling == smpling) |>
-		select(!sampling)
+Gij_df <- data.frame(r = Gij[order(Gij)])
+Gij_df$Function <- "1_Gij(r)"
+Gj_df <- data.frame(r = Gj[order(Gj)])
+Gj_df$Function <- "3_Gj(r)"
 
-	cate_rasters <- which(names(r) %in% c("forest", "grass"))
+# Merge data for plotting
+Gplot <- rbind(Gij_df, Gj_df)
 
-	knndm
+ggplot(
+	data = Gplot,
+	aes_string(x = "r", group = "Function", col = "Function")
+) +
+	geom_vline(xintercept = 0, lwd = 0.1) +
+	geom_hline(yintercept = 0, lwd = 0.1) +
+	geom_hline(yintercept = 1, lwd = 0.1) +
+	stat_ecdf(geom = "step", lwd = 0.8) +
+	scale_colour_manual(
+		values = c(myColors[2], myColors[1]),
+		labels = c("prediction-to-sample", "sample-to-sample")
+	) +
+	guides(colour = guide_legend(override.aes = list("linewidth" = 1.6))) +
+	theme_bw(base_size = 12) +
+	ylab("ECDF") +
+	labs(group = "Distance function", col = "Distance function") +
+	theme(legend.position = "bottom", legend.text = element_text(size = 14), legend.title.position = "top")
+```
+
+### 2. Test wether $G_j <= G_{ij}$
+
+Next, we test if $G_j$ <= $G_{ij}$, which would imply a random sampling design. In that case, the algorithm would stop and return a random fold assignment. However, as can bee seen below (and also from the figure above), this is not the case:
+
+```{r}
+testks <- suppressWarnings(stats::ks.test(Gj, Gij, alternative = "great"))
+testks$p.value >= 0.05
+```
+
+
+### 3. Cluster samples into $q$ clusters
+
+Next, we cluster the training points into $q$ clusters, where $q \in Q$ and $Q = [k, ..., N]$. This means, that $q$ is a integer sequence ranging from the number of folds $k$ to the number of training points $N$. The length of this sequence is by default 100, but for visualization purposes it is reduced to 3 here.
+
+```{r}
+nk_length <- 3
+
+clustgrid <- data.frame(
+	nk = as.integer(round(exp(seq(
+		log(k),
+		log(nrow(samples) - 2),
+		length.out = nk_length
+	))))
+)
+clustgrid$W <- NA
+clustgrid <- clustgrid[!duplicated(clustgrid$nk), ]
+clustgroups <- list()
+
+nk_df <- list()
+tabclust <- list()
+clust_nk <- list()
+for (nk in clustgrid$nk) {
+	# Create nk clusters
+	clust_nk[[nk]] <- stats::kmeans(sample_coords, nk)$cluster
+	# tabclust: table containing the unique clust_nks and their frequency
+	tabclust[[nk]] <- as.data.frame(table(clust_nk[[nk]]))
+	names(tabclust[[nk]]) <- c("clust_nk", "Freq")
+	tabclust[[nk]]$clust_k <- NA
+}
+
+clustgrid
+```
+
+The sampled sequence of $q$ clusters is in this case `r clustgrid$nk`. The following figure shows the training points coloured by their cluster for each of the $q$ clusters:
+
+```{r}
+#| fig-width: 8
+#| fig-height: 4
+#| echo: false
+#| warning: false
+
+for (nk in clustgrid$nk) {
+	nk_df[[nk]] <- data.frame(
+		"clust_nk" = clust_nk[[nk]],
+		"nk" = rep(nk, length = length(clust_nk[[nk]])),
+		"point_id" = samples$point_id
+	)
+}
+nk_df_clean <- nk_df[lapply(nk_df, length) > 0]
+nk_df_sf <- lapply(nk_df_clean, function(x) {
+	coords <- st_coordinates(samples)
+	df <- cbind(x, coords)
+	df_sf <- st_as_sf(df, coords = c("X", "Y"), crs = st_crs(samples))
+	df_sf
 })
 
-names(results) <- unique(samples$sampling)
+cluster_polys <- lapply(seq_along(nk_df_sf), function(i) {
+	nk_df_focal <- nk_df_sf[[i]]
+
+	nk_df_focal |>
+		group_by(clust_nk, nk) |>
+		summarise() |>
+		st_convex_hull() |>
+		mutate(clust_nk = as.factor(clust_nk), nk = nk)
+})
+
+lapply(seq_along(nk_df_sf), function(i) {
+	pal <- colorspace::rainbow_hcl(length(unique(nk_df_sf[[i]]$clust_nk)))
+
+	ggplot() +
+		geom_sf(data = prediction_points, alpha = 0) +
+		geom_sf(data = cluster_polys[[i]], aes(fill = as.factor(clust_nk)), alpha = 0.3, color = "transparent") +
+		geom_sf(data = nk_df_sf[[i]], aes(colour = as.factor(clust_nk))) +
+		scale_colour_manual(values = pal) +
+		facet_wrap(~nk) +
+		theme_bw(base_size = 8) +
+		coord_sf(expand = FALSE, datum = st_crs(samples)) +
+		theme(legend.position = "none", panel.grid = element_blank())
+}) |>
+	plot_grid(plotlist = _, nrow = 1)
+```
+
+
+### 4. Merge the $q$ clusters along their first PC into $k$ folds
+
+The $q$ clusters are then merged along the first principal component of the samples coordinates if $q > k$. This prevents contigous clusters to end up in the same fold.
+
+Therefore, we first calculate the PCA over the samples coordinates to capture the axis of largest spatial variation (first PC, red arrow):
+
+```{r}
+pcacoords <- stats::prcomp(sample_coords, center = TRUE, scale. = FALSE, rank = 1)
+```
+
+```{r}
+#| fig-width: 8
+#| fig-height: 4
+#| echo: false
+
+samples$pca <- pcacoords$x
+center <- pcacoords$center
+rotation_vector <- pcacoords$rotation[, 1]
+arrow_length <- max(dist(sample_coords)) * 0.5
+arrow_end <- center + arrow_length * rotation_vector
+arrow_sf <- st_as_sf(
+	data.frame(
+		x = arrow_end[1],
+		y = arrow_end[2]
+	),
+	coords = c("x", "y"),
+	crs = st_crs(samples)
+)
+
+arrow_start <- st_as_sf(
+	data.frame(
+		x = center[1],
+		y = center[2]
+	),
+	coords = c("x", "y"),
+	crs = st_crs(samples)
+)
+ggplot() +
+	geom_sf(data = prediction_points, alpha = 0) +
+	geom_sf(data = samples, aes(colour = pca)) +
+	geom_sf(data = arrow_start) +
+	geom_segment(
+		data = NULL,
+		aes(x = center[1], y = center[2], xend = arrow_end[1], yend = arrow_end[2]),
+		arrow = arrow(length = unit(0.35, "cm"), type = "closed"),
+		linewidth = 1.2,
+		color = "red"
+	) +
+	scale_colour_viridis_c("PC 1") +
+	coord_sf(expand = FALSE, datum = st_crs(samples)) +
+	theme_bw(base_size = 16) +
+	theme(panel.grid = element_blank())
+```
+
+Then, we order the $q$ clusters according to the first principal component:
+```{r}
+for (nk in clustgrid$nk) {
+	# compute cluster centroids and project that centroid to the first PC
+	centr_tpoints <- sapply(tabclust[[nk]]$clust_nk, function(x) {
+		centrpca <- matrix(apply(sample_coords[clust_nk[[nk]] %in% x, , drop = FALSE], 2, mean), nrow = 1)
+		colnames(centrpca) <- colnames(sample_coords)
+		return(predict(pcacoords, centrpca))
+	})
+	# Order the clusters along this first PC to ensure spatial separation when merging them later
+	tabclust[[nk]]$centrpca <- centr_tpoints
+	tabclust[[nk]] <- tabclust[[nk]][order(tabclust[[nk]]$centrpca), ]
+}
+```
+
+```{r}
+#| fig-width: 8
+#| fig-height: 4
+#| echo: false
+
+plot_nk <- list()
+for (nk in clustgrid$nk) {
+	plot_nk[[nk]] <- full_join(
+		tabclust[[nk]] |> mutate("clust_nk" = as.factor(clust_nk)),
+		nk_df[[nk]] |> mutate("clust_nk" = as.factor(clust_nk)),
+		by = "clust_nk"
+	)
+}
+
+plot_nk_clean <- plot_nk[lapply(plot_nk, length) > 0]
+plot_nk_sf <- lapply(plot_nk_clean, function(x) {
+	coords <- sample_coords |> as.data.frame()
+	coords$point_id <- samples$point_id
+	df <- full_join(x, coords, by = "point_id")
+	df_sf <- st_as_sf(df, coords = c("X", "Y"), crs = st_crs(samples))
+	df_sf
+})
+
+ggplot() +
+	geom_sf(data = prediction_points, alpha = 0) +
+	geom_sf(data = do.call("rbind", cluster_polys)) +
+	geom_sf(data = do.call("rbind", plot_nk_sf), aes(colour = centrpca)) +
+	scale_colour_viridis_c() +
+	facet_wrap(~nk, nrow = 1) +
+	theme_bw(base_size = 12) +
+	coord_sf(expand = FALSE, datum = st_crs(samples)) +
+	theme(legend.position = "right", panel.grid = element_blank())
+```
+
+And lastly, we merge the $q$ clusters along the first principal component:
+
+```{r}
+clust_k <- list()
+tabclust2 <- list()
+for (nk in clustgrid$nk) {
+	# We don't merge big clusters
+	clust_i <- 1
+	for (i in 1:nrow(tabclust[[nk]])) {
+		if (tabclust[[nk]]$Freq[i] >= nrow(samples) / k) {
+			tabclust[[nk]]$clust_k[i] <- clust_i
+			clust_i <- clust_i + 1
+		}
+	}
+	rm("clust_i")
+
+	## And we merge the remaining nk clusters into k groups
+	clust_i <- setdiff(1:k, unique(tabclust[[nk]]$clust_k))
+	# tabclust is ordered along PC1 and thus repeating a sequence
+	# from 1:k to assign folds results in spatially separated merging of clusters
+	tabclust[[nk]]$clust_k[is.na(tabclust[[nk]]$clust_k)] <- rep(clust_i, ceiling(nk / length(clust_i)))[
+		1:sum(is.na(tabclust[[nk]]$clust_k))
+	]
+
+	# Then creating a new data frame containing the raw nk cluster assignment for each point
+	tabclust2[[nk]] <- data.frame(ID = 1:length(clust_nk[[nk]]), clust_nk = clust_nk[[nk]])
+	# And add the assignment to k folds to them (clust_k)
+	tabclust2[[nk]] <- merge(tabclust2[[nk]], tabclust[[nk]], by = "clust_nk")
+	tabclust2[[nk]] <- tabclust2[[nk]][order(tabclust2[[nk]]$ID), ]
+	clust_k[[nk]] <- tabclust2[[nk]]$clust_k
+	tabclust2[[nk]]$nk <- nk # For plotting only
+}
+```
+
+```{r}
+#| fig-width: 8
+#| fig-height: 4
+#| echo: false
+
+tabclust2_clean <- tabclust2[lapply(tabclust2, length) > 0]
+tabclust2_sf <- lapply(tabclust2_clean, function(x) {
+	coords <- st_coordinates(samples) |> as.data.frame()
+	coords$point_id <- samples$point_id
+	df <- full_join(x, coords, by = c("ID" = "point_id"))
+	df_sf <- st_as_sf(df, coords = c("X", "Y"), crs = st_crs(samples))
+	df_sf
+})
+
+cluster_polys2 <- lapply(seq_along(tabclust2_sf), function(i) {
+	tabclust2_focal <- tabclust2_sf[[i]] |>
+		st_drop_geometry() |>
+		select(!ID) |>
+		distinct() |>
+		mutate(clust_nk = as.factor(clust_nk), clust_k = as.factor(clust_k))
+	nk_df_sf[[i]] |>
+		group_by(clust_nk) |>
+		summarise() |>
+		st_convex_hull() |>
+		mutate(clust_nk = as.factor(clust_nk)) |>
+		inner_join(y = tabclust2_focal, by = "clust_nk")
+}) |>
+	do.call(what = "rbind")
+
+ggplot() +
+	geom_sf(data = prediction_points, alpha = 0) +
+	geom_sf(data = cluster_polys2, aes(fill = clust_k), alpha = 0.3, color = "transparent") +
+	geom_sf(
+		data = do.call("rbind", tabclust2_sf),
+		aes(colour = as.factor(clust_k))
+	) +
+	ggthemes::scale_color_colorblind("k") +
+	ggthemes::scale_fill_colorblind("k") +
+	facet_wrap(~nk, nrow = 1) +
+	theme_bw(base_size = 12) +
+	coord_sf(expand = FALSE, datum = st_crs(samples)) +
+	theme(legend.position = "right", panel.grid = element_blank())
+```
+
+### 5. Calculate $G_j^*$ for each $q$ configuration and calculate $W$
+
+```{r}
+distclust_euclidean <- function(tr_coords, folds) {
+	alldist <- rep(NA, length(folds))
+	for (f in unique(folds)) {
+		alldist[f == folds] <- c(FNN::knnx.dist(
+			query = tr_coords[f == folds, , drop = FALSE],
+			data = tr_coords[f != folds, , drop = FALSE],
+			k = 1
+		))
+	}
+	alldist
+}
+
+Gjstar_i <- list()
+for (nk in clustgrid$nk) {
+	# Compute W statistic if not exceeding maxp
+	if (!any(table(clust_k[[nk]]) / length(clust_k[[nk]]) > 0.8)) {
+		Gjstar_i[[nk]] <- distclust_euclidean(sample_coords, clust_k[[nk]])
+		clustgrid$W[clustgrid$nk == nk] <- twosamples::wass_stat(Gjstar_i[[nk]], Gij)
+		clustgroups[[paste0("nk", nk)]] <- clust_k[[nk]]
+	}
+}
+```
+
+```{r}
+#| fig-width: 8
+#| fig-height: 6
+#| echo: false
+
+Gplot <- list()
+for (nk in clustgrid$nk) {
+	Gjstar_df <- data.frame(r = Gjstar_i[[nk]], Function = "2_Gjstar(r)")
+	Gplot[[nk]] <- rbind(Gij_df, Gjstar_df, Gj_df)
+	Gplot[[nk]]$nk <- nk
+}
+
+Gplot_df <- do.call("rbind", Gplot)
+
+ggplot(
+	data = Gplot_df,
+	aes_string(x = "r", group = "Function", col = "Function")
+) +
+	geom_vline(xintercept = 0, lwd = 0.1) +
+	geom_hline(yintercept = 0, lwd = 0.1) +
+	geom_hline(yintercept = 1, lwd = 0.1) +
+	stat_ecdf(geom = "step", lwd = 0.8) +
+	scale_colour_manual(
+		values = c(myColors[2], myColors[3], myColors[1]),
+		labels = c("prediction-to-sample", "CV distances", "sample-to-sample")
+	) +
+	guides(colour = guide_legend(override.aes = list(linewidth = 1.6))) +
+	theme_bw(base_size = 12) +
+	ylab("ECDF") +
+	labs(group = "Distance function", col = "Distance function") +
+	theme(legend.position = "bottom", legend.text = element_text(size = 10), aspect.ratio = 1.6) +
+	facet_wrap(~nk, nrow = 1)
+
+clustgrid
+```
+
+
+### 6. Return the configuration yielding the lowest $W$
+```{r}
+k_final <- clustgrid$nk[which.min(clustgrid$W)]
+W_final <- min(clustgrid$W, na.rm = T)
+clust <- clustgroups[[paste0("nk", k_final)]]
+Gjstar <- distclust_euclidean(sample_coords, clust)
+
+print(k_final)
+```
+
+The following plot shows the training samples with their final fold assignment:
+
+```{r}
+#| fig-width: 8
+#| fig-height: 4
+#| echo: false
+
+samples$fold <- clust
+
+ggplot() +
+	geom_sf(data = prediction_points, alpha = 0) +
+	geom_sf(data = samples, aes(colour = as.factor(fold)), size = 2) +
+	coord_sf(expand = FALSE, datum = st_crs(samples)) +
+	scale_color_brewer("Fold", palette = "Set1") +
+	theme_bw() +
+	theme(panel.grid = element_blank(), legend.position = "right") +
+	labs(x = "", y = "")
+
+```
+
+
+## Summary
+
+```{r}
+#| fig-width: 12
+#| fig-height: 14
+#| warning: false
+#| echo: false
+lapply(seq_along(clustgrid$nk), function(i) {
+	nk_focal <- clustgrid$nk[[i]]
+	pal <- colorspace::rainbow_hcl(length(unique(nk_df_sf[[i]]$clust_nk)))
+
+	tabclust2_focal <- tabclust2_sf[[i]] |>
+		st_drop_geometry() |>
+		select(!ID) |>
+		distinct() |>
+		mutate(clust_nk = as.factor(clust_nk), clust_k = as.factor(clust_k))
+
+	cluster_polys <- nk_df_sf[[i]] |>
+		group_by(clust_nk) |>
+		summarise() |>
+		st_convex_hull() |>
+		mutate(clust_nk = as.factor(clust_nk)) |>
+		inner_join(y = tabclust2_focal, by = "clust_nk")
+
+	Nkplot_focal <- ggplot() +
+		geom_sf(data = prediction_points, alpha = 0) +
+		geom_sf(data = cluster_polys, aes(fill = clust_nk, colour = clust_nk)) +
+		scale_fill_manual(values = pal) +
+		scale_colour_manual(values = pal) +
+		facet_wrap(~"Initial nk clusters") +
+		theme_bw(base_size = 16) +
+		coord_sf(expand = FALSE, datum = st_crs(samples)) +
+		theme(legend.position = "none", panel.grid = element_blank())
+
+	PCplot_focal <- ggplot() +
+		geom_sf(data = prediction_points, alpha = 0) +
+		geom_sf(data = cluster_polys, aes(fill = centrpca, colour = centrpca)) +
+		scale_fill_viridis_c() +
+		scale_colour_viridis_c() +
+		facet_wrap(~"PCA", nrow = 1) +
+		theme_bw(base_size = 16) +
+		coord_sf(expand = FALSE, datum = st_crs(samples)) +
+		theme(legend.position = "none", panel.grid = element_blank())
+
+	Clustk_focal <- ggplot() +
+		geom_sf(data = prediction_points, alpha = 0) +
+		geom_sf(data = cluster_polys, aes(fill = clust_k, colour = clust_k)) +
+		ggthemes::scale_fill_colorblind("clust_k") +
+		ggthemes::scale_colour_colorblind("clust_k") +
+		facet_wrap(~"Final k clusters", nrow = 1) +
+		theme_bw(base_size = 16) +
+		coord_sf(expand = FALSE, datum = st_crs(samples)) +
+		theme(legend.position = "none", panel.grid = element_blank())
+
+	Gplot_nkfocal <- ggplot(
+		data = Gplot_df[Gplot_df$nk == nk_focal, ],
+		aes_string(x = "r", group = "Function", col = "Function")
+	) +
+		geom_vline(xintercept = 0, lwd = 0.1) +
+		geom_hline(yintercept = 0, lwd = 0.1) +
+		geom_hline(yintercept = 1, lwd = 0.1) +
+		stat_ecdf(geom = "step", lwd = 0.8) +
+		scale_colour_manual(
+			values = c(myColors[2], myColors[3], myColors[1]),
+			labels = c("prediction-to-sample", "CV distances", "sample-to-sample")
+		) +
+		guides(colour = guide_legend(override.aes = list(linewidth = 1.6))) +
+		theme_bw(base_size = 16) +
+		ylab("") +
+		labs(group = "Distance function", col = "Distance function") +
+		theme(legend.position = "none", legend.text = element_text(size = 16)) +
+		facet_grid(paste0("nk = ", nk) ~ "ECDF")
+
+	plot_grid(Nkplot_focal, PCplot_focal, Clustk_focal, Gplot_nkfocal, nrow = 1, align = "vh")
+}) |>
+	plot_grid(plotlist = _, ncol = 1, align = "vh")
 ```

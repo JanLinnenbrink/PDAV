@@ -7,6 +7,8 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+
+## Setup
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
 	collapse = TRUE,
@@ -16,7 +18,38 @@ knitr::opts_chunk$set(
 
 ```{r setup}
 library(PDAV)
+library(dplyr)
+library(caret)
+library(terra)
+library(sf)
+library(simsam)
+library(ggplot2)
+library(cowplot)
+library(tidyterra)
+library(ggnewscale)
 ```
+
+## Simulate predictors and response
+```{r}
+r <- PDAV:::generate_rast()
+samples <- PDAV:::generate_samples(r, 100)
+```
+
+```{r}
+#| fig-width: 6
+#| fig-height: 4
+#| echo: false
+
+ggplot() +
+	geom_spatraster(data = r) +
+	coord_sf(expand = FALSE, datum = st_crs(r)) +
+	scale_fill_viridis_c() +
+	facet_wrap(~lyr) +
+	theme_bw() +
+	theme(panel.grid = element_blank())
+```
+
+
 
 ## NNDM
 
