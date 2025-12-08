@@ -46,14 +46,8 @@ library(dplyr)
 ## Example data
 ### Simulate predictors and response
 ```{r}
-set.seed(100)
-rast_grid = terra::rast(xmin = 0, xmax = 200, ymin = 0, ymax = 200, ncols = 200, nrows = 200)
-r <- sim_covariates(rast_grid, vgm = gstat::vgm(model = "Exp", psill = 1, range = 20), n = 4)
-outcome <- simsam::blend_rasters(r, ~ cov1 + cov2 + cov3 + cov4)
-r <- c(outcome, r)
-terra::crs(r) <- "EPSG:3857"
-
-response_name <- "outcome"
+r <- PDAV:::generate_rast()
+samples <- PDAV:::generate_samples(r, 100)
 ```
 
 ```{r}
@@ -68,40 +62,6 @@ ggplot() +
 	facet_wrap(~lyr) +
 	theme_bw() +
 	theme(panel.grid = element_blank())
-```
-
-### Simulate samples
-```{r}
-sample_random <- sam_field(
-	x = r,
-	size = 100,
-	type = "random",
-	na.rm = TRUE
-) |>
-	terra::extract(x = r, bind = TRUE) |>
-	st_as_sf()
-
-
-# Clustered sampling
-set.seed(456)
-sample_clustered <- sam_field(
-	x = r,
-	size = 100,
-	type = "clustered",
-	type_opts = list(nclusters = 5, radius = 15),
-	na.rm = TRUE
-) |>
-	terra::extract(x = r, bind = TRUE) |>
-	st_as_sf()
-```
-
-```{r}
-#| fig-width: 6
-#| fig-height: 4
-#| echo: false
-
-samples <- rbind(sample_random |> mutate(sampling = "random"), sample_clustered |> mutate(sampling = "clustered")) |>
-	mutate(sampling = factor(sampling, levels = c("random", "clustered")))
 
 ggplot() +
 	geom_spatraster(data = r$outcome) +
@@ -118,5 +78,19 @@ ggplot() +
 ## kNNDM CV
 
 ```{r}
+#| warning: false
 
+predictor_stack <- r[[setdiff(names(r), "outcome")]]
+
+results <- lapply(unique(samples$sampling), function(smpling) {
+	samples_smpl <- samples |>
+		filter(sampling == smpling) |>
+		select(!sampling)
+
+	cate_rasters <- which(names(r) %in% c("forest", "grass"))
+
+	knndm
+})
+
+names(results) <- unique(samples$sampling)
 ```

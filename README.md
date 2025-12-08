@@ -1,9 +1,9 @@
 # PDAV
 This repository is a collection of prediction-domain adaptive validation methods. Due to the growing application of spatial predictive models in geoscientific fields, there is also a growing need for reliable validation of the resulting maps. Prediction-domain adaptive validation methods provide reliable proxies of map accuracies that can be used during model selection and also -- in the absence of an independent probability sample -- as a proxy of the final map accuracy. This repository aims at:
 
-1) collecting and consistently implementing prediction-domain adaptive validation methods applicable for spatial predictive modelling.
-2) providing vignettes that describe their functioning and application.
-3) providing an overview over the developed methods.
+1) collecting and consistently [implementing](R/) prediction-domain adaptive validation methods applicable for spatial predictive modelling.
+2) providing [vignettes](vignettes/) that describe their functioning and application.
+3) providing an [overview](vignettes/Prediction-domain-adaptive-validation.Rmd) over the developed methods.
 4) comparing the performance of the validation methods as compared to random and spatial CV on a common benchmark dataset.
 
 As such, the repository is expected to grow and include newly developed methods falling in the class of prediction-domain adaptive validation.

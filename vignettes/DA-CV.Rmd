@@ -11,7 +11,7 @@ vignette: >
 ## Introduction
 Dissimilarity-adaptive cross-validation (DA-CV) was developed by @Wang2025. 
 It uses adversial validation (AV) to predict the probability that a prediction location is similar to the training samples.
-Then it calculates a RMSE based on random CV, as well as spatial+ CV @Wang2023 and weights both of them using the relative area 
+Then it calculates a RMSE based on random CV, as well as spatial+ CV (@Wang2023) and weights both of them using the relative area 
 of similar cells (random CV) and dissimilar cells (spatial+ CV). 
 
 The more detailed workflow is:
@@ -63,8 +63,6 @@ library(ggnewscale)
 
 ## Simulate predictors and response
 ```{r}
-#| fig-width: 6
-#| fig-height: 4
 r <- PDAV:::generate_rast()
 samples <- PDAV:::generate_samples(r, 100)
 ```
