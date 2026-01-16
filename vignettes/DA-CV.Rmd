@@ -11,7 +11,7 @@ vignette: >
 ## Introduction
 Dissimilarity-adaptive cross-validation (DA-CV) was developed by @Wang2025. 
 It uses adversial validation (AV) to predict the probability that a prediction location is similar to the training samples.
-Then it calculates a RMSE based on random CV, as well as spatial+ CV (@Wang2023) and weights both of them using the relative area 
+Then it calculates a RMSE based on random CV, as well as spatial+ CV (@Wang2023) and weights both of them acoording to the relative area 
 of similar cells (random CV) and dissimilar cells (spatial+ CV). 
 
 The more detailed workflow is:
@@ -59,22 +59,38 @@ library(ggplot2)
 library(cowplot)
 library(tidyterra)
 library(ggnewscale)
+
+set.seed(100)
 ```
 
 ## Simulate predictors and response
 ```{r}
 r <- PDAV:::generate_rast()
-samples <- PDAV:::generate_samples(r, 100)
+predictor_stack <- r[[setdiff(names(r), "outcome")]]
+cate_rasters <- which(names(r) %in% c("forest", "grass"))
+
+samples <- sam_field(
+	x = r,
+	size = 100,
+	type = "clustered",
+	type_opts = list(nclusters = 10, radius = 30),
+	na.rm = TRUE
+) |>
+	terra::extract(x = r, bind = TRUE) |>
+	st_as_sf()
+
+
 ```
 
 ```{r}
 #| fig-width: 6
 #| fig-height: 4
+#| fig-cap: "Figure 1: The predictor stack"
 #| echo: false
 
 ggplot() +
-	geom_spatraster(data = r) +
-	coord_sf(expand = FALSE, datum = st_crs(r)) +
+	geom_spatraster(data = predictor_stack) +
+	coord_sf(expand = FALSE, datum = st_crs(predictor_stack)) +
 	scale_fill_viridis_c() +
 	facet_wrap(~lyr) +
 	theme_bw() +
@@ -88,17 +104,15 @@ ggplot() +
 library(sp)
 library(gstat)
 
-sample_random_sp <- as(sample_random, "Spatial")
-sample_clustered_sp <- as(sample_clustered, "Spatial")
-vg_random <- variogram(as.formula(paste(response_name, "~ 1")), data = sample_random_sp)
-vg_clustered <- variogram(as.formula(paste(response_name, "~ 1")), data = sample_clustered_sp)
-plot(vg_random, main = paste("Semivariance of", response_name, "(Random samples)"))
-plot(vg_clustered, main = paste("Semivariance of", response_name, "(Clustered samples)"))
+samples_sp <- as(samples, "Spatial")
+vg_samples <- variogram(as.formula(paste(response_name, "~ 1")), data = samples_sp)
+plot(vg_samples, main = paste("Semivariance of", response_name, "(Biased samples)"))
 ```
 
 ```{r}
 #| fig-width: 6
 #| fig-height: 4
+#| fig-cap: "Figure 2: The simulated outcome with training locations."
 #| echo: false
 
 ggplot() +
@@ -108,7 +122,6 @@ ggplot() +
 	geom_sf(data = samples, shape = 21, aes(fill = "training samples"), size = 1) +
 	coord_sf(expand = FALSE, datum = st_crs(samples)) +
 	scale_fill_manual("", values = "white") +
-	facet_wrap(~sampling) +
 	theme_bw() +
 	theme(panel.grid = element_blank())
 ```
@@ -122,50 +135,32 @@ Now, we use DA-CV to obtain area estimates of interpolation vs extrapolation are
 ```{r}
 #| warning: false
 
-predictor_stack <- r[[setdiff(names(r), "outcome")]]
-
-results <- lapply(unique(samples$sampling), function(smpling) {
-	samples_smpl <- samples |>
-		filter(sampling == smpling) |>
-		select(!sampling)
-
-	cate_rasters <- which(names(r) %in% c("forest", "grass"))
-
-	da_cv(
-		samples = samples_smpl,
-		predictors = r,
-		response = "outcome",
-		folds_k = 5,
-		autoc_threshold = 1
-		#cate_col_start = min(cate_rasters),
-		#cate_col_end = max(cate_rasters)
-	)
-})
-
-names(results) <- unique(samples$sampling)
+results <- da_cv(
+	samples = samples,
+	predictors = r,
+	response = "outcome",
+	folds_k = 5,
+	autoc_threshold = 1
+	#cate_col_start = min(cate_rasters),
+	#cate_col_end = max(cate_rasters)
+)
 
 ```
 
-For randomly distributed samples, the AV classifier has a performance of $AUC = `r round(results$random$auc, 1)`$. This is then normalized to $D = 0$, because the classifier is not better than randomly guessing if a prediction location is similiar or dissimilar (see @Wang2025b, section 2.1 for more information). The threshold is then calculated as $T(D) = 0.5 * 0$, which is 0. This means that all prediction locations are similar to the training 1, and no extrapolation is required, as can be seen in the following map. All weights will be given to random CV. 
-
-For clustered samples, the AV classifier achieves a performance of $AUC = `r round(results$clustered$auc, 2)`$. This leads to $D = \frac{`r round(results$clustered$auc, 2)` - 0.5}{1 - 0.5} = `r (round(results$clustered$auc, 2) - 0.5) / 0.5`$. The threshold is then $T(D) = 0.5* `r (round(results$clustered$auc, 2) - 0.5) / 0.5` = `r 0.5*((round(results$clustered$auc, 1) - 0.5) / 0.5)`$. Hence, all prediction cells with a similarity score lower than `r 0.5*((round(results$clustered$auc, 1) - 0.5) / 0.5)` are classified as dissimilar. The relative fraction of prediction locations being similar from the sampling locations is `r round(results$clustered$weights[["similar"]], 2)`, while the fraction being dissimilar is `r round(results$clustered$weights[["different"]], 2)`.
+For the biased sampling design shown here, the AV classifier achieves a performance of $AUC = `r round(results$auc, 2)`$. This leads to $D = \frac{`r round(results$auc, 2)` - 0.5}{1 - 0.5} = `r (round(results$auc, 2) - 0.5) / 0.5`$. The threshold is then $T(D) = 0.5* `r (round(results$auc, 2) - 0.5) / 0.5` = `r 0.5*((round(results$auc, 1) - 0.5) / 0.5)`$. Hence, all prediction cells with a similarity score lower than `r 0.5*((round(results$auc, 1) - 0.5) / 0.5)` are classified as dissimilar. The relative fraction of prediction locations being similar from the sampling locations is `r round(results$weights[["similar"]], 2)`, while the fraction being dissimilar is `r round(results$weights[["different"]], 2)`.
 
 ``` {r}
 #| fig-width: 6
-#| fig-height: 12
-
-lapply(unique(samples$sampling), function(smpling) {
-	plot(results[[smpling]]) +
-		new_scale_fill() +
-		geom_sf(data = samples[samples$sampling == smpling, ], shape = 21, fill = "white") +
-		coord_sf(expand = FALSE, datum = st_crs(samples[samples$sampling == smpling, ], )) +
-		ggtitle(smpling) +
-		theme(
-			legend.position = "right",
-			plot.title = element_text(face = "bold", hjust = 0.5)
-		)
-}) |>
-	plot_grid(plotlist = _, ncol = 1, align = "vh")
+#| fig-height: 5
+#| fig-cap: "Figure 3: The similarity raster resulting from applying the AV classifier to the predictor stack."
+plot(results) +
+	new_scale_fill() +
+	geom_sf(data = samples, shape = 21, fill = "white") +
+	coord_sf(expand = FALSE, datum = st_crs(samples, )) +
+	theme(
+		legend.position = "right",
+		plot.title = element_text(face = "bold", hjust = 0.5)
+	)
 
 ```
 
@@ -177,96 +172,92 @@ Lastly, the resulting cross-validation fold assignments could be used to calcula
 form <- as.formula(paste0("outcome~", paste0(names(predictor_stack), collapse = "+")))
 pgrid <- data.frame(mtry = 6, splitrule = "variance", min.node.size = 5)
 
-weighted_RMSE <- lapply(unique(samples$sampling), function(smpling) {
-	samples_smpl <- samples |>
-		filter(sampling == smpling) |>
-		mutate("randomCV" = results[[smpling]]$folds_RDM, "spatialCV" = results[[smpling]]$folds_SP) |>
-		st_drop_geometry()
+samples_df <- samples |>
+	mutate("randomCV" = results$folds_RDM, "spatialCV" = results$folds_SP) |>
+	st_drop_geometry()
 
-	folds_random <- CAST::CreateSpacetimeFolds(samples_smpl, spacevar = "randomCV", k = 5)
-	folds_spatial <- CAST::CreateSpacetimeFolds(samples_smpl, spacevar = "spatialCV", k = 5)
+folds_random <- CAST::CreateSpacetimeFolds(samples_df, spacevar = "randomCV", k = 5)
+folds_spatial <- CAST::CreateSpacetimeFolds(samples_df, spacevar = "spatialCV", k = 5)
 
-	train_cntrl_random <- trainControl(
-		method = "CV",
-		index = folds_random$index,
-		indexOut = folds_random$indexOut,
-		savePredictions = TRUE
-	)
+train_cntrl_random <- trainControl(
+	method = "CV",
+	index = folds_random$index,
+	indexOut = folds_random$indexOut,
+	savePredictions = TRUE
+)
 
-	train_cntrl_SP <- trainControl(
-		method = "CV",
-		index = folds_spatial$index,
-		indexOut = folds_spatial$indexOut,
-		savePredictions = TRUE
-	)
+train_cntrl_SP <- trainControl(
+	method = "CV",
+	index = folds_spatial$index,
+	indexOut = folds_spatial$indexOut,
+	savePredictions = TRUE
+)
 
-	rand_mod <- train(
-		form,
-		data = samples_smpl,
-		method = "ranger",
-		trControl = train_cntrl_random,
-		tuneGrid = pgrid
-	)
+rand_mod <- train(
+	form,
+	data = samples_df,
+	method = "ranger",
+	trControl = train_cntrl_random,
+	tuneGrid = pgrid
+)
 
-	spat_mod <- train(
-		form,
-		data = samples_smpl,
-		method = "ranger",
-		trControl = train_cntrl_SP,
-		tuneGrid = pgrid
-	)
+spat_mod <- train(
+	form,
+	data = samples_df,
+	method = "ranger",
+	trControl = train_cntrl_SP,
+	tuneGrid = pgrid
+)
 
-	err_stats_rand <- CAST::global_validation(rand_mod)
-	err_stats_SP <- CAST::global_validation(spat_mod)
+err_stats_rand <- CAST::global_validation(rand_mod)
+err_stats_SP <- CAST::global_validation(spat_mod)
 
-	err_stats_weighted <- sqrt(
-		results[[smpling]]$weights[["similar"]] *
-			(err_stats_rand[["RMSE"]]^2) +
-			results[[smpling]]$weights[["different"]] * (err_stats_SP[["RMSE"]]^2)
-	)
+err_stats_weighted <- sqrt(
+	results$weights[["similar"]] *
+		(err_stats_rand[["RMSE"]]^2) +
+		results$weights[["different"]] * (err_stats_SP[["RMSE"]]^2)
+)
 
-	prediction <- predict(r, rand_mod)
-	list(err_stats_weighted, prediction)
-})
+prediction <- predict(r, rand_mod)
 
 ```
 
+The RMSE obtained by DA-CV is `r round(err_stats_weighted, 3)`. The maps below depict the difference between predicted and true response:
+
 ```{r}
-#| fig-width: 6
-#| fig-height: 8
+#| fig-width: 8
+#| fig-height: 4
+#| fig-cap: "Figure 4: The different CV fold assignments and their respective weight."
 #| echo: false
 
-samples_long <- lapply(unique(samples$sampling), function(smpling) {
-	samples_smpl <- samples |>
-		filter(sampling == smpling) |>
-		mutate("randomCV" = results[[smpling]]$folds_RDM, "spatialCV" = results[[smpling]]$folds_SP) |>
-		select(randomCV, spatialCV, sampling)
-	samples_smpl$ID <- 1:nrow(samples_smpl)
-	samples_geom <- select(samples_smpl, ID)
-	st_drop_geometry(samples_smpl) |>
-		pivot_longer(-c(ID, sampling)) |>
-		left_join(samples_geom, by = "ID") |>
-		st_as_sf() |>
-		mutate(
-			weight = case_when(
-				name == "randomCV" ~ round(results[[smpling]]$weights[["similar"]], 2),
-				name == "spatialCV" ~ round(results[[smpling]]$weights[["different"]], 2)
-			)
+samples_df <- samples |>
+	mutate("randomCV" = results$folds_RDM, "spatialCV" = results$folds_SP) |>
+	select(randomCV, spatialCV)
+samples_df$ID <- 1:nrow(samples_df)
+samples_geom <- select(samples_df, ID)
+samples_long <- st_drop_geometry(samples_df) |>
+	pivot_longer(-ID) |>
+	left_join(samples_geom, by = "ID") |>
+	st_as_sf() |>
+	mutate(
+		weight = case_when(
+			name == "randomCV" ~ round(results$weights[["similar"]], 2),
+			name == "spatialCV" ~ round(results$weights[["different"]], 2)
 		)
-}) |>
-	do.call(what = "rbind")
+	)
+
 
 ggplot() +
 	geom_sf(data = samples_long, aes(colour = as.factor(value)), size = 1) +
 	geom_text(
 		data = samples_long,
-		aes(x = 45, y = 180, label = paste0("Weight: ", weight)),
+		aes(x = 40, y = 160, label = paste0("Weight: ", weight)),
 		size = 3,
 		fontface = "bold",
 		check_overlap = TRUE
 	) +
 	coord_sf(expand = FALSE, datum = st_crs(samples_long)) +
-	facet_grid(sampling ~ name) +
+	facet_grid(~name) +
 	scale_color_brewer("Fold", palette = "Set1") +
 	theme_bw() +
 	theme(panel.grid = element_blank(), legend.position = "right") +
@@ -274,31 +265,3 @@ ggplot() +
 
 ```
 
-The RMSE obtained by DA-CV are `r round(weighted_RMSE[[1]][[1]], 3)` for the random sampling design, `r round(weighted_RMSE[[2]][[1]], 3)` for the biased sampling and `r round(weighted_RMSE[[3]][[1]], 3)` for the clustered design. The maps below depict the difference between predicted and true response:
-
-```{r}
-#| fig-width: 6
-#| fig-height: 3
-#| echo: false
-
-names(weighted_RMSE) <- unique(samples$sampling)
-prediction_rasters <- lapply(weighted_RMSE, function(x) return(x[[2]])) |>
-	rast()
-diff_rasters <- prediction_rasters - r$outcome
-
-
-rmse <- lapply(weighted_RMSE, function(x) return(x[[1]])) |>
-	do.call(what = "rbind") |>
-	as.data.frame()
-rmse$lyr <- rownames(rmse)
-rmse$lyr <- factor(rmse$lyr, levels = c("random", "biased", "clustered"))
-
-ggplot() +
-	geom_spatraster(data = diff_rasters) +
-	scale_fill_distiller("predicted - true", type = "div") +
-	geom_sf(data = samples |> mutate(lyr = sampling), fill = "white", colour = "black", shape = 21, size = 1) +
-	coord_sf(expand = FALSE, datum = st_crs(prediction_rasters)) +
-	labs(x = "", y = "") +
-	facet_wrap(~lyr)
-
-```

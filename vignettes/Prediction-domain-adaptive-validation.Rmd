@@ -1,11 +1,16 @@
 ---
-title: "Prediction-domain-adaptive-validation"
+title: "PDAV"
 output: rmarkdown::html_vignette
+bibliography: references.bib
 vignette: >
-  %\VignetteIndexEntry{Prediction-domain-adaptive-validation}
+  %\VignetteIndexEntry{PDAV}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
+
+## Introduction
+This document gives an overview over the prediction-domain adaptive validation methods currently implemented.
+
 
 
 ## Setup
@@ -27,11 +32,16 @@ library(ggplot2)
 library(cowplot)
 library(tidyterra)
 library(ggnewscale)
+
+set.seed(100)
 ```
 
 ## Simulate predictors and response
 ```{r}
 r <- PDAV:::generate_rast()
+predictor_stack <- r[[setdiff(names(r), "outcome")]]
+cate_rasters <- which(names(r) %in% c("forest", "grass"))
+
 samples <- PDAV:::generate_samples(r, 100)
 ```
 
@@ -50,11 +60,186 @@ ggplot() +
 ```
 
 
+```{r}
+#| fig-width: 6
+#| fig-height: 4
+#| echo: false
 
-## NNDM
-
-## kNNDM
+ggplot() +
+	geom_spatraster(data = r$outcome) +
+	scale_fill_viridis_c("outcome") +
+	new_scale_fill() +
+	geom_sf(data = samples, shape = 21, aes(fill = "training samples"), size = 1) +
+	coord_sf(expand = FALSE, datum = st_crs(samples)) +
+	scale_fill_manual("", values = "white") +
+	facet_wrap(~sampling) +
+	theme_bw() +
+	theme(panel.grid = element_blank())
+```
 
 ## DA-CV
 
-## Comparison
+DA-CV (@Wang2025) uses adversial validation (AV) to predict the probability that a prediction location is similar to the training samples.
+Then it calculates a RMSE based on random CV, as well as spatial+ CV (@Wang2023) and weights both of them according to the relative area of similar cells (random CV) and dissimilar cells (spatial+ CV). 
+
+```{r}
+#| warning: false
+
+results <- lapply(unique(samples$sampling), function(smpling) {
+	samples_smpl <- samples |>
+		filter(sampling == smpling) |>
+		select(!sampling)
+
+	da_cv(
+		samples = samples_smpl,
+		predictors = r,
+		response = "outcome",
+		folds_k = 5,
+		autoc_threshold = 1
+		#cate_col_start = min(cate_rasters),
+		#cate_col_end = max(cate_rasters)
+	)
+})
+
+names(results) <- unique(samples$sampling)
+
+```
+
+For randomly distributed samples, the AV classifier has a performance of $AUC = `r round(results$random$auc, 1)`$. This is then normalized to $D = 0$, because the classifier is not better than randomly guessing if a prediction location is similiar or dissimilar (see @Wang2025b, section 2.1 for more information). The threshold is then calculated as $T(D) = 0.5 * 0$, which is 0. This means that all prediction locations are similar to the training 1, and no extrapolation is required, as can be seen in the following map. All weights will be given to random CV. 
+
+For clustered samples, the AV classifier achieves a performance of $AUC = `r round(results$clustered$auc, 2)`$. This leads to $D = \frac{`r round(results$clustered$auc, 2)` - 0.5}{1 - 0.5} = `r (round(results$clustered$auc, 2) - 0.5) / 0.5`$. The threshold is then $T(D) = 0.5* `r (round(results$clustered$auc, 2) - 0.5) / 0.5` = `r 0.5*((round(results$clustered$auc, 1) - 0.5) / 0.5)`$. Hence, all prediction cells with a similarity score lower than `r 0.5*((round(results$clustered$auc, 1) - 0.5) / 0.5)` are classified as dissimilar. The relative fraction of prediction locations being similar ro the sampling locations is `r round(results$clustered$weights[["similar"]], 2)`, while the fraction being dissimilar is `r round(results$clustered$weights[["different"]], 2)`.
+
+``` {r}
+#| fig-width: 12
+#| fig-height: 5
+#| fig-cap: "Figure 3: Similarity maps resulting from the AV classifier."
+
+lapply(unique(samples$sampling), function(smpling) {
+	plot(results[[smpling]]) +
+		new_scale_fill() +
+		geom_sf(data = samples[samples$sampling == smpling, ], shape = 21, fill = "white") +
+		coord_sf(expand = FALSE, datum = st_crs(samples[samples$sampling == smpling, ], )) +
+		ggtitle(smpling) +
+		theme(
+			legend.position = "right",
+			plot.title = element_text(face = "bold", hjust = 0.5)
+		)
+}) |>
+	plot_grid(plotlist = _, nrow = 1, align = "vh")
+
+```
+
+Lastly, the resulting cross-validation fold assignments can be used to calculate the weighted RMSE of a spatial predictive model.
+
+```{r}
+form <- as.formula(paste0("outcome~", paste0(names(predictor_stack), collapse = "+")))
+pgrid <- data.frame(mtry = 6, splitrule = "variance", min.node.size = 5)
+
+weighted_RMSE <- lapply(unique(samples$sampling), function(smpling) {
+	samples_smpl <- samples |>
+		filter(sampling == smpling) |>
+		mutate("randomCV" = results[[smpling]]$folds_RDM, "spatialCV" = results[[smpling]]$folds_SP) |>
+		st_drop_geometry()
+
+	folds_random <- CAST::CreateSpacetimeFolds(samples_smpl, spacevar = "randomCV", k = 5)
+	folds_spatial <- CAST::CreateSpacetimeFolds(samples_smpl, spacevar = "spatialCV", k = 5)
+
+	train_cntrl_random <- trainControl(
+		method = "CV",
+		index = folds_random$index,
+		indexOut = folds_random$indexOut,
+		savePredictions = TRUE
+	)
+
+	train_cntrl_SP <- trainControl(
+		method = "CV",
+		index = folds_spatial$index,
+		indexOut = folds_spatial$indexOut,
+		savePredictions = TRUE
+	)
+
+	rand_mod <- train(
+		form,
+		data = samples_smpl,
+		method = "ranger",
+		trControl = train_cntrl_random,
+		tuneGrid = pgrid
+	)
+
+	spat_mod <- train(
+		form,
+		data = samples_smpl,
+		method = "ranger",
+		trControl = train_cntrl_SP,
+		tuneGrid = pgrid
+	)
+
+	err_stats_rand <- CAST::global_validation(rand_mod)
+	err_stats_SP <- CAST::global_validation(spat_mod)
+
+	err_stats_weighted <- sqrt(
+		results[[smpling]]$weights[["similar"]] *
+			(err_stats_rand[["RMSE"]]^2) +
+			results[[smpling]]$weights[["different"]] * (err_stats_SP[["RMSE"]]^2)
+	)
+
+	prediction <- predict(r, rand_mod)
+	list(err_stats_weighted, prediction)
+})
+
+```
+
+```{r}
+#| fig-width: 6
+#| fig-height: 8
+#| echo: false
+
+samples_long <- lapply(unique(samples$sampling), function(smpling) {
+	samples_smpl <- samples |>
+		filter(sampling == smpling) |>
+		mutate("randomCV" = results[[smpling]]$folds_RDM, "spatialCV" = results[[smpling]]$folds_SP) |>
+		select(randomCV, spatialCV, sampling)
+	samples_smpl$ID <- 1:nrow(samples_smpl)
+	samples_geom <- select(samples_smpl, ID)
+	st_drop_geometry(samples_smpl) |>
+		pivot_longer(-c(ID, sampling)) |>
+		left_join(samples_geom, by = "ID") |>
+		st_as_sf() |>
+		mutate(
+			weight = case_when(
+				name == "randomCV" ~ round(results[[smpling]]$weights[["similar"]], 2),
+				name == "spatialCV" ~ round(results[[smpling]]$weights[["different"]], 2)
+			)
+		)
+}) |>
+	do.call(what = "rbind")
+
+ggplot() +
+	geom_sf(data = samples_long, aes(colour = as.factor(value)), size = 1) +
+	geom_text(
+		data = samples_long,
+		aes(x = 45, y = 180, label = paste0("Weight: ", weight)),
+		size = 3,
+		fontface = "bold",
+		check_overlap = TRUE
+	) +
+	coord_sf(expand = FALSE, datum = st_crs(samples_long)) +
+	facet_grid(sampling ~ name) +
+	scale_color_brewer("Fold", palette = "Set1") +
+	theme_bw() +
+	theme(panel.grid = element_blank(), legend.position = "right") +
+	labs(x = "", y = "")
+
+```
+
+The RMSE obtained by DA-CV are `r round(weighted_RMSE[[1]][[1]], 3)` for the random sampling design, `r round(weighted_RMSE[[2]][[1]], 3)` for the biased sampling and `r round(weighted_RMSE[[3]][[1]], 3)` for the clustered design.
+
+
+## kNNDM CV
+
+```{r}
+
+```
+
+
+## NNDM CV

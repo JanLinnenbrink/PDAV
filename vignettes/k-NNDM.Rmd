@@ -43,6 +43,8 @@ library(tidyterra)
 library(ggnewscale)
 library(dplyr)
 
+set.seed(100)
+
 k = 2
 ```
 
