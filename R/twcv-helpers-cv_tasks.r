@@ -25,6 +25,7 @@ augment_cv_task_descriptors <- function(cv_losses, sample_dat, grid_dat, task_va
 		stop("No valid task_vars found in sample_dat and grid_dat.", call. = FALSE)
 	}
 
+	# Calculates NNDs between predpoints and samples, and between samples using FNN, as well as the predictor values
 	tasks <- compute_task_descriptors(
 		sample_dat = sample_dat,
 		grid_dat = grid_dat,
@@ -52,7 +53,7 @@ augment_cv_task_descriptors <- function(cv_losses, sample_dat, grid_dat, task_va
 		out[[v]] <- sample_desc[[v]][idx]
 	}
 
-	# realized prediction distance
+	# Calculates the NND between folds based on distance matrix / matrices
 	d_realized <- compute_cv_prediction_distances(
 		sample_dat = sample_dat,
 		folds = cv_losses$fold
@@ -95,6 +96,7 @@ augment_buffered_task_descriptors <- function(task_losses, sample_dat, grid_dat,
 		stop("No valid task_vars found in sample_dat and grid_dat.", call. = FALSE)
 	}
 
+	# Calculates NNDs between predpoints and samples, and between samples using FNN, as well as the predictor values
 	tasks <- compute_task_descriptors(
 		sample_dat = sample_dat,
 		grid_dat = grid_dat,
@@ -393,118 +395,4 @@ assert_required_columns <- function(x, required) {
 		stop("Missing required columns: ", paste(miss, collapse = ", "), call. = FALSE)
 	}
 	invisible(x)
-}
-
-
-#' Prepare balanced task representations for CV
-#'
-#' Constructs balanced representations of sample and grid task descriptors
-#' for weighting-based estimators such as TWCV.
-#'
-#' @param loss_df Data frame of sample-level losses.
-#' @param grid_tasks Data frame of grid-level task descriptors.
-#' @param balancing_vars Character vector of variables used for balancing.
-#' @param by Numeric step size for quantile binning.
-#'
-#' @return List with \code{sample_tasks_bal} and \code{grid_tasks_bal}.
-#' @noRd
-prepare_balanced_tasks_cv <- function(loss_df, grid_tasks, balancing_vars, by = 0.2) {
-	stopifnot(length(balancing_vars) > 0)
-
-	sample_tasks_bal <- prepare_for_balancing(
-		df = loss_df,
-		vars = balancing_vars,
-		ref_df = grid_tasks,
-		by = by
-	)
-
-	grid_tasks_bal <- prepare_for_balancing(
-		df = grid_tasks,
-		vars = balancing_vars,
-		ref_df = grid_tasks,
-		by = by
-	)
-
-	list(
-		sample_tasks_bal = sample_tasks_bal,
-		grid_tasks_bal = grid_tasks_bal
-	)
-}
-
-
-#' Prepare variables for balancing via discretization
-#'
-#' Transforms variables into categorical representations suitable for
-#' balancing. Numeric variables are discretized using quantiles of a
-#' reference distribution; categorical variables are aligned to the
-#' reference support.
-#'
-#' @param df Data frame to transform.
-#' @param vars Variables to transform.
-#' @param ref_df Reference data frame.
-#' @param by Quantile step size.
-#'
-#' @return Modified data frame with additional \code{*_cat} variables.
-#' @noRd
-prepare_for_balancing <- function(df, vars, ref_df, by = 0.2) {
-	df_out <- df
-
-	for (v in vars) {
-		if (!(v %in% names(df))) {
-			stop("Variable '", v, "' not found in df.", call. = FALSE)
-		}
-		if (!(v %in% names(ref_df))) {
-			stop("Variable '", v, "' not found in ref_df.", call. = FALSE)
-		}
-
-		x_ref <- ref_df[[v]]
-		x <- df[[v]]
-		out_name <- paste0(v, "_cat")
-
-		# numeric variables
-		if (is.numeric(x_ref) && length(unique(stats::na.omit(x_ref))) > 2) {
-			probs <- seq(0, 1, by = by)
-			qtiles <- stats::quantile(x_ref, probs = probs, na.rm = TRUE, names = FALSE)
-
-			qtiles <- unique(qtiles)
-
-			# degenerate case
-			if (length(qtiles) < 2) {
-				levs <- paste0(v, "_Q1")
-				df_out[[out_name]] <- factor(
-					ifelse(is.na(x), NA, levs),
-					levels = levs,
-					ordered = TRUE
-				)
-				next
-			}
-
-			qtiles[1] <- -Inf
-			qtiles[length(qtiles)] <- Inf
-
-			n_bins <- length(qtiles) - 1L
-			levs <- paste0(v, "_Q", seq_len(n_bins))
-
-			df_out[[out_name]] <- cut(
-				x,
-				breaks = qtiles,
-				include.lowest = TRUE,
-				labels = levs,
-				ordered_result = TRUE
-			)
-		} else {
-			ref_levels <- sort(unique(as.character(stats::na.omit(x_ref))))
-			x_chr <- as.character(x)
-
-			x_chr[!(x_chr %in% ref_levels) & !is.na(x_chr)] <- NA_character_
-
-			df_out[[out_name]] <- factor(
-				x_chr,
-				levels = ref_levels,
-				ordered = FALSE
-			)
-		}
-	}
-
-	df_out
 }

@@ -58,22 +58,26 @@ compute_dwcv_weights <- function(sample_tasks, grid_tasks, balance_by = 0.2, shr
 #' @return A list containing calibration weights and metadata.
 #' @noRd
 compute_twcv_weights <- function(sample_tasks_bal, grid_tasks_bal, balancing_vars, shrink_lambda = 0, verbose = 0) {
+	# Extracts the balancing variables from the training points
 	balance_df <- as.data.frame(
 		lapply(balancing_vars, function(v) sample_tasks_bal[[paste0(v, "_cat")]])
 	)
 	names(balance_df) <- balancing_vars
 
+	# Calculates proportion of predpoints in each quantile of each predictor used for weighting
 	target_margins <- compute_target_margins_generic(
 		grid_tasks_bal = grid_tasks_bal,
 		balancing_vars = balancing_vars
 	)
 
+	# applies iterative proportional fitting ("raking")
 	out <- rake_weights(
 		balance_df = balance_df,
 		target_margins = target_margins,
 		verbose = verbose
 	)
 
+	# Weights are normalized by their mean and shrinked towards 1 to mitigate extreme values
 	out$weights_raw <- normalize_weights(out$weights)
 	out$weights <- shrink_weights(out$weights_raw, lambda = shrink_lambda)
 	out$shrink_lambda <- shrink_lambda
@@ -167,14 +171,18 @@ rake_weights <- function(balance_df, target_margins, base_weights = NULL, max_it
 			levs <- seq_along(target_margins[[m]])
 			target_prop <- target_margins[[m]]
 
+			# calculate the number of training points currently in each quantile
 			current_totals <- tapply(w, factor(x, levels = levs), sum)
 			current_totals[is.na(current_totals)] <- 0
 
+			# calculate the desired number of training points in each quantile that matches the target margins
 			target_totals <- sum(w) * target_prop
 
 			adj <- rep(1, length(levs))
 			ok <- current_totals > 0
 
+			# calculates the weight needed to adjust the training point distribution to the target margins
+			# (weights > 1 are used to up-weigh underrepresented classes, weights < 1 to down-weight over-represented ones)
 			adj[ok] <- target_totals[ok] / current_totals[ok]
 			adj[!ok] <- NA_real_
 
@@ -182,12 +190,16 @@ rake_weights <- function(balance_df, target_margins, base_weights = NULL, max_it
 			w[valid] <- w[valid] * adj[x[valid]]
 		}
 
+		# Compute the relative strength of the absolute change of weights from base (or previous) to new weights
 		rel_change <- max(abs(w - w_old) / pmax(abs(w_old), 1e-12))
 
 		if (verbose >= 2) {
 			log_message(verbose, 2, "  raking iter ", iter, ", max relative change = ", format(rel_change, digits = 3))
 		}
 
+		# When the changes converge (i.e., when the weight difference from previous iteration to new one is small), stop and return weights
+		# (when the weights for predictor B are changed, weights for predictor A might be off again, and another iteration starts,
+		# until the diff between them is small)
 		if (rel_change < tol) break
 	}
 
@@ -226,4 +238,118 @@ shrink_weights <- function(w, lambda = 0) {
 	stopifnot(lambda >= 0, lambda <= 1)
 	w <- normalize_weights(w)
 	(1 - lambda) * w + lambda
+}
+
+
+#' Prepare balanced task representations for CV
+#'
+#' Constructs balanced representations of sample and grid task descriptors
+#' for weighting-based estimators such as TWCV.
+#'
+#' @param loss_df Data frame of sample-level losses.
+#' @param grid_tasks Data frame of grid-level task descriptors.
+#' @param balancing_vars Character vector of variables used for balancing.
+#' @param by Numeric step size for quantile binning.
+#'
+#' @return List with \code{sample_tasks_bal} and \code{grid_tasks_bal}.
+#' @noRd
+prepare_balanced_tasks_cv <- function(loss_df, grid_tasks, balancing_vars, by = 0.2) {
+	stopifnot(length(balancing_vars) > 0)
+
+	sample_tasks_bal <- prepare_for_balancing(
+		df = loss_df,
+		vars = balancing_vars,
+		ref_df = grid_tasks,
+		by = by
+	)
+
+	grid_tasks_bal <- prepare_for_balancing(
+		df = grid_tasks,
+		vars = balancing_vars,
+		ref_df = grid_tasks,
+		by = by
+	)
+
+	list(
+		sample_tasks_bal = sample_tasks_bal,
+		grid_tasks_bal = grid_tasks_bal
+	)
+}
+
+
+#' Prepare variables for balancing via discretization
+#'
+#' Transforms variables into categorical representations suitable for
+#' balancing. Numeric variables are discretized using quantiles of a
+#' reference distribution; categorical variables are aligned to the
+#' reference support.
+#'
+#' @param df Data frame to transform.
+#' @param vars Variables to transform.
+#' @param ref_df Reference data frame.
+#' @param by Quantile step size.
+#'
+#' @return Modified data frame with additional \code{*_cat} variables.
+#' @noRd
+prepare_for_balancing <- function(df, vars, ref_df, by = 0.2) {
+	df_out <- df
+
+	for (v in vars) {
+		if (!(v %in% names(df))) {
+			stop("Variable '", v, "' not found in df.", call. = FALSE)
+		}
+		if (!(v %in% names(ref_df))) {
+			stop("Variable '", v, "' not found in ref_df.", call. = FALSE)
+		}
+
+		x_ref <- ref_df[[v]]
+		x <- df[[v]]
+		out_name <- paste0(v, "_cat")
+
+		# numeric variables
+		if (is.numeric(x_ref) && length(unique(stats::na.omit(x_ref))) > 2) {
+			probs <- seq(0, 1, by = by)
+			qtiles <- stats::quantile(x_ref, probs = probs, na.rm = TRUE, names = FALSE)
+
+			qtiles <- unique(qtiles)
+
+			# degenerate case
+			if (length(qtiles) < 2) {
+				levs <- paste0(v, "_Q1")
+				df_out[[out_name]] <- factor(
+					ifelse(is.na(x), NA, levs),
+					levels = levs,
+					ordered = TRUE
+				)
+				next
+			}
+
+			qtiles[1] <- -Inf
+			qtiles[length(qtiles)] <- Inf
+
+			n_bins <- length(qtiles) - 1L
+			levs <- paste0(v, "_Q", seq_len(n_bins))
+
+			df_out[[out_name]] <- cut(
+				x,
+				breaks = qtiles,
+				include.lowest = TRUE,
+				labels = levs,
+				ordered_result = TRUE
+			)
+		} else {
+			ref_levels <- sort(unique(as.character(stats::na.omit(x_ref))))
+			x_chr <- as.character(x)
+
+			x_chr[!(x_chr %in% ref_levels) & !is.na(x_chr)] <- NA_character_
+
+			df_out[[out_name]] <- factor(
+				x_chr,
+				levels = ref_levels,
+				ordered = FALSE
+			)
+		}
+	}
+
+	df_out
 }

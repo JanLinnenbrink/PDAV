@@ -41,6 +41,73 @@
 #'   }
 #'
 #' @seealso [compute_buffered_estimators()], [compute_twcv_weights()]]
+#'
+#' @examples
+#' \dontrun{
+#' # Example data:
+#' # sample_dat contains observed responses at sampled locations,
+#' # grid_dat contains the deployment locations where predictions are intended.
+#'
+#' set.seed(1)
+#'
+#' n_sample <- 120
+#' n_grid <- 500
+#'
+#' sample_dat <- data.frame(
+#'   id = seq_len(n_sample),
+#'   x = runif(n_sample),
+#'   y = runif(n_sample),
+#'   x1 = rnorm(n_sample),
+#'   x2 = runif(n_sample),
+#'   z = NA_real_
+#' )
+#'
+#' sample_dat$z <- 1 + 2 * sample_dat$x1 - sample_dat$x2 + rnorm(n_sample, sd = 0.3)
+#'
+#' grid_dat <- data.frame(
+#'   id = seq_len(n_grid),
+#'   x = runif(n_grid),
+#'   y = runif(n_grid),
+#'   x1 = rnorm(n_grid),
+#'   x2 = runif(n_grid)
+#' )
+#'
+#' # Five-fold CV assignment
+#' folds <- sample(rep(1:5, length.out = n_sample))
+#'
+#' # Simple model adapters used by compute_cv_estimators()
+#' fit_lm <- function(train_dat, model, response, ...) {
+#'   stats::lm(stats::as.formula(
+#'     paste(response, "~", paste(c("x1", "x2"), collapse = " + "))
+#'   ), data = train_dat)
+#' }
+#'
+#' predict_lm <- function(object, newdata) {
+#'   stats::predict(object, newdata = newdata)
+#' }
+#'
+#' res <- compute_cv_estimators(
+#'   sample_dat = sample_dat,
+#'   grid_dat = grid_dat,
+#'   folds = folds,
+#'   model = "lm",
+#'   response = "z",
+#'   fit_fun = fit_lm,
+#'   predict_fun = predict_lm,
+#'   predictor_vars = c("x1", "x2"),
+#'   env_vars = c("x1", "x2"),
+#'   verbose = 1
+#' )
+#'
+#' # Augmented validation losses
+#' head(res$losses)
+#'
+#' # Performance summaries
+#' res$estimators
+#'
+#' # TWCV weight object(s)
+#' names(res$weights)
+#' }
 compute_cv_estimators <- function(
 	sample_dat,
 	grid_dat,
@@ -84,6 +151,7 @@ compute_cv_estimators <- function(
 		)
 	}
 
+	# Computes CV losses by calling compute_cv_predictions and compute_pointwise_errors
 	log_message(verbose, 1, "Computing CV predictions...")
 	cv_losses <- compute_cv_losses(
 		sample_dat = sample_dat,
@@ -97,6 +165,11 @@ compute_cv_estimators <- function(
 		...
 	)
 
+	# Augments the CV validation task by calling compute_task_descriptors to prepare predictor values
+	# and NNDs between samples (not returned), and between predpoints and samples (compute_task_descriptors calls nearest_neighbor_distance which uses FNN).
+	# Furthermore, it calls compute_cv_prediction_distance to calculate NNDs between folds (pairwise_distance_matrix).
+	# Returns `losses` with sample task (NNDs between folds, CV error and predictor values) and
+	# and `grid_task` with grid task (NNDs between predpoints and samples, predictor values)
 	log_message(verbose, 1, "Computing realized task descriptors...")
 	aug <- augment_cv_task_descriptors(
 		cv_losses = cv_losses,
@@ -125,6 +198,10 @@ compute_cv_estimators <- function(
 			stop("Malformed twcv spec for '", nm, "'.", call. = FALSE)
 		}
 
+		# Constructs balanced representations of sample and grid task descriptors for weighting.
+		# Calls `prepare_for_balancing` which discretizes the variables in quantiles.
+		# The returned data.frames have additional columns "x1_cat" etc. for every predictor that is used for weighting and
+		# that specifies in which quantile the values of the predictor fall into (also for the NNDs, which is just another weighting variable here).
 		bal <- prepare_balanced_tasks_cv(
 			loss_df = cv_losses,
 			grid_tasks = grid_tasks,
@@ -132,6 +209,11 @@ compute_cv_estimators <- function(
 			by = spec$balance_by
 		)
 
+		# Calculates weights so that CV matches the margins of different task descriptors (predictors, NND) of the prediction task.
+		# Calls compute_target_margins_generic which iterates over every discretized predictor ("marginal weighting"), calculates
+		# the proportion of points falling into each quantile for the predpoints (tabulate_proportions).
+		# Then calls `rake_weights` to apply proportional fitting ("raking").
+		# Returns `weights_raw` (which are normalized by their mean) and `weights` which are normalized and shrunk towards 1.
 		tw <- compute_twcv_weights(
 			sample_tasks_bal = bal$sample_tasks_bal,
 			grid_tasks_bal = bal$grid_tasks_bal,
@@ -252,6 +334,8 @@ compute_buffered_estimators <- function(
 		)
 	}
 
+	# Computes CV losses by iterating over all training points, fitting a model, making predictions for the left-out data,
+	# and then calling compute_pointwise_errors to calculate the error metrics
 	raw_losses <- compute_buffered_task_losses(
 		sample_dat = sample_dat,
 		task_obj = task_obj,
@@ -274,6 +358,10 @@ compute_buffered_estimators <- function(
 		))
 	}
 
+	# Augments the CV validation task by calling compute_task_descriptors to prepare predictor values
+	# and NNDs between samples, and between predpoints and samples (compute_task_descriptors calls nearest_neighbor_distance which uses FNN).
+	# It does not call compute_cv_prediction_distance to calculate NNDs between folds.
+	# compute_buffered_estimators rather needs those NNDs as input attached to task_obj, and calculated by generate_buffered_loo_tasks
 	aug <- augment_buffered_task_descriptors(
 		task_losses = raw_losses,
 		sample_dat = sample_dat,
