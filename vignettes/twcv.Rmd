@@ -1,0 +1,85 @@
+---
+title: "DA-CV"
+output: rmarkdown::html_vignette
+bibliography: references.bib
+vignette: >
+  %\VignetteIndexEntry{DA-CV}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+## Introduction
+Target-Weighted Cross-Validation (TWCV) was developed by @Brenning2026. 
+It uses iterative calibration weighting to align the validation task (predictor values of the training points and nearest-neighbour distances (NNDs) between folds) to the prediction task (predictor values of the prediction points and NNDs between prediction and training points).
+
+The more detailed workflow is:
+
+1. Compute CV losses by training a model on the training folds fold and predicting to the held-out fold
+2. Compute the CV validation task and the prediction task (NNDs and predictor values)
+3. Calculates quantiles of the balancing variables for training and prediction points separately (NNDs and predictors)
+4. Calculates the proportion of training points and prediction points falling in each quantile
+5. Applies iterative proportional fitting ("raking") to align the proportions of the training points to those in the prediction points:
+   1. For each balancing variable, calculate the current number of training points in each quantile.
+   2. Calculate the target number of training points in each quantile based on the target proportions.
+   3. Calculate multiplicative adjustment factors that transform the current counts to the target counts.
+   4. Because the weighting is done for each variable seperately ("marginal"), correcting one variable can disturb variables adjusted earlier. 
+   5. Repeat this process until the maximum relative change in weights between successive iterations falls below a threshold.
+6. Normalize weights and shrink them towards 1 to mitigate extreme values.
+
+
+## Setup
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+	collapse = TRUE,
+	comment = "#>"
+)
+```
+
+```{r setup}
+library(PDAV)
+library(dplyr)
+library(caret)
+library(terra)
+library(sf)
+library(simsam)
+library(ggplot2)
+library(cowplot)
+library(tidyterra)
+library(ggnewscale)
+
+set.seed(100)
+```
+
+## Simulate predictors and response
+```{r}
+r <- PDAV:::generate_rast()
+predictor_stack <- r[[setdiff(names(r), "outcome")]]
+cate_rasters <- which(names(r) %in% c("forest", "grass"))
+
+samples <- sam_field(
+	x = r,
+	size = 100,
+	type = "clustered",
+	type_opts = list(nclusters = 10, radius = 30),
+	na.rm = TRUE
+) |>
+	terra::extract(x = r, bind = TRUE) |>
+	st_as_sf()
+```
+
+```{r}
+#| fig-width: 6
+#| fig-height: 4
+#| fig-cap: "Figure 1: The predictor stack"
+#| echo: false
+ggplot() +
+	geom_spatraster(data = predictor_stack) +
+	coord_sf(expand = FALSE, datum = st_crs(predictor_stack)) +
+	scale_fill_viridis_c() +
+	facet_wrap(~lyr) +
+	theme_bw() +
+	theme(panel.grid = element_blank())
+```
+
+
+## Run DA-CV
