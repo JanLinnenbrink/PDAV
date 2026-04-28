@@ -72,14 +72,10 @@ cate_rasters <- which(names(r) %in% c("forest", "grass"))
 samples <- sam_field(
 	x = r,
 	size = 100,
-	type = "clustered",
-	type_opts = list(nclusters = 10, radius = 30),
-	na.rm = TRUE
+	method = sample_clustered(nclusters = 10, radius = 30, na.rm = TRUE)
 ) |>
 	terra::extract(x = r, bind = TRUE) |>
 	st_as_sf()
-
-
 ```
 
 ```{r}
@@ -87,7 +83,6 @@ samples <- sam_field(
 #| fig-height: 4
 #| fig-cap: "Figure 1: The predictor stack"
 #| echo: false
-
 ggplot() +
 	geom_spatraster(data = predictor_stack) +
 	coord_sf(expand = FALSE, datum = st_crs(predictor_stack)) +
@@ -100,7 +95,6 @@ ggplot() +
 ```{r semivariogram}
 #| eval: false
 #| echo: false
-
 library(sp)
 library(gstat)
 
@@ -114,7 +108,6 @@ plot(vg_samples, main = paste("Semivariance of", response_name, "(Biased samples
 #| fig-height: 4
 #| fig-cap: "Figure 2: The simulated outcome with training locations."
 #| echo: false
-
 ggplot() +
 	geom_spatraster(data = r$outcome) +
 	scale_fill_viridis_c("outcome") +
@@ -134,7 +127,6 @@ Now, we use DA-CV to obtain area estimates of interpolation vs extrapolation are
 
 ```{r}
 #| warning: false
-
 results <- da_cv(
 	samples = samples,
 	predictors = r,
@@ -144,7 +136,6 @@ results <- da_cv(
 	#cate_col_start = min(cate_rasters),
 	#cate_col_end = max(cate_rasters)
 )
-
 ```
 
 For the biased sampling design shown here, the AV classifier achieves a performance of $AUC = `r round(results$auc, 2)`$. This leads to $D = \frac{`r round(results$auc, 2)` - 0.5}{1 - 0.5} = `r (round(results$auc, 2) - 0.5) / 0.5`$. The threshold is then $T(D) = 0.5* `r (round(results$auc, 2) - 0.5) / 0.5` = `r 0.5*((round(results$auc, 1) - 0.5) / 0.5)`$. Hence, all prediction cells with a similarity score lower than `r 0.5*((round(results$auc, 1) - 0.5) / 0.5)` are classified as dissimilar. The relative fraction of prediction locations being similar from the sampling locations is `r round(results$weights[["similar"]], 2)`, while the fraction being dissimilar is `r round(results$weights[["different"]], 2)`.
@@ -161,14 +152,12 @@ plot(results) +
 		legend.position = "right",
 		plot.title = element_text(face = "bold", hjust = 0.5)
 	)
-
 ```
 
 ### Calculate CV results and weigh them according to the area proportions
 Lastly, the resulting cross-validation fold assignments could be used to calculate the weighted RMSE of a spatial predictive model.
 
 ```{r}
-
 form <- as.formula(paste0("outcome~", paste0(names(predictor_stack), collapse = "+")))
 pgrid <- data.frame(mtry = 6, splitrule = "variance", min.node.size = 5)
 
@@ -219,7 +208,6 @@ err_stats_weighted <- sqrt(
 )
 
 prediction <- predict(r, rand_mod)
-
 ```
 
 The RMSE obtained by DA-CV is `r round(err_stats_weighted, 3)`. The maps below depict the difference between predicted and true response:
@@ -229,7 +217,6 @@ The RMSE obtained by DA-CV is `r round(err_stats_weighted, 3)`. The maps below d
 #| fig-height: 4
 #| fig-cap: "Figure 4: The different CV fold assignments and their respective weight."
 #| echo: false
-
 samples_df <- samples |>
 	mutate("randomCV" = results$folds_RDM, "spatialCV" = results$folds_SP) |>
 	select(randomCV, spatialCV)
@@ -262,6 +249,5 @@ ggplot() +
 	theme_bw() +
 	theme(panel.grid = element_blank(), legend.position = "right") +
 	labs(x = "", y = "")
-
 ```
 

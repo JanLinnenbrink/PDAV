@@ -5,13 +5,11 @@ generate_rast <- function() {
 
 	rast_grid <- rast(xmin = 0, xmax = 200, ymin = 0, ymax = 200, ncols = 200, nrows = 200)
 
-	grad_predictors <- sim_covariates(rast_grid, vgm = gstat::vgm(psill = 1, model = "Exp", range = 50), n = 8)
+	grad_predictors <- sim_covariates(rast_grid, n = 8, method = simulate_gaussian(psill = 1, model = "Exp", range = 50))
 	landcover <- sim_covariates(
 		rast_grid,
-		vgm = gstat::vgm(psill = 5, model = "Exp", range = 100),
 		n = 2,
-		beta = 10,
-		indicators = TRUE
+		method = simulate_gaussian(psill = 5, model = "Exp", range = 100, beta = 10, indicators = TRUE)
 	)
 
 	predictors <- c(grad_predictors, landcover)
@@ -31,7 +29,7 @@ generate_rast <- function() {
 		# forest boosts, grass reduces, small slope term
 	)
 
-	noise <- sim_covariates(rast_grid, vgm = gstat::vgm(psill = 0.001, model = "Exp", range = 5), n = 1)
+	noise <- sim_covariates(rast_grid, n = 1, method = simulate_gaussian(psill = 0.001, model = "Exp", range = 5))
 	names(noise) <- "noise"
 	outcome <- outcome_pred + noise
 
@@ -47,8 +45,7 @@ generate_samples <- function(r, n_samples) {
 	sample_random <- sam_field(
 		x = r,
 		size = n_samples,
-		type = "random",
-		na.rm = TRUE
+		method = sample_random(na.rm = TRUE)
 	) |>
 		terra::extract(x = r, bind = TRUE) |>
 		st_as_sf() |>
@@ -57,9 +54,7 @@ generate_samples <- function(r, n_samples) {
 	sample_biased <- sam_field(
 		x = r,
 		size = n_samples,
-		type = "clustered",
-		type_opts = list(nclusters = 10, radius = 30),
-		na.rm = TRUE
+		method = sample_clustered(nclusters = 10, radius = 30, na.rm = TRUE)
 	) |>
 		terra::extract(x = r, bind = TRUE) |>
 		st_as_sf() |>
@@ -68,9 +63,7 @@ generate_samples <- function(r, n_samples) {
 	sample_clustered <- sam_field(
 		x = r,
 		size = n_samples,
-		type = "clustered",
-		type_opts = list(nclusters = 5, radius = 15),
-		na.rm = TRUE
+		method = sample_clustered(nclusters = 5, radius = 15, na.rm = TRUE)
 	) |>
 		terra::extract(x = r, bind = TRUE) |>
 		st_as_sf() |>

@@ -1,9 +1,9 @@
 ---
-title: "DA-CV"
+title: "TWCV"
 output: rmarkdown::html_vignette
 bibliography: references.bib
 vignette: >
-  %\VignetteIndexEntry{DA-CV}
+  %\VignetteIndexEntry{TWCV}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -16,8 +16,8 @@ The more detailed workflow is:
 
 1. Compute CV losses by training a model on the training folds fold and predicting to the held-out fold
 2. Compute the CV validation task and the prediction task (NNDs and predictor values)
-3. Calculates quantiles of the balancing variables for training and prediction points separately (NNDs and predictors)
-4. Calculates the proportion of training points and prediction points falling in each quantile
+3. Calculate quantiles of the balancing variables for training and prediction points separately (NNDs and predictors)
+4. Calculate the proportion of training points and prediction points falling in each quantile
 5. Applies iterative proportional fitting ("raking") to align the proportions of the training points to those in the prediction points:
    1. For each balancing variable, calculate the current number of training points in each quantile.
    2. Calculate the target number of training points in each quantile based on the target proportions.
@@ -59,9 +59,7 @@ cate_rasters <- which(names(r) %in% c("forest", "grass"))
 samples <- sam_field(
 	x = r,
 	size = 100,
-	type = "clustered",
-	type_opts = list(nclusters = 10, radius = 30),
-	na.rm = TRUE
+	method = sample_clustered(nclusters = 10, radius = 30, na.rm = TRUE)
 ) |>
 	terra::extract(x = r, bind = TRUE) |>
 	st_as_sf()
@@ -82,4 +80,12 @@ ggplot() +
 ```
 
 
-## Run DA-CV
+## Run TWCV
+
+```{r}
+# compute_cv_losses
+# augment_cv_task_descriptors
+# prepare_balanced_tasks_cv
+## show binned variables with frequency for tpoints and predpoints
+# compute_twcv_weights
+```

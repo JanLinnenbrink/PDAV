@@ -25,6 +25,7 @@ Imports:
     terra,
     twosamples,
     ggplot2,
+    ggthemes,
     RColorBrewer
 Suggests: 
     knitr,

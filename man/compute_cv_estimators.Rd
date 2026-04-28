@@ -74,6 +74,73 @@ Model fitting and prediction are supplied explicitly through \code{fit_fun} and
 \code{predict_fun}, allowing the shared estimator engine to be reused across case
 studies without redefining global adapter functions.
 }
+\examples{
+\dontrun{
+# Example data:
+# sample_dat contains observed responses at sampled locations,
+# grid_dat contains the deployment locations where predictions are intended.
+
+set.seed(1)
+
+n_sample <- 120
+n_grid <- 500
+
+sample_dat <- data.frame(
+  id = seq_len(n_sample),
+  x = runif(n_sample),
+  y = runif(n_sample),
+  x1 = rnorm(n_sample),
+  x2 = runif(n_sample),
+  z = NA_real_
+)
+
+sample_dat$z <- 1 + 2 * sample_dat$x1 - sample_dat$x2 + rnorm(n_sample, sd = 0.3)
+
+grid_dat <- data.frame(
+  id = seq_len(n_grid),
+  x = runif(n_grid),
+  y = runif(n_grid),
+  x1 = rnorm(n_grid),
+  x2 = runif(n_grid)
+)
+
+# Five-fold CV assignment
+folds <- sample(rep(1:5, length.out = n_sample))
+
+# Simple model adapters used by compute_cv_estimators()
+fit_lm <- function(train_dat, model, response, ...) {
+  stats::lm(stats::as.formula(
+    paste(response, "~", paste(c("x1", "x2"), collapse = " + "))
+  ), data = train_dat)
+}
+
+predict_lm <- function(object, newdata) {
+  stats::predict(object, newdata = newdata)
+}
+
+res <- compute_cv_estimators(
+  sample_dat = sample_dat,
+  grid_dat = grid_dat,
+  folds = folds,
+  model = "lm",
+  response = "z",
+  fit_fun = fit_lm,
+  predict_fun = predict_lm,
+  predictor_vars = c("x1", "x2"),
+  env_vars = c("x1", "x2"),
+  verbose = 1
+)
+
+# Augmented validation losses
+head(res$losses)
+
+# Performance summaries
+res$estimators
+
+# TWCV weight object(s)
+names(res$weights)
+}
+}
 \seealso{
 \code{\link[=compute_buffered_estimators]{compute_buffered_estimators()}}, \code{\link[=compute_twcv_weights]{compute_twcv_weights()}}]
 }

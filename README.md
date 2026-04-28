@@ -28,15 +28,6 @@ As a guideline for choosing an appropriate method, the table below summarises so
 | [DA-CV](R/da_cv.R) | - creates a **map that depicts areas of inter- vs extrapolation**, which can be useful for subsequent sampling or for uncertainty assessment | - **less direct** approximation of the prediction situation<br>- No inspection method available to **assess if the prediction situation can be matched** during CV<br>- Matches the prediction situation in the feature space, but **mixes spaces** in the spatial+ resampling method<br>- requires calculating the weighted **average of two validation statistics**, which might be problematic for metrics other than RMSE |
 
 
-## Benchmarking
-
-The following figure shows the results of the benchmarking study for different sampling designs. The simulation can be reproduced in the [vignette](vignettes/benchmarking.Rmd).
-
-<img src="man/figures/rmse_comp.png" width="100%" />
-
-This figure shows the computational costs of each method:
-
-
 ## List of research papers
 * Milà, C., Mateu, J., Pebesma, E., Meyer, H. (2022): Nearest Neighbour Distance Matching Leave-One-Out Cross-Validation for map validation. Methods in Ecology and Evolution 00, 1– 13.
 https://doi.org/10.1111/2041-210X.13851
