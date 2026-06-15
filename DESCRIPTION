@@ -24,7 +24,6 @@ Imports:
     terra,
     twosamples,
     ggplot2,
-    ggthemes,
     RColorBrewer
 Suggests: 
     knitr,
@@ -34,7 +33,8 @@ Suggests:
     ggnewscale,
     dplyr,
     tidyr,
-    cowplot
+    cowplot,
+    colorspace
 VignetteBuilder: knitr
 Remotes:
     Nowosad/simsam
