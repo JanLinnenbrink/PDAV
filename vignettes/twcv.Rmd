@@ -128,15 +128,6 @@ ggplot() +
 
 ## Run TWCV
 
-```{r}
-# compute_cv_losses
-# augment_cv_task_descriptors
-# prepare_balanced_tasks_cv
-## show binned variables with frequency for tpoints and predpoints
-# compute_twcv_weights
-```
-
-
 ### 1. Compute CV losses
 
 Iterate over each fold and calculate the predictions and the resulting pointwise CV error:
@@ -243,11 +234,9 @@ knitr::kable(head(aug$grid_tasks))
 cv_losses <- aug$losses
 grid_tasks <- aug$grid_tasks
 
-est_list <- list(
+unweighted_losses <- list(
 	unweighted = PDAV:::summarize_losses(cv_losses)
 )
-
-# weight_objects <- list()
 
 sample_tasks_bal <- PDAV:::prepare_for_balancing(
 	df = cv_losses,
@@ -272,11 +261,7 @@ knitr::kable(head(bal$sample_tasks_bal))
 knitr::kable(head(bal$grid_tasks_bal))
 ```
 
-```{r plot}
-library(ggplot2)
-library(dplyr)
-library(cowplot)
-
+```{r plot, echo=FALSE, fig.width=10, fig.height=5}
 #-----------------------------
 # 1. Helper: order Q-levels
 #-----------------------------
@@ -482,7 +467,7 @@ target_margins$elev
 
 ### 5. Apply Raking
 
-```{r}
+```{r, message=FALSE, warning=FALSE, results='hide'}
 margin_names <- names(target_margins)
 max_iter <- 500
 tol = 1e-6
@@ -538,6 +523,10 @@ tw <- list(
 )
 ```
 
+```{r}
+tw$weights
+```
+
 ### 6. Normalize and shrink weights
 
 ```{r}
@@ -548,7 +537,7 @@ tw$weights <- PDAV:::shrink_weights(tw$weights_raw, lambda = shrink_lambda)
 tw$shrink_lambda <- twcv_specs$twcv_extended$shrink_lambda
 tw$balancing_vars <- twcv_specs$twcv_extended$balancing_vars
 
-tw
+tw$weights
 ```
 
 ### 7. Return weighted error estimates
@@ -557,10 +546,16 @@ tw
 est_list <- PDAV:::summarize_losses(cv_losses, tw$weights)
 weight_objects <- tw
 
-list(
+result <- list(
 	losses = cv_losses,
 	estimators = est_list,
 	weights = weight_objects,
 	twcv_specs = twcv_specs
 )
+
+# Unweighted error:
+unweighted_losses
+
+# Weighted error:
+result$estimators
 ```
