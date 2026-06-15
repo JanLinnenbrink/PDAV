@@ -1,0 +1,187 @@
+# Estimate deployment-oriented predictive performance from CV tasks
+
+Computes validation losses for a given cross-validation design, augments
+them with realized task descriptors, and summarizes predictive
+performance under several estimators targeting different task
+distributions. In addition to the unweighted estimator, the function
+computes distance-weighted CV (DWCV), target-weighted CV (TWCV), and
+optionally importance-weighted CV (IWCV).
+
+## Usage
+
+``` r
+compute_cv_estimators(
+  sample_dat,
+  grid_dat,
+  folds,
+  model = c("rf", "lm", "ked_het_x1", "ked", "ked_het_pop"),
+  response = NULL,
+  fit_fun = fit_model,
+  predict_fun = predict_model,
+  verbose = 0,
+  twcv_specs = NULL,
+  predictor_vars = NULL,
+  env_vars = NULL,
+  ...
+)
+```
+
+## Arguments
+
+- sample_dat:
+
+  Data frame of sampled observations used for validation. Must contain
+  an ID column and the response variable.
+
+- grid_dat:
+
+  Data frame representing deployment or prediction locations.
+
+- folds:
+
+  Integer vector of fold assignments for `sample_dat`.
+
+- model:
+
+  Character string identifying the prediction model.
+
+- response:
+
+  Optional response variable name. If `NULL`, the function tries `z` and
+  then `outcome`.
+
+- fit_fun:
+
+  Model-fitting function passed to `compute_cv_losses()`. It must accept
+  at least `train_dat`, `model`, and `response`.
+
+- predict_fun:
+
+  Prediction function passed to `compute_cv_losses()`. It must accept a
+  fitted model object and `newdata`.
+
+- verbose:
+
+  Verbosity level.
+
+- twcv_specs:
+
+  Optional named list of TWCV specifications. Each specification must
+  contain `balancing_vars`, `balance_by`, and `shrink_lambda`. If
+  `NULL`, a default extended TWCV specification is used.
+
+- predictor_vars:
+
+  Optional character vector of predictor variables used by the
+  predictive model. If `NULL`, common non-coordinate, non-response
+  variables are inferred from `sample_dat` and `grid_dat`.
+
+- env_vars:
+
+  Optional character vector of environmental variables used as task
+  descriptors. Defaults to `predictor_vars`.
+
+- ...:
+
+  Additional arguments passed to `fit_fun` during validation.
+
+## Value
+
+A list with elements:
+
+- losses:
+
+  Validation-loss data frame augmented with task descriptors.
+
+- estimators:
+
+  Named list of performance summaries for the unweighted TWCV.
+
+- weights:
+
+  Named list of weight object for TWCV.
+
+- twcv_specs:
+
+  The TWCV specification set actually used.
+
+## Details
+
+Model fitting and prediction are supplied explicitly through `fit_fun`
+and `predict_fun`, allowing the shared estimator engine to be reused
+across case studies without redefining global adapter functions.
+
+## See also
+
+[`compute_buffered_estimators()`](https://janlinnenbrink.github.io/PDAV/reference/compute_buffered_estimators.md),
+`compute_twcv_weights()`\]
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+# Example data:
+# sample_dat contains observed responses at sampled locations,
+# grid_dat contains the deployment locations where predictions are intended.
+
+set.seed(1)
+
+n_sample <- 120
+n_grid <- 500
+
+sample_dat <- data.frame(
+  id = seq_len(n_sample),
+  x = runif(n_sample),
+  y = runif(n_sample),
+  x1 = rnorm(n_sample),
+  x2 = runif(n_sample),
+  z = NA_real_
+)
+
+sample_dat$z <- 1 + 2 * sample_dat$x1 - sample_dat$x2 + rnorm(n_sample, sd = 0.3)
+
+grid_dat <- data.frame(
+  id = seq_len(n_grid),
+  x = runif(n_grid),
+  y = runif(n_grid),
+  x1 = rnorm(n_grid),
+  x2 = runif(n_grid)
+)
+
+# Five-fold CV assignment
+folds <- sample(rep(1:5, length.out = n_sample))
+
+# Simple model adapters used by compute_cv_estimators()
+fit_lm <- function(train_dat, model, response, ...) {
+  stats::lm(stats::as.formula(
+    paste(response, "~", paste(c("x1", "x2"), collapse = " + "))
+  ), data = train_dat)
+}
+
+predict_lm <- function(object, newdata) {
+  stats::predict(object, newdata = newdata)
+}
+
+res <- compute_cv_estimators(
+  sample_dat = sample_dat,
+  grid_dat = grid_dat,
+  folds = folds,
+  model = "lm",
+  response = "z",
+  fit_fun = fit_lm,
+  predict_fun = predict_lm,
+  predictor_vars = c("x1", "x2"),
+  env_vars = c("x1", "x2"),
+  verbose = 1
+)
+
+# Augmented validation losses
+head(res$losses)
+
+# Performance summaries
+res$estimators
+
+# TWCV weight object(s)
+names(res$weights)
+} # }
+```

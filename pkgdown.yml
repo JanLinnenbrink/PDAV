@@ -1,0 +1,12 @@
+pandoc: 3.8.3
+pkgdown: 2.2.0
+pkgdown_sha: ~
+articles:
+  DA-CV: DA-CV.html
+  k-NNDM: k-NNDM.html
+  Prediction-domain-adaptive-validation: Prediction-domain-adaptive-validation.html
+  twcv: twcv.html
+last_built: 2026-06-15T17:48Z
+urls:
+  reference: https://janlinnenbrink.github.io/PDAV/reference
+  article: https://janlinnenbrink.github.io/PDAV/articles

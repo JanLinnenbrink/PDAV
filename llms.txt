@@ -1,0 +1,96 @@
+# PDAV
+
+This repository is a collection of prediction-domain adaptive validation
+methods. Due to the growing application of spatial predictive models in
+geoscientific fields, there is also a growing need for reliable
+validation of the resulting maps. Prediction-domain adaptive validation
+methods provide reliable proxies of map accuracies that can be used
+during model selection and also – in the absence of an independent
+probability sample – as a proxy of the final map accuracy. This
+repository aims at:
+
+1.  collecting and consistently
+    [implementing](https://janlinnenbrink.github.io/PDAV/R/)
+    prediction-domain adaptive validation methods applicable for spatial
+    predictive modelling.
+2.  providing
+    [vignettes](https://janlinnenbrink.github.io/PDAV/vignettes/) that
+    describe their functioning and application.
+3.  providing an
+    [overview](https://janlinnenbrink.github.io/PDAV/vignettes/Prediction-domain-adaptive-validation.Rmd)
+    over the developed methods.
+
+As such, the repository is expected to grow and include newly developed
+methods falling in the class of prediction-domain adaptive validation.
+It is still work-in-progress, so please reach out if you find
+inaccuracies or want to add methods.
+
+## Overview over the currently developed methods:
+
+Below, you can find a technical comparison of the different approaches:
+
+[TABLE]
+
+The table below summarises some advantages and disadvantages of the
+different methods (based on my subjective impression):
+
+[TABLE]
+
+## List of research papers
+
+- Milà, C., Mateu, J., Pebesma, E., Meyer, H. (2022): Nearest Neighbour
+  Distance Matching Leave-One-Out Cross-Validation for map validation.
+  Methods in Ecology and Evolution 00, 1– 13.
+  <https://doi.org/10.1111/2041-210X.13851>
+
+- Linnenbrink, J., Milà, C., Ludwig, M., and Meyer, H. (2024): kNNDM:
+  k-fold Nearest Neighbour Distance Matching Cross-Validation for map
+  accuracy estimation. GMD, 17, 5897–5912.
+  <https://doi.org/10.5194/gmd-17-5897-2024>
+
+- Wang, Y., Khodadadzadeh, M. and Zurita-Milla, R. (2025): A
+  dissimilarity-adaptive cross-validation method for evaluating
+  geospatial machine learning predictions with clustered samples.
+  Ecological Informatics 90, 1574-9541.
+  <https://doi.org/10.1016/j.ecoinf.2025.103287>
+
+- Brenning, A., Suesse, T (2026): Aligning Validation with Deployment in
+  Spatial Prediction: Target-Weighted Cross-Validation. Preprint.
+  <https://arxiv.org/abs/2603.29981>
+
+# Package index
+
+## All functions
+
+- [`compute_buffered_estimators()`](https://janlinnenbrink.github.io/PDAV/reference/compute_buffered_estimators.md)
+  : Estimate deployment-oriented predictive performance from buffered
+  tasks
+- [`compute_cv_estimators()`](https://janlinnenbrink.github.io/PDAV/reference/compute_cv_estimators.md)
+  : Estimate deployment-oriented predictive performance from CV tasks
+- [`da_cv()`](https://janlinnenbrink.github.io/PDAV/reference/da_cv.md)
+  : Dissimilarity-Adaptive Cross-Validation (DA-CV)
+- [`generate_buffered_loo_tasks()`](https://janlinnenbrink.github.io/PDAV/reference/generate_buffered_loo_tasks.md)
+  : Generate buffered leave-one-out tasks
+- [`knndm()`](https://janlinnenbrink.github.io/PDAV/reference/knndm.md)
+  : K-fold Nearest Neighbour Distance Matching
+- [`log_message()`](https://janlinnenbrink.github.io/PDAV/reference/log_message.md)
+  : Conditional logging with verbosity levels
+- [`make_twcv_specs()`](https://janlinnenbrink.github.io/PDAV/reference/make_twcv_specs.md)
+  : Create a TWCV specification
+- [`nndm()`](https://janlinnenbrink.github.io/PDAV/reference/nndm.md) :
+  Nearest Neighbour Distance Matching (NNDM) algorithm
+- [`plot(`*`<nndm>`*`)`](https://janlinnenbrink.github.io/PDAV/reference/plot.md)
+  [`plot(`*`<knndm>`*`)`](https://janlinnenbrink.github.io/PDAV/reference/plot.md)
+  [`plot(`*`<da_cv>`*`)`](https://janlinnenbrink.github.io/PDAV/reference/plot.md)
+  : Plot PDAV classes
+- [`spatial_plus_cv()`](https://janlinnenbrink.github.io/PDAV/reference/spatial_plus_cv.md)
+  : Spatially-Aware Cross-Validation (SP-CV) Split
+
+# Articles
+
+### All vignettes
+
+- [DA-CV](https://janlinnenbrink.github.io/PDAV/articles/DA-CV.md):
+- [k-NNDM](https://janlinnenbrink.github.io/PDAV/articles/k-NNDM.md):
+- [PDAV](https://janlinnenbrink.github.io/PDAV/articles/Prediction-domain-adaptive-validation.md):
+- [TWCV](https://janlinnenbrink.github.io/PDAV/articles/twcv.md):
