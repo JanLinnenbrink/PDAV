@@ -56,13 +56,59 @@ r <- PDAV:::generate_rast()
 predictor_stack <- r[[setdiff(names(r), "outcome")]]
 cate_rasters <- which(names(r) %in% c("forest", "grass"))
 
+n_sample <- 100
+
 samples <- sam_field(
 	x = r,
-	size = 100,
+	size = n_sample,
 	method = sample_clustered(nclusters = 10, radius = 30, na.rm = TRUE)
-) |>
-	terra::extract(x = r, bind = TRUE) |>
+)
+
+predictor_vars <- names(predictor_stack)
+env_vars <- predictor_vars
+task_vars <- env_vars
+response <- "outcome"
+pred_points <- spatSample(predictor_stack, 1000, method = "regular", na.rm = TRUE, as.points = TRUE) |>
 	st_as_sf()
+
+sample_coords <- st_coordinates(samples) |> as.data.frame() |> rename("x" = X, "y" = Y)
+grid_coords <- st_coordinates(pred_points) |> as.data.frame() |> rename("x" = X, "y" = Y)
+sample_dat <- st_drop_geometry(samples) |>
+	mutate(id = row_number()) |>
+	cbind(sample_coords)
+grid_dat <- st_drop_geometry(pred_points) |>
+	mutate(id = row_number()) |>
+	cbind(grid_coords)
+
+twcv_specs <- PDAV:::make_twcv_specs(
+	predictor_vars = predictor_vars,
+	include_distance = TRUE,
+	balance_by = 0.2,
+	shrink_lambda = 0.2,
+	name = "twcv_extended"
+)
+
+fit_fun <- function(train_dat, model, response, predictor_vars = NULL, ...) {
+	if (is.null(predictor_vars)) {
+		predictor_vars <- setdiff(names(train_dat), response)
+	}
+
+	dat <- train_dat[, c(response, predictor_vars), drop = FALSE]
+
+	ranger::ranger(
+		formula = stats::reformulate(predictor_vars, response = response),
+		data = dat,
+		...
+	)
+}
+
+predict_fun <- function(fit, newdata, ...) {
+	predict(fit, data = newdata)$predictions
+}
+
+model = "rf"
+
+folds <- sample(rep(1:5, length.out = n_sample))
 ```
 
 ```{r}
@@ -88,4 +134,433 @@ ggplot() +
 # prepare_balanced_tasks_cv
 ## show binned variables with frequency for tpoints and predpoints
 # compute_twcv_weights
+```
+
+
+### 1. Compute CV losses
+
+Iterate over each fold and calculate the predictions and the resulting pointwise CV error:
+```{r}
+pred <- PDAV:::compute_cv_predictions(
+	sample_dat = sample_dat,
+	folds = folds,
+	model = model,
+	response = response,
+	fit_fun = fit_fun,
+	predict_fun = predict_fun
+)
+
+pe <- PDAV:::compute_pointwise_errors(
+	obs = sample_dat[[response]],
+	pred = pred
+)
+
+cv_losses <- data.frame(
+	id = sample_dat$id,
+	fold = folds,
+	obs = pe$obs,
+	pred = pe$pred,
+	error = pe$error,
+	se = pe$se,
+	ae = pe$ae
+)
+
+knitr::kable(head(cv_losses))
+```
+
+### 2. Compute the CV validation task and the prediction task
+
+```{r}
+d_sample <- PDAV:::nearest_neighbor_distance(
+	query_coords = sample_dat[, c("x", "y")],
+	ref_coords = sample_dat[, c("x", "y")],
+	exclude_self = TRUE
+)
+
+d_grid <- PDAV:::nearest_neighbor_distance(
+	query_coords = grid_dat[, c("x", "y")],
+	ref_coords = sample_dat[, c("x", "y")],
+	exclude_self = FALSE
+)
+
+sample_tasks <- data.frame(
+	id = sample_dat$id,
+	d = d_sample,
+	stringsAsFactors = FALSE
+)
+
+grid_tasks <- data.frame(
+	id = grid_dat$id,
+	d = d_grid,
+	stringsAsFactors = FALSE
+)
+
+for (v in env_vars) {
+	sample_tasks[[v]] <- sample_dat[[v]]
+	grid_tasks[[v]] <- grid_dat[[v]]
+}
+
+tasks <- list(
+	sample_tasks = sample_tasks,
+	grid_tasks = grid_tasks
+)
+
+sample_desc <- tasks$sample_tasks
+idx <- match(cv_losses$id, sample_desc$id)
+
+# combine CV losses with task descriptors for training points
+out <- cv_losses
+for (v in task_vars) {
+	if (!(v %in% names(sample_desc))) {
+		stop("Variable '", v, "' missing in sample_tasks.", call. = FALSE)
+	}
+	out[[v]] <- sample_desc[[v]][idx]
+}
+
+# Calculates the NND between folds based on distance matrix / matrices
+d_realized <- PDAV:::compute_cv_prediction_distances(
+	sample_dat = sample_dat,
+	folds = cv_losses$fold
+)
+
+# Update the NND attached to the training points from NND between points to NND between folds
+idx_d <- match(out$id, sample_dat$id)
+out$d <- d_realized[idx_d]
+
+aug <- list(
+	losses = out,
+	grid_tasks = tasks$grid_tasks
+)
+
+knitr::kable(head(aug$losses))
+knitr::kable(head(aug$grid_tasks))
+```
+
+
+### 3. Calculate quantiles of the balancing variables
+
+```{r}
+cv_losses <- aug$losses
+grid_tasks <- aug$grid_tasks
+
+est_list <- list(
+	unweighted = PDAV:::summarize_losses(cv_losses)
+)
+
+# weight_objects <- list()
+
+sample_tasks_bal <- PDAV:::prepare_for_balancing(
+	df = cv_losses,
+	vars = twcv_specs$twcv_extended$balancing_vars,
+	ref_df = grid_tasks,
+	by = twcv_specs$twcv_extended$balance_by
+)
+
+grid_tasks_bal <- PDAV:::prepare_for_balancing(
+	df = grid_tasks,
+	vars = twcv_specs$twcv_extended$balancing_vars,
+	ref_df = grid_tasks,
+	by = twcv_specs$twcv_extended$balance_by
+)
+
+bal <- list(
+	sample_tasks_bal = sample_tasks_bal,
+	grid_tasks_bal = grid_tasks_bal
+)
+
+knitr::kable(head(bal$sample_tasks_bal))
+knitr::kable(head(bal$grid_tasks_bal))
+```
+
+```{r plot}
+library(ggplot2)
+library(dplyr)
+library(cowplot)
+
+#-----------------------------
+# 1. Helper: order Q-levels
+#-----------------------------
+
+get_q_levels <- function(x) {
+	if (is.factor(x)) {
+		levs <- levels(x)
+	} else {
+		levs <- unique(as.character(stats::na.omit(x)))
+	}
+
+	qnum <- suppressWarnings(as.integer(sub(".*_Q", "", levs)))
+
+	if (all(!is.na(qnum))) {
+		levs[order(qnum)]
+	} else {
+		sort(levs)
+	}
+}
+
+#-----------------------------
+# 2. Create bands from existing quintile variable
+#-----------------------------
+
+make_bands_from_existing_bins <- function(ref_dat, x_var = "elev", cat_var = "elev_cat", xlim = NULL) {
+	levs <- get_q_levels(ref_dat[[cat_var]])
+
+	ranges <- ref_dat %>%
+		transmute(
+			x = .data[[x_var]],
+			cat = factor(as.character(.data[[cat_var]]), levels = levs)
+		) %>%
+		filter(!is.na(x), !is.na(cat)) %>%
+		group_by(cat) %>%
+		summarise(
+			lo = min(x),
+			hi = max(x),
+			.groups = "drop"
+		) %>%
+		arrange(cat)
+
+	# Boundaries between adjacent existing bins.
+	# Since exact cut points are not stored, these are reconstructed
+	# from adjacent observed bin ranges.
+	cuts <- (head(ranges$hi, -1) + tail(ranges$lo, -1)) / 2
+
+	if (is.null(xlim)) {
+		xlim <- range(ref_dat[[x_var]], na.rm = TRUE)
+	}
+
+	tibble(
+		cat = ranges$cat,
+		xmin = c(xlim[1], cuts),
+		xmax = c(cuts, xlim[2])
+	)
+}
+
+#-----------------------------
+# 3. Common x-range across both data frames
+#-----------------------------
+
+x_rng <- range(
+	c(
+		bal$sample_tasks_bal$elev,
+		bal$grid_tasks_bal$elev
+	),
+	na.rm = TRUE
+)
+
+#-----------------------------
+# 4. Build elevation bands using existing grid elev_cat
+#-----------------------------
+
+elev_bands <- make_bands_from_existing_bins(
+	ref_dat = bal$grid_tasks_bal,
+	x_var = "elev",
+	cat_var = "elev_cat",
+	xlim = x_rng
+)
+
+#-----------------------------
+# 5. Plot function
+#-----------------------------
+
+make_density_band_plot <- function(dat, bands, title = "", x_var = "elev", x_lab = "Elevation") {
+	ggplot(dat, aes(x = .data[[x_var]])) +
+		geom_rect(
+			data = bands,
+			aes(
+				xmin = xmin,
+				xmax = xmax,
+				ymin = -Inf,
+				ymax = Inf,
+				fill = cat
+			),
+			inherit.aes = FALSE,
+			alpha = 0.18
+		) +
+		geom_density(
+			fill = "grey70",
+			color = "grey20",
+			alpha = 0.35,
+			linewidth = 1
+		) +
+		geom_vline(
+			data = bands[-nrow(bands), ],
+			aes(xintercept = xmax),
+			inherit.aes = FALSE,
+			linetype = "dashed",
+			color = "grey30"
+		) +
+		coord_cartesian(
+			xlim = range(c(bands$xmin, bands$xmax), na.rm = TRUE)
+		) +
+		scale_fill_brewer(
+			palette = "Set2",
+			drop = FALSE
+		) +
+		labs(
+			title = title,
+			x = x_lab,
+			y = "Density",
+			fill = "Elevation quintile"
+		) +
+		theme_minimal() +
+		theme(
+			legend.position = "bottom"
+		)
+}
+
+#-----------------------------
+# 6. Create individual plots
+#-----------------------------
+
+p_sample <- make_density_band_plot(
+	dat = bal$sample_tasks_bal,
+	bands = elev_bands,
+	title = "Sample tasks",
+	x_var = "elev",
+	x_lab = "Elevation"
+)
+
+p_grid <- make_density_band_plot(
+	dat = bal$grid_tasks_bal,
+	bands = elev_bands,
+	title = "Grid tasks",
+	x_var = "elev",
+	x_lab = "Elevation"
+)
+
+#-----------------------------
+# 7. Extract shared legend
+#-----------------------------
+
+shared_legend <- cowplot::get_legend(
+	p_sample +
+		theme(
+			legend.position = "bottom",
+			legend.box = "horizontal"
+		)
+)
+
+# Remove legends from individual panels
+p_sample_noleg <- p_sample + theme(legend.position = "none")
+p_grid_noleg <- p_grid + theme(legend.position = "none")
+
+#-----------------------------
+# 8. Combine panels and shared legend
+#-----------------------------
+
+combined_plot <- cowplot::plot_grid(
+	cowplot::plot_grid(
+		p_sample_noleg,
+		p_grid_noleg,
+		nrow = 1,
+		align = "hv",
+		axis = "tblr",
+		labels = c("A", "B")
+	),
+	shared_legend,
+	ncol = 1,
+	rel_heights = c(1, 0.12)
+)
+
+combined_plot
+```
+
+### 4. Calculate frequencies for the quantiles
+
+```{r}
+balance_df <- as.data.frame(
+	lapply(twcv_specs$twcv_extended$balancing_vars, function(v) sample_tasks_bal[[paste0(v, "_cat")]])
+)
+names(balance_df) <- twcv_specs$twcv_extended$balancing_vars
+
+# Calculates proportion of predpoints in each quantile of each predictor used for weighting
+target_margins <- PDAV:::compute_target_margins_generic(
+	grid_tasks_bal = grid_tasks_bal,
+	balancing_vars = twcv_specs$twcv_extended$balancing_vars
+)
+target_margins$elev
+```
+
+### 5. Apply Raking
+
+```{r}
+margin_names <- names(target_margins)
+max_iter <- 500
+tol = 1e-6
+n <- nrow(balance_df)
+w <- rep(1, n)
+
+for (iter in seq_len(max_iter)) {
+	w_old <- w
+
+	for (m in margin_names) {
+		x <- as.integer(balance_df[[m]])
+		levs <- seq_along(target_margins[[m]])
+		target_prop <- target_margins[[m]]
+
+		# calculate the number of training points currently in each quantile
+		# uses the weights from the previous balancing variable
+		# -> already weighted, but likely not ideally for this variable
+		current_totals <- tapply(w, factor(x, levels = levs), sum)
+		current_totals[is.na(current_totals)] <- 0
+
+		# calculate the desired number of training points in each quantile that matches the target margins:
+		# Number of training points * target proportion vector
+		target_totals <- sum(w) * target_prop
+
+		adj <- rep(1, length(levs))
+		ok <- current_totals > 0
+
+		# calculates the weight needed to adjust the training point distribution to the target margins
+		# (weights > 1 are used to up-weigh underrepresented classes, weights < 1 to down-weight over-represented ones)
+		adj[ok] <- target_totals[ok] / current_totals[ok]
+		adj[!ok] <- NA_real_
+
+		valid <- !is.na(adj[x])
+		w[valid] <- w[valid] * adj[x[valid]]
+		print(paste(m, w))
+	}
+
+	# Compute the relative strength of the absolute change of weights from base (or previous) to new weights
+	rel_change <- max(abs(w - w_old) / pmax(abs(w_old), 1e-12))
+
+	# When the changes converge (i.e., when the weight difference from previous iteration to new one is small), stop and return weights
+	# (when the weights for predictor B are changed, weights for predictor A might be off again, and another iteration starts,
+	# until the diff between them is small)
+	if (rel_change < tol) break
+}
+
+converged <- iter < max_iter || rel_change < tol
+
+tw <- list(
+	weights = w,
+	converged = converged,
+	iterations = iter
+)
+```
+
+### 6. Normalize and shrink weights
+
+```{r}
+# Weights are normalized by their mean and shrinked towards 1 to mitigate extreme values
+shrink_lambda <- 0
+tw$weights_raw <- PDAV:::normalize_weights(tw$weights)
+tw$weights <- PDAV:::shrink_weights(tw$weights_raw, lambda = shrink_lambda)
+tw$shrink_lambda <- twcv_specs$twcv_extended$shrink_lambda
+tw$balancing_vars <- twcv_specs$twcv_extended$balancing_vars
+
+tw
+```
+
+### 7. Return weighted error estimates
+
+```{r}
+est_list <- PDAV:::summarize_losses(cv_losses, tw$weights)
+weight_objects <- tw
+
+list(
+	losses = cv_losses,
+	estimators = est_list,
+	weights = weight_objects,
+	twcv_specs = twcv_specs
+)
 ```

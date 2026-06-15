@@ -166,10 +166,11 @@ compute_cv_estimators <- function(
 	)
 
 	# Augments the CV validation task by calling compute_task_descriptors to prepare predictor values
-	# and NNDs between samples (not returned), and between predpoints and samples (compute_task_descriptors calls nearest_neighbor_distance which uses FNN).
+	# and NNDs between samples (not returned), and between predpoints and samples
+	# (compute_task_descriptors calls nearest_neighbor_distance which uses FNN).
 	# Furthermore, it calls compute_cv_prediction_distance to calculate NNDs between folds (pairwise_distance_matrix).
 	# Returns `losses` with sample task (NNDs between folds, CV error and predictor values) and
-	# and `grid_task` with grid task (NNDs between predpoints and samples, predictor values)
+	# `grid_task` with grid task (NNDs between predpoints and samples, predictor values)
 	log_message(verbose, 1, "Computing realized task descriptors...")
 	aug <- augment_cv_task_descriptors(
 		cv_losses = cv_losses,

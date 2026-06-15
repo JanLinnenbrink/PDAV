@@ -73,9 +73,7 @@ samples <- sam_field(
 	x = r,
 	size = 100,
 	method = sample_clustered(nclusters = 10, radius = 30, na.rm = TRUE)
-) |>
-	terra::extract(x = r, bind = TRUE) |>
-	st_as_sf()
+)
 ```
 
 ```{r}

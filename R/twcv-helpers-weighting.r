@@ -172,10 +172,13 @@ rake_weights <- function(balance_df, target_margins, base_weights = NULL, max_it
 			target_prop <- target_margins[[m]]
 
 			# calculate the number of training points currently in each quantile
+			# uses the weights from the previous balancing variable
+			# -> already weighted, but likely not ideally for this variable
 			current_totals <- tapply(w, factor(x, levels = levs), sum)
 			current_totals[is.na(current_totals)] <- 0
 
-			# calculate the desired number of training points in each quantile that matches the target margins
+			# calculate the desired number of training points in each quantile that matches the target margins:
+			# Number of training points * target proportion vector
 			target_totals <- sum(w) * target_prop
 
 			adj <- rep(1, length(levs))
@@ -188,6 +191,7 @@ rake_weights <- function(balance_df, target_margins, base_weights = NULL, max_it
 
 			valid <- !is.na(adj[x])
 			w[valid] <- w[valid] * adj[x[valid]]
+			print(paste(m, w))
 		}
 
 		# Compute the relative strength of the absolute change of weights from base (or previous) to new weights
