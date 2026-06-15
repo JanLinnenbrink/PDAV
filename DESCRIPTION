@@ -7,7 +7,6 @@ Description: What the package does (one paragraph).
 License: GPL (>= 3)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
 Imports: 
     caret,
     CAST,
@@ -39,3 +38,5 @@ Suggests:
 VignetteBuilder: knitr
 Remotes:
     Nowosad/simsam
+Config/roxygen2/version: 8.0.0
+URL: https://janlinnenbrink.github.io/PDAV/
