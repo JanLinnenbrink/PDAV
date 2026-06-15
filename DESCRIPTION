@@ -34,7 +34,8 @@ Suggests:
     dplyr,
     tidyr,
     cowplot,
-    colorspace
+    colorspace,
+    ggthemes
 VignetteBuilder: knitr
 Remotes:
     Nowosad/simsam

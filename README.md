@@ -6,11 +6,12 @@ This repository is a collection of prediction-domain adaptive validation methods
 3) providing an [overview](vignettes/Prediction-domain-adaptive-validation.Rmd) over the developed methods.
 
 As such, the repository is expected to grow and include newly developed methods falling in the class of prediction-domain adaptive validation.
+It is still work-in-progress, so please reach out if you find inaccuracies or want to add methods.
 
 
 ## Overview over the currently developed methods:
 
-Below, you can find a technical comparison of the different approaches.
+Below, you can find a technical comparison of the different approaches:
 
 | Method | Authors | Short Description | Critical Parameters |
 | ----------- | ----------- | ----------- | ----------- |
@@ -19,7 +20,7 @@ Below, you can find a technical comparison of the different approaches.
 | [DA-CV](R/da_cv.R) |  [Wang et al. (2025)](https://doi.org/10.1016/j.ecoinf.2025.103287) | - Uses **adversial validation** to classify the prediction area into locations that are similar or dissimilar to the training samples.<br>- Returns a random and a spatial resampling split.<br>- The validation statistics obtained by these two splits are then **weighted by the proportion of similar or dissimilar areas**, respectively. | - `autoc_threshold`: block size in spatial cross-validation |
 | [TWCV](R/twcv.R) |  [Brenning & Suisse (2026)](https://doi.org/10.48550/arXiv.2603.29981) | - Uses **raking** to weight the error estimates at the training points to match the frequency distribution of the predictor variables at the prediction locations | -  |
 
-As a guideline for choosing an appropriate method, the table below summarises some advantages and disadvantages of the different methods.
+The table below summarises some advantages and disadvantages of the different methods (based on my subjective impression):
 
 | Method | Advantages | Disadvantages |
 | ----------- | ----------- | ----------- |
