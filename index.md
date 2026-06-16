@@ -1,59 +1,27 @@
 # PDAV
 
-This repository is a collection of prediction-domain adaptive validation
-methods. Due to the growing application of spatial predictive models in
-geoscientific fields, there is also a growing need for reliable
-validation of the resulting maps. Prediction-domain adaptive validation
-methods provide reliable proxies of map accuracies that can be used
-during model selection and also – in the absence of an independent
-probability sample – as a proxy of the final map accuracy. This
-repository aims at:
+Prediction-domain adaptive validation methods provide estimates of map
+accuracy that are adapted to the deployment or prediction domain.
 
-1.  collecting and consistently
-    [implementing](https://janlinnenbrink.github.io/PDAV/R/)
-    prediction-domain adaptive validation methods applicable for spatial
-    predictive modelling.
-2.  providing
-    [vignettes](https://janlinnenbrink.github.io/PDAV/vignettes/) that
-    describe their functioning and application.
-3.  providing an
-    [overview](https://janlinnenbrink.github.io/PDAV/vignettes/Prediction-domain-adaptive-validation.Rmd)
-    over the developed methods.
+The package aims to:
 
-As such, the repository is expected to grow and include newly developed
-methods falling in the class of prediction-domain adaptive validation.
-It is still work-in-progress, so please reach out if you find
-inaccuracies or want to add methods.
+1.  provide consistent implementations of prediction-domain adaptive
+    validation methods for spatial predictive modelling;
+2.  provide vignettes that describe how the methods work and how they
+    can be applied;
+3.  provide an overview of currently available methods.
 
-## Overview over the currently developed methods:
+## Available methods
 
-Below, you can find a technical comparison of the different approaches:
+| Method | Main idea | Reference | Documentation |
+|----|----|----|----|
+| NNDM | Leave-one-out nearest-neighbour distance matching. Matches the nearest-neighbour distance distribution encountered during prediction by excluding training points from the LOO CV. | [Milà et al. (2022)](https://doi.org/10.1111/2041-210X.13851) | [Function](https://janlinnenbrink.github.io/PDAV/reference/nndm.md), [Article](https://janlinnenbrink.github.io/PDAV/articles/NNDM.md) |
+| kNNDM | k-fold nearest-neighbour distance matching. Uses clustering to create fold configurations ranging from random to spatially clustered CV and selects the configuration that best approximates the prediction situation. | [Linnenbrink & Milà et al. (2024)](https://doi.org/10.5194/gmd-17-5897-2024) | [Function](https://janlinnenbrink.github.io/PDAV/reference/knndm.md), [Article](https://janlinnenbrink.github.io/PDAV/articles/k-NNDM.md) |
+| DA-CV | Uses adversarial validation to classify the prediction area into (dis-)similar to the training data, and then weights random and spatial CV results based on the proportion of the two areas. | [Wang et al. (2025)](https://doi.org/10.1016/j.ecoinf.2025.103287) | [Function](https://janlinnenbrink.github.io/PDAV/reference/da_cv.md), [Article](https://janlinnenbrink.github.io/PDAV/articles/DA-CV.md) |
+| TWCV | Uses raking to weight the error estimates at the training points to match the frequency distribution of the predictor variables at the prediction locations. | [Brenning & Suesse (2026)](https://doi.org/10.48550/arXiv.2603.29981) | [Function](https://janlinnenbrink.github.io/PDAV/reference/compute_cv_estimators.md), [Article](https://janlinnenbrink.github.io/PDAV/articles/TWCV.md) |
 
-[TABLE]
+## Detailed comparison
 
-The table below summarises some advantages and disadvantages of the
-different methods (based on my subjective impression):
-
-[TABLE]
-
-## List of research papers
-
-- Milà, C., Mateu, J., Pebesma, E., Meyer, H. (2022): Nearest Neighbour
-  Distance Matching Leave-One-Out Cross-Validation for map validation.
-  Methods in Ecology and Evolution 00, 1– 13.
-  <https://doi.org/10.1111/2041-210X.13851>
-
-- Linnenbrink, J., Milà, C., Ludwig, M., and Meyer, H. (2024): kNNDM:
-  k-fold Nearest Neighbour Distance Matching Cross-Validation for map
-  accuracy estimation. GMD, 17, 5897–5912.
-  <https://doi.org/10.5194/gmd-17-5897-2024>
-
-- Wang, Y., Khodadadzadeh, M. and Zurita-Milla, R. (2025): A
-  dissimilarity-adaptive cross-validation method for evaluating
-  geospatial machine learning predictions with clustered samples.
-  Ecological Informatics 90, 1574-9541.
-  <https://doi.org/10.1016/j.ecoinf.2025.103287>
-
-- Brenning, A., Suesse, T (2026): Aligning Validation with Deployment in
-  Spatial Prediction: Target-Weighted Cross-Validation. Preprint.
-  <https://arxiv.org/abs/2603.29981>
+For a more detailed comparison of advantages, disadvantages, and
+assumptions, see the [overview
+article](https://janlinnenbrink.github.io/PDAV/vignettes/Prediction-domain-adaptive-validation.md).

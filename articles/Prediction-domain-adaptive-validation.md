@@ -2,10 +2,19 @@
 
 ## Introduction
 
-This document gives an overview over the prediction-domain adaptive
-validation methods currently implemented.
+This vignette provides an overview over the different methods of
+prediction-domain adaptive evaluation. First, I will briefly summarize
+the (dis-)advantages of the different methods (based on my subjective
+impression), and then I will briefly show how they work using a
+simulated case study with three different sampling designs. For a more
+detailed description of the methods, please refer to the dedicated
+vignettes.
 
-## Setup
+## Overview of the currently developed methods:
+
+[TABLE]
+
+## Case Study
 
 ``` r
 
@@ -40,7 +49,7 @@ library(ggnewscale)
 set.seed(100)
 ```
 
-## Simulate predictors and response
+### Simulate predictors and response
 
 ``` r
 
@@ -55,7 +64,7 @@ samples <- PDAV:::generate_samples(r, 100)
 
 ![](Prediction-domain-adaptive-validation_files/figure-html/unnamed-chunk-4-1.png)
 
-## DA-CV
+### DA-CV
 
 DA-CV (Wang et al. (2025a)) uses adversial validation (AV) to predict
 the probability that a prediction location is similar to the training
@@ -202,9 +211,11 @@ weighted_RMSE <- lapply(unique(samples$sampling), function(smpling) {
 The RMSE obtained by DA-CV are 0.038 for the random sampling design,
 0.05 for the biased sampling and 0.054 for the clustered design.
 
-## kNNDM CV
+### kNNDM CV
 
-## NNDM CV
+### NNDM CV
+
+### TWCV
 
 Wang, Yanwen, Mahdi Khodadadzadeh, and Raúl Zurita-Milla. 2023.
 “Spatial+: A New Cross-Validation Method to Evaluate Geospatial Machine

@@ -35,6 +35,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/DA-CV.html">DA-CV</a></li>
     <li><a class="dropdown-item" href="../articles/k-NNDM.html">k-NNDM</a></li>
+    <li><a class="dropdown-item" href="../articles/NNDM.html">NNDM</a></li>
     <li><a class="dropdown-item" href="../articles/Prediction-domain-adaptive-validation.html">PDAV</a></li>
     <li><a class="dropdown-item" href="../articles/twcv.html">TWCV</a></li>
   </ul>
@@ -69,11 +70,95 @@
 <div class="section level2">
 <h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
-<p>This document gives an overview over the prediction-domain adaptive
-validation methods currently implemented.</p>
+<p>This vignette provides an overview over the different methods of
+prediction-domain adaptive evaluation. First, I will briefly summarize
+the (dis-)advantages of the different methods (based on my subjective
+impression), and then I will briefly show how they work using a
+simulated case study with three different sampling designs. For a more
+detailed description of the methods, please refer to the dedicated
+vignettes.</p>
 </div>
 <div class="section level2">
-<h2 id="setup">Setup<a class="anchor" aria-label="anchor" href="#setup"></a>
+<h2 id="overview-of-the-currently-developed-methods">Overview of the currently developed methods:<a class="anchor" aria-label="anchor" href="#overview-of-the-currently-developed-methods"></a>
+</h2>
+<table class="table">
+<colgroup>
+<col width="25%">
+<col width="25%">
+<col width="25%">
+<col width="25%">
+</colgroup>
+<thead><tr class="header">
+<th>Method</th>
+<th>Advantages</th>
+<th>Disadvantages</th>
+<th>Critical Parameters</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td><a href="R/nndm.R">NNDM</a></td>
+<td>- <strong>direct quantification of the prediction situation</strong>
+through nearest-neighbour distances<br>- <strong>NND plots</strong>
+reveal situations where prediction situation cannot be matched during
+CV<br>- works natively with <strong>distances in the geographic or
+feature space</strong>
+</td>
+<td>- <strong>high computational costs</strong> since it uses
+LOO-CV<br>- <strong>May remove large fractions of the training
+samples</strong> and thus lead to unstable models<br>- depends on the
+estimated autocorrelation range (though not so important as in spatial+
+CV used in DA-CV)</td>
+<td>- <code>phi</code>: Autocorrelation threshold up to which
+Nearest-Neighbour distances are matched<br>- <code>min_train</code>:
+fold balancing</td>
+</tr>
+<tr class="even">
+<td><a href="R/knndm.R">kNNDM</a></td>
+<td>- <strong>direct quantification of the prediction situation</strong>
+through nearest-neighbour distances<br>- <strong>NND plots</strong>
+reveal situations where prediction situation cannot be matched during
+CV<br>- more computational efficient than NNDM<br>- works natively with
+<strong>distances in the geographic or feature space</strong>
+</td>
+<td>- <strong>less flexible</strong> in matching the NND distributions
+than NNDM</td>
+<td>- <code>maxp</code>: maximum fold size allowed: higher numbers lead
+to more imbalanced splits, but also may resemble the prediction
+situation better</td>
+</tr>
+<tr class="odd">
+<td><a href="R/da_cv.R">DA-CV</a></td>
+<td>- creates a <strong>map that depicts areas of inter- vs
+extrapolation</strong>, which can be useful for subsequent sampling or
+for uncertainty assessment</td>
+<td>- <strong>less direct</strong> approximation of the prediction
+situation<br>- No inspection method available to <strong>assess if the
+prediction situation can be matched</strong> during CV<br>- Matches the
+prediction situation in the feature space, but <strong>mixes
+spaces</strong> in the spatial+ resampling method<br>- requires
+calculating the weighted <strong>average of two validation
+statistics</strong>, which might be problematic for metrics other than
+RMSE</td>
+<td>- <code>autoc_threshold</code>: block size in spatial
+cross-validation</td>
+</tr>
+<tr class="even">
+<td><a href="R/twcv.R">TWCV</a></td>
+<td>- applies <strong>weighting</strong> to match the prediction
+situation, which is more flexible than resampling-based matching of the
+prediction situation</td>
+<td>- <strong>integration of geographic distances</strong> implicit and
+weighting of the predictor vs geographical space is automatically done
+by the raking algorithm<br>- Depends on the resampling method (e.g.,
+random resampling might not create geographical distances that are
+comparable to the prediction situation)</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section level2">
+<h2 id="case-study">Case Study<a class="anchor" aria-label="anchor" href="#case-study"></a>
 </h2>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://janlinnenbrink.github.io/PDAV/">PDAV</a></span><span class="op">)</span></span>
@@ -105,10 +190,9 @@ validation methods currently implemented.</p>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://eliocamp.github.io/ggnewscale/" class="external-link">ggnewscale</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">100</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level2">
-<h2 id="simulate-predictors-and-response">Simulate predictors and response<a class="anchor" aria-label="anchor" href="#simulate-predictors-and-response"></a>
-</h2>
+<div class="section level3">
+<h3 id="simulate-predictors-and-response">Simulate predictors and response<a class="anchor" aria-label="anchor" href="#simulate-predictors-and-response"></a>
+</h3>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu">PDAV</span><span class="fu">:::</span><span class="fu">generate_rast</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">predictor_stack</span> <span class="op">&lt;-</span> <span class="va">r</span><span class="op">[[</span><span class="fu"><a href="https://generics.r-lib.org/reference/setops.html" class="external-link">setdiff</a></span><span class="op">(</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">r</span><span class="op">)</span>, <span class="st">"outcome"</span><span class="op">)</span><span class="op">]</span><span class="op">]</span></span>
@@ -118,9 +202,9 @@ validation methods currently implemented.</p>
 <p><img src="Prediction-domain-adaptive-validation_files/figure-html/unnamed-chunk-3-1.png" class="r-plt" alt="" width="576"></p>
 <p><img src="Prediction-domain-adaptive-validation_files/figure-html/unnamed-chunk-4-1.png" class="r-plt" alt="" width="576"></p>
 </div>
-<div class="section level2">
-<h2 id="da-cv">DA-CV<a class="anchor" aria-label="anchor" href="#da-cv"></a>
-</h2>
+<div class="section level3">
+<h3 id="da-cv">DA-CV<a class="anchor" aria-label="anchor" href="#da-cv"></a>
+</h3>
 <p>DA-CV (<span class="citation">Wang et al. (2025a)</span>) uses
 adversial validation (AV) to predict the probability that a prediction
 location is similar to the training samples. Then it calculates a RMSE
@@ -254,13 +338,17 @@ to calculate the weighted RMSE of a spatial predictive model.</p>
 <p>The RMSE obtained by DA-CV are 0.038 for the random sampling design,
 0.05 for the biased sampling and 0.054 for the clustered design.</p>
 </div>
-<div class="section level2">
-<h2 id="knndm-cv">kNNDM CV<a class="anchor" aria-label="anchor" href="#knndm-cv"></a>
-</h2>
+<div class="section level3">
+<h3 id="knndm-cv">kNNDM CV<a class="anchor" aria-label="anchor" href="#knndm-cv"></a>
+</h3>
 </div>
-<div class="section level2 unnumbered">
-<h2 class="unnumbered" id="nndm-cv">NNDM CV<a class="anchor" aria-label="anchor" href="#nndm-cv"></a>
-</h2>
+<div class="section level3">
+<h3 id="nndm-cv">NNDM CV<a class="anchor" aria-label="anchor" href="#nndm-cv"></a>
+</h3>
+</div>
+<div class="section level3 unnumbered">
+<h3 class="unnumbered" id="twcv">TWCV<a class="anchor" aria-label="anchor" href="#twcv"></a>
+</h3>
 <div id="refs" class="references csl-bib-body hanging-indent">
 <div id="ref-Wang2023" class="csl-entry">
 Wang, Yanwen, Mahdi Khodadadzadeh, and Raúl Zurita-Milla. 2023.
@@ -280,6 +368,7 @@ Wang, Yanwen, Mahdi Khodadadzadeh, and Raúl Zurita-Milla. 2025b.
 <span>“On the Use of Adversarial Validation for Quantifying
 Dissimilarity in Geospatial Machine Learning Prediction.”</span>
 <em>GIScience &amp; Remote Sensing</em> 62 (1): 2460513. <a href="https://doi.org/10.1080/15481603.2025.2460513" class="external-link">https://doi.org/10.1080/15481603.2025.2460513</a>.
+</div>
 </div>
 </div>
 </div>
