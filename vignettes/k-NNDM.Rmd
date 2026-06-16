@@ -1,6 +1,7 @@
 ---
 title: "k-NNDM"
 output: rmarkdown::html_vignette
+bibliography: references.bib
 vignette: >
   %\VignetteIndexEntry{k-NNDM}
   %\VignetteEngine{knitr::rmarkdown}
@@ -15,14 +16,49 @@ As NNDM, kNNDM also matches the distribution of nearest-neighbour distances (NND
 
 The more detailed workflow is:
 
-1. Conmpute the distribution of NNDs between training samples ($G_j$), as well as between prediction locations and training samples ($G_{ij}$).
-2. Use the KS-test to evaluate wether $G_j >= G_{ij}$, i.e., wether the samples are randomly distributed in the prediction area.
-3. A) If $G_j >= G_{ij}$; return a random CV split and stop the algorithm here.
-3. B) Otherwise, continue by clustering the training points into $q \in Q$, where $Q = [k, ..., N]$. This yields a gradient from $k$ clusters (i.e., one cluster per fold) to $N$ clusters (i.e., one cluster per training sample).
-4. The $q$ clusters are then merged along the first principal component of the training points coordinates' until $k$ is reached. This means that for $q = N$, nothing happens and a strongly clustered fold configuration is returned. For $q = N$, a random fold assignment is returned. For everything in-between ($q>k<N$), a gradient from strongly to weak clustered folds is returned.
-5.  For each of the $q$ fold configurations, the NND distribution between the unique folds is calculated ($G_{j}^*$), and the distance between $G_j^*$ and $G_{ij}$ is calculated using the Wasserstein statistic (W).
-6. The fold configuration yielding the lowest W is returned.
+<ol>
+<li>
+Compute the distribution of NNDs between training samples,
+G<sub>j</sub>, as well as between prediction locations and training samples,
+G<sub>ij</sub>.
+</li>
 
+<li>
+Use the KS-test to evaluate whether G<sub>j</sub> ≥ G<sub>ij</sub>,
+i.e. whether the samples are randomly distributed in the prediction area.
+</li>
+
+<li>
+Depending on the KS-test result:
+
+<ol type="A">
+<li>
+If G<sub>j</sub> ≥ G<sub>ij</sub>, return a random CV split and stop the algorithm here.
+</li>
+
+<li>
+Otherwise, continue by clustering the training points into q ∈ Q,
+where Q = [k, …, N].
+</li>
+</ol>
+</li>
+
+<li>
+The q clusters are then merged along the first principal component of the
+training-point coordinates until k folds are reached.
+</li>
+
+<li>
+For each of the q fold configurations, the NND distribution between the unique
+folds is calculated, G<sub>j</sub><sup>*</sup>, and the distance between
+G<sub>j</sub><sup>*</sup> and G<sub>ij</sub> is calculated using the
+Wasserstein statistic, W.
+</li>
+
+<li>
+The fold configuration yielding the lowest W is returned.
+</li>
+</ol>
 
 ## Setup
 ```{r, include = FALSE}
@@ -62,7 +98,6 @@ samples <- select(samples, point_id)
 #| fig-width: 8
 #| fig-height: 4
 #| echo: false
-
 ggplot() +
 	geom_spatraster(data = r) +
 	coord_sf(expand = FALSE, datum = st_crs(r)) +
@@ -86,15 +121,14 @@ ggplot() +
 ## kNNDM in geographical space
 
 
-### 1. Compute $G_j$ and $G_{ij}$
+### 1. Compute G<sub>j</sub> and G<sub>ij</sub>
 
-Firstly, the kNNDM algorithm calcuates the distribution of NND between samples ($G_j$), as well as the distribution of NNDs between prediction points and samples ($G_{ij}$). The calculation of NNDs is shown in the following figure: the nearest neighbour distance between samples is shown in the left panel, while the right panel shows nearest neighbour distances between prediction points and samples.
+Firstly, the kNNDM algorithm calcuates the distribution of NND between samples (G<sub>j</sub>), as well as the distribution of NNDs between prediction points and samples (G<sub>ij</sub>). The calculation of NNDs is shown in the following figure: the nearest neighbour distance between samples is shown in the left panel, while the right panel shows nearest neighbour distances between prediction points and samples.
 
 ```{r}
 #| fig-width: 8
 #| fig-height: 4
 #| echo: false
-
 prediction_points <- spatSample(r, size = 1000, method = "regular", as.points = TRUE) |>
 	st_as_sf()
 
@@ -171,7 +205,6 @@ Gij <- c(FNN::knnx.dist(
 #| fig-height: 4
 #| echo: false
 #| warning: false
-
 myColors <- RColorBrewer::brewer.pal(3, "Dark2")
 
 Gij_df <- data.frame(r = Gij[order(Gij)])
@@ -201,9 +234,9 @@ ggplot(
 	theme(legend.position = "bottom", legend.text = element_text(size = 14), legend.title.position = "top")
 ```
 
-### 2. Test wether $G_j <= G_{ij}$
+### 2. Test wether G<sub>j</sub> <= G<sub>ij</sub>
 
-Next, we test if $G_j$ <= $G_{ij}$, which would imply a random sampling design. In that case, the algorithm would stop and return a random fold assignment. However, as can bee seen below (and also from the figure above), this is not the case:
+Next, we test if G<sub>j</sub> <= G<sub>ij</sub>, which would imply a random sampling design. In that case, the algorithm would stop and return a random fold assignment. However, as can bee seen below (and also from the figure above), this is not the case:
 
 ```{r}
 testks <- suppressWarnings(stats::ks.test(Gj, Gij, alternative = "great"))
@@ -211,9 +244,9 @@ testks$p.value >= 0.05
 ```
 
 
-### 3. Cluster samples into $q$ clusters
+### 3. Cluster samples into <em>q</em> clusters
 
-Next, we cluster the training points into $q$ clusters, where $q \in Q$ and $Q = [k, ..., N]$. This means, that $q$ is a integer sequence ranging from the number of folds $k$ to the number of training points $N$. The length of this sequence is by default 100, but for visualization purposes it is reduced to 3 here.
+Next, we cluster the training points into <em>q</em> clusters, where <em>q</em> ∈ <em>Q</em> and <em>Q</em> = [<em>k</em>, …, <em>N</em>]. This means that <em>q</em> is an integer sequence ranging from the number of folds, <em>k</em>, to the number of training points, <em>N</em>. The length of this sequence is 100 by default, but for visualization purposes it is reduced to 3 here.
 
 ```{r}
 nk_length <- 3
@@ -244,14 +277,13 @@ for (nk in clustgrid$nk) {
 clustgrid
 ```
 
-The sampled sequence of $q$ clusters is in this case `r clustgrid$nk`. The following figure shows the training points coloured by their cluster for each of the $q$ clusters:
+The sampled sequence of <em>q</em> clusters is in this case `r clustgrid$nk`. The following figure shows the training points coloured by their cluster for each of the <em>q</em> clusters:
 
 ```{r}
 #| fig-width: 8
 #| fig-height: 4
 #| echo: false
 #| warning: false
-
 for (nk in clustgrid$nk) {
 	nk_df[[nk]] <- data.frame(
 		"clust_nk" = clust_nk[[nk]],
@@ -294,9 +326,9 @@ lapply(seq_along(nk_df_sf), function(i) {
 ```
 
 
-### 4. Merge the $q$ clusters along their first PC into $k$ folds
+### 4. Merge the <em>q</em> clusters along their first PC into <em>k</em> folds
 
-The $q$ clusters are then merged along the first principal component of the samples coordinates if $q > k$. This prevents contigous clusters to end up in the same fold.
+The <em>q</em> clusters are then merged along the first principal component of the samples coordinates if <em>q</em> &gt; <em>k</em>. This prevents contigous clusters to end up in the same fold.
 
 Therefore, we first calculate the PCA over the samples coordinates to capture the axis of largest spatial variation (first PC, red arrow):
 
@@ -308,7 +340,6 @@ pcacoords <- stats::prcomp(sample_coords, center = TRUE, scale. = FALSE, rank = 
 #| fig-width: 8
 #| fig-height: 4
 #| echo: false
-
 samples$pca <- pcacoords$x
 center <- pcacoords$center
 rotation_vector <- pcacoords$rotation[, 1]
@@ -348,7 +379,7 @@ ggplot() +
 	theme(panel.grid = element_blank())
 ```
 
-Then, we order the $q$ clusters according to the first principal component:
+Then, we order the <em>q</em> clusters according to the first principal component:
 ```{r}
 for (nk in clustgrid$nk) {
 	# compute cluster centroids and project that centroid to the first PC
@@ -367,7 +398,6 @@ for (nk in clustgrid$nk) {
 #| fig-width: 8
 #| fig-height: 4
 #| echo: false
-
 plot_nk <- list()
 for (nk in clustgrid$nk) {
 	plot_nk[[nk]] <- full_join(
@@ -397,7 +427,7 @@ ggplot() +
 	theme(legend.position = "right", panel.grid = element_blank())
 ```
 
-And lastly, we merge the $q$ clusters along the first principal component:
+And lastly, we merge the <em>q</em> clusters along the first principal component:
 
 ```{r}
 clust_k <- list()
@@ -435,7 +465,6 @@ for (nk in clustgrid$nk) {
 #| fig-width: 8
 #| fig-height: 4
 #| echo: false
-
 tabclust2_clean <- tabclust2[lapply(tabclust2, length) > 0]
 tabclust2_sf <- lapply(tabclust2_clean, function(x) {
 	coords <- st_coordinates(samples) |> as.data.frame()
@@ -475,7 +504,7 @@ ggplot() +
 	theme(legend.position = "right", panel.grid = element_blank())
 ```
 
-### 5. Calculate $G_j^*$ for each $q$ configuration and calculate $W$
+### 5. Calculate G<sub>j</sub><sup>*</sup> for each <em>q</em> configuration and calculate <em>W</em>
 
 ```{r}
 distclust_euclidean <- function(tr_coords, folds) {
@@ -505,7 +534,6 @@ for (nk in clustgrid$nk) {
 #| fig-width: 8
 #| fig-height: 6
 #| echo: false
-
 Gplot <- list()
 for (nk in clustgrid$nk) {
 	Gjstar_df <- data.frame(r = Gjstar_i[[nk]], Function = "2_Gjstar(r)")
@@ -538,7 +566,7 @@ clustgrid
 ```
 
 
-### 6. Return the configuration yielding the lowest $W$
+### 6. Return the configuration yielding the lowest <em>W</em>
 ```{r}
 k_final <- clustgrid$nk[which.min(clustgrid$W)]
 W_final <- min(clustgrid$W, na.rm = T)
@@ -554,7 +582,6 @@ The following plot shows the training samples with their final fold assignment:
 #| fig-width: 8
 #| fig-height: 4
 #| echo: false
-
 samples$fold <- clust
 
 ggplot() +
@@ -565,7 +592,6 @@ ggplot() +
 	theme_bw() +
 	theme(panel.grid = element_blank(), legend.position = "right") +
 	labs(x = "", y = "")
-
 ```
 
 

@@ -1,0 +1,39 @@
+/* Reduce excessive spacing caused by inline math in pkgdown articles */
+.template-article .contents .katex,
+.template-article .contents .math,
+.template-article .contents span.math {
+  line-height: 1 !important;
+  font-size: 1em !important;
+  vertical-align: baseline !important;
+}
+
+/* Keep article text compact */
+.template-article .contents p {
+  line-height: 1.4 !important;
+  margin-top: 0 !important;
+  margin-bottom: 0.7rem !important;
+}
+
+.template-article .contents h2 {
+  margin-top: 1.8rem !important;
+  margin-bottom: 0.7rem !important;
+}
+
+.template-article .contents h3 {
+  margin-top: 1.3rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.template-article .contents li {
+  line-height: 1.4 !important;
+  margin-bottom: 0.25rem !important;
+}
+
+.template-article .contents li > p {
+  margin-top: 0 !important;
+  margin-bottom: 0.25rem !important;
+}
+
+.template-article .contents pre {
+  line-height: 1.25 !important;
+}

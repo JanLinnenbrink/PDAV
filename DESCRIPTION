@@ -1,9 +1,9 @@
 Package: PDAV
-Title: What the Package Does (One Line, Title Case)
+Title: Collection of prediction-domain adaptive evaluation methods
 Version: 0.0.0.9000
 Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
+    person("Jan", "Linnenbrink", , "jan.linnenbrink@uni-muenster.de", role = c("aut", "cre"))
+Description: Collection of prediction-domain adaptive evaluation methods.
 License: GPL (>= 3)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

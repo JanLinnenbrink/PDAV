@@ -49,7 +49,6 @@ samples <- PDAV:::generate_samples(r, 100)
 #| fig-width: 6
 #| fig-height: 4
 #| echo: false
-
 ggplot() +
 	geom_spatraster(data = r) +
 	coord_sf(expand = FALSE, datum = st_crs(r)) +
@@ -64,7 +63,6 @@ ggplot() +
 #| fig-width: 6
 #| fig-height: 4
 #| echo: false
-
 ggplot() +
 	geom_spatraster(data = r$outcome) +
 	scale_fill_viridis_c("outcome") +
@@ -84,7 +82,6 @@ Then it calculates a RMSE based on random CV, as well as spatial+ CV (@Wang2023)
 
 ```{r}
 #| warning: false
-
 results <- lapply(unique(samples$sampling), function(smpling) {
 	samples_smpl <- samples |>
 		filter(sampling == smpling) |>
@@ -102,18 +99,35 @@ results <- lapply(unique(samples$sampling), function(smpling) {
 })
 
 names(results) <- unique(samples$sampling)
-
 ```
 
-For randomly distributed samples, the AV classifier has a performance of $AUC = `r round(results$random$auc, 1)`$. This is then normalized to $D = 0$, because the classifier is not better than randomly guessing if a prediction location is similiar or dissimilar (see @Wang2025b, section 2.1 for more information). The threshold is then calculated as $T(D) = 0.5 * 0$, which is 0. This means that all prediction locations are similar to the training 1, and no extrapolation is required, as can be seen in the following map. All weights will be given to random CV. 
+```{r da-cv-values, include=FALSE}
+auc_random <- round(results$random$auc, 1)
 
-For clustered samples, the AV classifier achieves a performance of $AUC = `r round(results$clustered$auc, 2)`$. This leads to $D = \frac{`r round(results$clustered$auc, 2)` - 0.5}{1 - 0.5} = `r (round(results$clustered$auc, 2) - 0.5) / 0.5`$. The threshold is then $T(D) = 0.5* `r (round(results$clustered$auc, 2) - 0.5) / 0.5` = `r 0.5*((round(results$clustered$auc, 1) - 0.5) / 0.5)`$. Hence, all prediction cells with a similarity score lower than `r 0.5*((round(results$clustered$auc, 1) - 0.5) / 0.5)` are classified as dissimilar. The relative fraction of prediction locations being similar ro the sampling locations is `r round(results$clustered$weights[["similar"]], 2)`, while the fraction being dissimilar is `r round(results$clustered$weights[["different"]], 2)`.
+auc_clustered <- round(results$clustered$auc, 2)
+D_clustered <- (auc_clustered - 0.5) / 0.5
+T_clustered <- 0.5 * D_clustered
+
+w_similar <- round(results$clustered$weights[["similar"]], 2)
+w_dissimilar <- round(results$clustered$weights[["different"]], 2)
+```
+
+For randomly distributed samples, the AV classifier has a performance of AUC = `r auc_random`.
+This is then normalized to D = 0, because the classifier is not better than random guessing at distinguishing whether a prediction location is similar or dissimilar to the training samples; see @Wang2025b, section 2.1, for more information.
+The threshold is then calculated as T(D) = 0.5 × 0, which is 0.
+This means that all prediction locations are considered similar to the training samples, and no extrapolation correction is required, as shown in the following map.
+Consequently, all weight is assigned to random CV.
+
+For clustered samples, the AV classifier achieves a performance of AUC = `r auc_clustered`.
+This leads to D = (`r auc_clustered` - 0.5) / (1 - 0.5) = `r round(D_clustered, 2)`.
+The threshold is then T(D) = 0.5 × `r round(D_clustered, 2)` = `r round(T_clustered, 2)`.
+Hence, all prediction cells with a similarity score lower than `r round(T_clustered, 2)` are classified as dissimilar.
+The relative fraction of prediction locations classified as similar to the sampling locations is `r w_similar`, while the fraction classified as dissimilar is `r w_dissimilar`.
 
 ``` {r}
 #| fig-width: 12
 #| fig-height: 5
 #| fig-cap: "Figure 3: Similarity maps resulting from the AV classifier."
-
 lapply(unique(samples$sampling), function(smpling) {
 	plot(results[[smpling]]) +
 		new_scale_fill() +
@@ -126,7 +140,6 @@ lapply(unique(samples$sampling), function(smpling) {
 		)
 }) |>
 	plot_grid(plotlist = _, nrow = 1, align = "vh")
-
 ```
 
 Lastly, the resulting cross-validation fold assignments can be used to calculate the weighted RMSE of a spatial predictive model.
@@ -186,14 +199,12 @@ weighted_RMSE <- lapply(unique(samples$sampling), function(smpling) {
 	prediction <- predict(r, rand_mod)
 	list(err_stats_weighted, prediction)
 })
-
 ```
 
 ```{r}
 #| fig-width: 6
 #| fig-height: 8
 #| echo: false
-
 samples_long <- lapply(unique(samples$sampling), function(smpling) {
 	samples_smpl <- samples |>
 		filter(sampling == smpling) |>
@@ -229,7 +240,6 @@ ggplot() +
 	theme_bw() +
 	theme(panel.grid = element_blank(), legend.position = "right") +
 	labs(x = "", y = "")
-
 ```
 
 The RMSE obtained by DA-CV are `r round(weighted_RMSE[[1]][[1]], 3)` for the random sampling design, `r round(weighted_RMSE[[2]][[1]], 3)` for the biased sampling and `r round(weighted_RMSE[[3]][[1]], 3)` for the clustered design.
