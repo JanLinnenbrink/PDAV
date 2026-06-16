@@ -3,38 +3,36 @@
 ## Introduction
 
 k-fold nearest-neighbour distance matching (kNNDM) cross-validation was
-developed by @Linnenbrink2024. It is the k-fold version of NNDM
-(@Mila2022), and as such much faster and better suited towards medium to
-large sized datasets. As NNDM, kNNDM also matches the distribution of
-nearest-neighbour distances (NND) between prediction locations and
-training samples during CV, but opposed to NNDM uses a clustering
-algorithm instead of excluding training samples.
+developed by Linnenbrink et al. (2024). It is the k-fold version of NNDM
+(Milà et al. (2022)), and as such much faster and better suited towards
+medium to large sized datasets. As NNDM, kNNDM also matches the
+distribution of nearest-neighbour distances (NND) between prediction
+locations and training samples during CV, but opposed to NNDM uses a
+clustering algorithm instead of excluding training samples.
 
 The more detailed workflow is:
 
-1.  Conmpute the distribution of NNDs between training samples
-    ($`G_j`$), as well as between prediction locations and training
-    samples ($`G_{ij}`$).
-2.  Use the KS-test to evaluate wether $`G_j >= G_{ij}`$, i.e., wether
-    the samples are randomly distributed in the prediction area.
-3.  1.  If $`G_j >= G_{ij}`$; return a random CV split and stop the
+1.  Compute the distribution of NNDs between training samples, G_(j), as
+    well as between prediction locations and training samples, G_(ij).
+
+2.  Use the KS-test to evaluate whether G_(j) ≥ G_(ij), i.e. whether the
+    samples are randomly distributed in the prediction area.
+
+3.  Depending on the KS-test result:
+
+    1.  If G_(j) ≥ G_(ij), return a random CV split and stop the
         algorithm here.
-4.  2.  Otherwise, continue by clustering the training points into
-        $`q \in Q`$, where $`Q = [k, ..., N]`$. This yields a gradient
-        from $`k`$ clusters (i.e., one cluster per fold) to $`N`$
-        clusters (i.e., one cluster per training sample).
-5.  The $`q`$ clusters are then merged along the first principal
-    component of the training points coordinates’ until $`k`$ is
-    reached. This means that for $`q = N`$, nothing happens and a
-    strongly clustered fold configuration is returned. For $`q = N`$, a
-    random fold assignment is returned. For everything in-between
-    ($`q>k<N`$), a gradient from strongly to weak clustered folds is
-    returned.
-6.  For each of the $`q`$ fold configurations, the NND distribution
-    between the unique folds is calculated ($`G_{j}^*`$), and the
-    distance between $`G_j^*`$ and $`G_{ij}`$ is calculated using the
-    Wasserstein statistic (W).
-7.  The fold configuration yielding the lowest W is returned.
+    2.  Otherwise, continue by clustering the training points into q ∈
+        Q, where Q = \[k, …, N\].
+
+4.  The q clusters are then merged along the first principal component
+    of the training-point coordinates until k folds are reached.
+
+5.  For each of the q fold configurations, the NND distribution between
+    the unique folds is calculated, G_(j), and the distance between
+    G_(j) and G_(ij) is calculated using the Wasserstein statistic, W.
+
+6.  The fold configuration yielding the lowest W is returned.
 
 ## Setup
 
@@ -90,14 +88,14 @@ samples <- select(samples, point_id)
 
 ## kNNDM in geographical space
 
-### 1. Compute $`G_j`$ and $`G_{ij}`$
+### 1. Compute G_(j) and G_(ij)
 
 Firstly, the kNNDM algorithm calcuates the distribution of NND between
-samples ($`G_j`$), as well as the distribution of NNDs between
-prediction points and samples ($`G_{ij}`$). The calculation of NNDs is
-shown in the following figure: the nearest neighbour distance between
-samples is shown in the left panel, while the right panel shows nearest
-neighbour distances between prediction points and samples.
+samples (G_(j)), as well as the distribution of NNDs between prediction
+points and samples (G_(ij)). The calculation of NNDs is shown in the
+following figure: the nearest neighbour distance between samples is
+shown in the left panel, while the right panel shows nearest neighbour
+distances between prediction points and samples.
 
 ![](k-NNDM_files/figure-html/unnamed-chunk-4-1.png)
 
@@ -116,12 +114,12 @@ Gij <- c(FNN::knnx.dist(
 
 ![](k-NNDM_files/figure-html/unnamed-chunk-6-1.png)
 
-### 2. Test wether $`G_j <= G_{ij}`$
+### 2. Test wether G_(j) \<= G_(ij)
 
-Next, we test if $`G_j`$ \<= $`G_{ij}`$, which would imply a random
-sampling design. In that case, the algorithm would stop and return a
-random fold assignment. However, as can bee seen below (and also from
-the figure above), this is not the case:
+Next, we test if G_(j) \<= G_(ij), which would imply a random sampling
+design. In that case, the algorithm would stop and return a random fold
+assignment. However, as can bee seen below (and also from the figure
+above), this is not the case:
 
 ``` r
 
@@ -130,13 +128,13 @@ testks$p.value >= 0.05
 #> [1] FALSE
 ```
 
-### 3. Cluster samples into $`q`$ clusters
+### 3. Cluster samples into *q* clusters
 
-Next, we cluster the training points into $`q`$ clusters, where
-$`q \in Q`$ and $`Q = [k, ..., N]`$. This means, that $`q`$ is a integer
-sequence ranging from the number of folds $`k`$ to the number of
-training points $`N`$. The length of this sequence is by default 100,
-but for visualization purposes it is reduced to 3 here.
+Next, we cluster the training points into *q* clusters, where *q* ∈ *Q*
+and *Q* = \[*k*, …, *N*\]. This means that *q* is an integer sequence
+ranging from the number of folds, *k*, to the number of training points,
+*N*. The length of this sequence is 100 by default, but for
+visualization purposes it is reduced to 3 here.
 
 ``` r
 
@@ -172,9 +170,9 @@ clustgrid
 #> 3 98 NA
 ```
 
-The sampled sequence of $`q`$ clusters is in this case 2, 14, 98. The
+The sampled sequence of *q* clusters is in this case 2, 14, 98. The
 following figure shows the training points coloured by their cluster for
-each of the $`q`$ clusters:
+each of the *q* clusters:
 
     #> `summarise()` has regrouped the output.
     #> `summarise()` has regrouped the output.
@@ -187,11 +185,11 @@ each of the $`q`$ clusters:
 
 ![](k-NNDM_files/figure-html/unnamed-chunk-9-1.png)
 
-### 4. Merge the $`q`$ clusters along their first PC into $`k`$ folds
+### 4. Merge the *q* clusters along their first PC into *k* folds
 
-The $`q`$ clusters are then merged along the first principal component
-of the samples coordinates if $`q > k`$. This prevents contigous
-clusters to end up in the same fold.
+The *q* clusters are then merged along the first principal component of
+the samples coordinates if *q* \> *k*. This prevents contigous clusters
+to end up in the same fold.
 
 Therefore, we first calculate the PCA over the samples coordinates to
 capture the axis of largest spatial variation (first PC, red arrow):
@@ -203,7 +201,7 @@ pcacoords <- stats::prcomp(sample_coords, center = TRUE, scale. = FALSE, rank = 
 
 ![](k-NNDM_files/figure-html/unnamed-chunk-11-1.png)
 
-Then, we order the $`q`$ clusters according to the first principal
+Then, we order the *q* clusters according to the first principal
 component:
 
 ``` r
@@ -223,7 +221,7 @@ for (nk in clustgrid$nk) {
 
 ![](k-NNDM_files/figure-html/unnamed-chunk-13-1.png)
 
-And lastly, we merge the $`q`$ clusters along the first principal
+And lastly, we merge the *q* clusters along the first principal
 component:
 
 ``` r
@@ -266,7 +264,7 @@ for (nk in clustgrid$nk) {
 
 ![](k-NNDM_files/figure-html/unnamed-chunk-15-1.png)
 
-### 5. Calculate $`G_j^*`$ for each $`q`$ configuration and calculate $`W`$
+### 5. Calculate G_(j)^(\*) for each *q* configuration and calculate *W*
 
 ``` r
 
@@ -300,7 +298,7 @@ for (nk in clustgrid$nk) {
     #> 2 14  9.255344
     #> 3 98 15.824061
 
-### 6. Return the configuration yielding the lowest $`W`$
+### 6. Return the configuration yielding the lowest *W*
 
 ``` r
 
@@ -321,3 +319,15 @@ assignment:
 ## Summary
 
 ![](k-NNDM_files/figure-html/unnamed-chunk-20-1.png)
+
+Linnenbrink, Jan, Carles Milà, Marvin Ludwig, and Hanna Meyer. 2024.
+“kNNDM CV: *K* -Fold Nearest-Neighbour Distance Matching
+Cross-Validation for Map Accuracy Estimation.” *Geoscientific Model
+Development* 17 (15): 5897–912.
+<https://doi.org/10.5194/gmd-17-5897-2024>.
+
+Milà, Carles, Jorge Mateu, Edzer Pebesma, and Hanna Meyer. 2022.
+“Nearest Neighbour Distance Matching \<Span
+Style="font-Variant:small-Caps;"\>Leave‐One‐Out
+Cross‐Validation\</Span\> for Map Validation.” *Methods in Ecology and
+Evolution* 13 (6): 1304–16. <https://doi.org/10.1111/2041-210X.13851>.

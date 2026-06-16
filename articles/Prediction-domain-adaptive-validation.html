@@ -16,7 +16,7 @@
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
-    <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
+    <nav class="navbar navbar-expand-lg fixed-top bg-primary" data-bs-theme="dark" aria-label="Site navigation"><div class="container">
 
     <a class="navbar-brand me-2" href="../index.html">PDAV</a>
 
@@ -153,27 +153,22 @@ CV).</p>
 <span></span>
 <span><span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">results</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">samples</span><span class="op">$</span><span class="va">sampling</span><span class="op">)</span></span></code></pre></div>
 <p>For randomly distributed samples, the AV classifier has a performance
-of
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>A</mi><mi>U</mi><mi>C</mi><mo>=</mo><mn>0.5</mn></mrow><annotation encoding="application/x-tex">AUC = 0.5</annotation></semantics></math>.
-This is then normalized to
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>D</mi><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">D = 0</annotation></semantics></math>,
-because the classifier is not better than randomly guessing if a
-prediction location is similiar or dissimilar (see <span class="citation">Wang et al. (2025b)</span>, section 2.1 for more
-information). The threshold is then calculated as
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>T</mi><mo stretchy="false" form="prefix">(</mo><mi>D</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mn>0.5</mn><mo>*</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">T(D) = 0.5 * 0</annotation></semantics></math>,
-which is 0. This means that all prediction locations are similar to the
-training 1, and no extrapolation is required, as can be seen in the
-following map. All weights will be given to random CV.</p>
+of AUC = 0.5. This is then normalized to D = 0, because the classifier
+is not better than random guessing at distinguishing whether a
+prediction location is similar or dissimilar to the training samples;
+see <span class="citation">Wang et al. (2025b)</span>, section 2.1, for
+more information. The threshold is then calculated as T(D) = 0.5 × 0,
+which is 0. This means that all prediction locations are considered
+similar to the training samples, and no extrapolation correction is
+required, as shown in the following map. Consequently, all weight is
+assigned to random CV.</p>
 <p>For clustered samples, the AV classifier achieves a performance of
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>A</mi><mi>U</mi><mi>C</mi><mo>=</mo><mn>0.81</mn></mrow><annotation encoding="application/x-tex">AUC = 0.81</annotation></semantics></math>.
-This leads to
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>D</mi><mo>=</mo><mfrac><mrow><mn>0.81</mn><mo>−</mo><mn>0.5</mn></mrow><mrow><mn>1</mn><mo>−</mo><mn>0.5</mn></mrow></mfrac><mo>=</mo><mn>0.62</mn></mrow><annotation encoding="application/x-tex">D = \frac{0.81 - 0.5}{1 - 0.5} = 0.62</annotation></semantics></math>.
-The threshold is then
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>T</mi><mo stretchy="false" form="prefix">(</mo><mi>D</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mn>0.5</mn><mo>*</mo><mn>0.62</mn><mo>=</mo><mn>0.3</mn></mrow><annotation encoding="application/x-tex">T(D) = 0.5* 0.62 = 0.3</annotation></semantics></math>.
-Hence, all prediction cells with a similarity score lower than 0.3 are
-classified as dissimilar. The relative fraction of prediction locations
-being similar ro the sampling locations is 0.84, while the fraction
-being dissimilar is 0.16.</p>
+AUC = 0.81. This leads to D = (0.81 - 0.5) / (1 - 0.5) = 0.62. The
+threshold is then T(D) = 0.5 × 0.62 = 0.31. Hence, all prediction cells
+with a similarity score lower than 0.31 are classified as dissimilar.
+The relative fraction of prediction locations classified as similar to
+the sampling locations is 0.84, while the fraction classified as
+dissimilar is 0.16.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">samples</span><span class="op">$</span><span class="va">sampling</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">smpling</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="fu"><a href="../reference/plot.html">plot</a></span><span class="op">(</span><span class="va">results</span><span class="op">[[</span><span class="va">smpling</span><span class="op">]</span><span class="op">]</span><span class="op">)</span> <span class="op">+</span></span>
@@ -295,7 +290,7 @@ Dissimilarity in Geospatial Machine Learning Prediction.”</span>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by First Last.</p>
+  <p>Developed by Jan Linnenbrink.</p>
 </div>
 
 <div class="pkgdown-footer-right">

@@ -16,7 +16,7 @@
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
-    <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
+    <nav class="navbar navbar-expand-lg fixed-top bg-primary" data-bs-theme="dark" aria-label="Site navigation"><div class="container">
 
     <a class="navbar-brand me-2" href="../index.html">PDAV</a>
 
@@ -70,54 +70,51 @@
 <h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
 <p>Dissimilarity-adaptive cross-validation (DA-CV) was developed by
-<span class="citation">Wang et al. (2025)</span>. It uses adversial
+<span class="citation">Wang et al. (2025)</span>. It uses adversarial
 validation (AV) to predict the probability that a prediction location is
-similar to the training samples. Then it calculates a RMSE based on
+similar to the training samples. Then it calculates an RMSE based on
 random CV, as well as spatial+ CV (<span class="citation">Wang et al.
-(2023)</span>) and weights both of them acoording to the relative area
-of similar cells (random CV) and dissimilar cells (spatial+ CV).</p>
+(2023)</span>), and weights both of them according to the relative area
+of similar cells, random CV, and dissimilar cells, spatial+ CV.</p>
 <p>The more detailed workflow is:</p>
 <ol style="list-style-type: decimal">
 <li>Generate an AV dataset consisting of the training samples and an
 equal number of randomly sampled prediction locations.</li>
 <li>Train the AV classifier based on the available predictors to predict
-the probability of a data point to belong to the training samples using
+the probability that a data point belongs to the training samples, using
 50% of the AV dataset.</li>
-<li>Evaluate the AV classifier on the other 50% and calcuate the
+<li>Evaluate the AV classifier on the other 50% and calculate the
 AUC.</li>
-<li>Normalize the AUC to [0,1] by starting with 0 at
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>A</mi><mi>U</mi><mi>C</mi><mo>=</mo><mn>0.5</mn></mrow><annotation encoding="application/x-tex">AUC = 0.5</annotation></semantics></math>.
-This normalized AUC is then interpreted as the overall dissimilarity
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>D</mi><annotation encoding="application/x-tex">D</annotation></semantics></math>.</li>
-<li>Derive the threshold to distinguish similar from dissimilar areas
-from the overall dissimilarity as
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>T</mi><mo stretchy="false" form="prefix">(</mo><mi>D</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mn>0.5</mn><mo>*</mo><mi>D</mi></mrow><annotation encoding="application/x-tex">T(D) = 0.5*D</annotation></semantics></math>.</li>
+<li>Normalize the AUC to [0, 1] by assigning 0 to AUC = 0.5. This
+normalized AUC is then interpreted as the overall dissimilarity, D.</li>
+<li>Derive the threshold used to distinguish similar from dissimilar
+areas from the overall dissimilarity as T(D) = 0.5 × D.</li>
 <li>Predict the similarity of all prediction locations using the AV
 classifier.</li>
-<li>Binarize the similarity map using
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>T</mi><mo stretchy="false" form="prefix">(</mo><mi>D</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">T(D)</annotation></semantics></math>.</li>
-<li>Calculate the weighted RMSE as
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>R</mi><mi>M</mi><mi>S</mi><msub><mi>E</mi><mrow><mi>D</mi><mi>A</mi></mrow></msub><mo>=</mo><msqrt><mrow><msub><mi>W</mi><mrow><mi>R</mi><mi>D</mi><mi>M</mi></mrow></msub><mo>*</mo><mi>R</mi><mi>M</mi><mi>S</mi><msubsup><mi>E</mi><mrow><mi>R</mi><mi>D</mi><mi>M</mi></mrow><mn>2</mn></msubsup><mo>+</mo><msub><mi>W</mi><mrow><mi>S</mi><mi>P</mi></mrow></msub><mo>*</mo><mi>R</mi><mi>M</mi><mi>S</mi><msubsup><mi>E</mi><mrow><mi>S</mi><mi>P</mi></mrow><mn>2</mn></msubsup></mrow></msqrt></mrow><annotation encoding="application/x-tex">RMSE_{DA} = \sqrt{W_{RDM} * RMSE^2_{RDM} + W_{SP} * RMSE^2_{SP}}</annotation></semantics></math>
-</li>
+<li>Binarize the similarity map using T(D).</li>
+<li>Calculate the weighted RMSE as RMSE<sub>DA</sub> = √(W<sub>RDM</sub>
+× RMSE<sub>RDM</sub><sup>2</sup> + W<sub>SP</sub> ×
+RMSE<sub>SP</sub><sup>2</sup>).</li>
 </ol>
 <p>Spatial+ CV works as follows:</p>
 <ol style="list-style-type: decimal">
-<li><p>Divide samples into blocks using agglomerative hierarchical
-clustering, where the maximum linkage (i.e., the maximum distance
-between samples in one cluster / block size) is derived from the
-semivariogram of the response values measured at the sampling locations
-(i.e., spatial autocorrelation range)</p></li>
-<li><p>Average the predictor values, response values and coordinates of
-all samples belonging to one block.</p></li>
-<li>
-<p>Cluster the blocks in three ways:</p>
-<p>3.1. K-Means clustering of the coordinates</p>
-<p>3.2. K-Prototypes clustering of the predictor values</p>
-<p>3.3. K-Means clustering of the response</p>
+<li>Divide samples into blocks using agglomerative hierarchical
+clustering. The maximum linkage, i.e. the maximum distance between
+samples in one cluster/block, is derived from the semivariogram of the
+response values measured at the sampling locations, i.e. the spatial
+autocorrelation range.</li>
+<li>Average the predictor values, response values, and coordinates of
+all samples belonging to one block.</li>
+<li>Cluster the blocks in three ways:
+<ol style="list-style-type: decimal">
+<li>k-means clustering of the coordinates.</li>
+<li>k-prototypes clustering of the predictor values.</li>
+<li>k-means clustering of the response.</li>
+</ol>
 </li>
-<li><p>Combine the three clustering results into k folds using the
-cluster ensemble function “Hybrid Bipartite Graph Formulation” that
-finds consistency between the three clustering results.</p></li>
+<li>Combine the three clustering results into k folds using the cluster
+ensemble function “Hybrid Bipartite Graph Formulation”, which finds
+consistency between the three clustering results.</li>
 </ol>
 </div>
 <div class="section level2">
@@ -322,7 +319,7 @@ Machine Learning Predictions with Clustered Samples.”</span>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by First Last.</p>
+  <p>Developed by Jan Linnenbrink.</p>
 </div>
 
 <div class="pkgdown-footer-right">

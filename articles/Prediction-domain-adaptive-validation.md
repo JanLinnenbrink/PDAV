@@ -92,20 +92,21 @@ names(results) <- unique(samples$sampling)
 ```
 
 For randomly distributed samples, the AV classifier has a performance of
-$`AUC = 0.5`$. This is then normalized to $`D = 0`$, because the
-classifier is not better than randomly guessing if a prediction location
-is similiar or dissimilar (see Wang et al. (2025b), section 2.1 for more
-information). The threshold is then calculated as $`T(D) = 0.5 * 0`$,
-which is 0. This means that all prediction locations are similar to the
-training 1, and no extrapolation is required, as can be seen in the
-following map. All weights will be given to random CV.
+AUC = 0.5. This is then normalized to D = 0, because the classifier is
+not better than random guessing at distinguishing whether a prediction
+location is similar or dissimilar to the training samples; see Wang et
+al. (2025b), section 2.1, for more information. The threshold is then
+calculated as T(D) = 0.5 × 0, which is 0. This means that all prediction
+locations are considered similar to the training samples, and no
+extrapolation correction is required, as shown in the following map.
+Consequently, all weight is assigned to random CV.
 
-For clustered samples, the AV classifier achieves a performance of
-$`AUC = 0.81`$. This leads to $`D = \frac{0.81 - 0.5}{1 - 0.5} = 0.62`$.
-The threshold is then $`T(D) = 0.5* 0.62 = 0.3`$. Hence, all prediction
-cells with a similarity score lower than 0.3 are classified as
-dissimilar. The relative fraction of prediction locations being similar
-ro the sampling locations is 0.84, while the fraction being dissimilar
+For clustered samples, the AV classifier achieves a performance of AUC =
+0.81. This leads to D = (0.81 - 0.5) / (1 - 0.5) = 0.62. The threshold
+is then T(D) = 0.5 × 0.62 = 0.31. Hence, all prediction cells with a
+similarity score lower than 0.31 are classified as dissimilar. The
+relative fraction of prediction locations classified as similar to the
+sampling locations is 0.84, while the fraction classified as dissimilar
 is 0.16.
 
 ``` r

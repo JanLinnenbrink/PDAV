@@ -3,52 +3,46 @@
 ## Introduction
 
 Dissimilarity-adaptive cross-validation (DA-CV) was developed by Wang et
-al. (2025). It uses adversial validation (AV) to predict the probability
-that a prediction location is similar to the training samples. Then it
-calculates a RMSE based on random CV, as well as spatial+ CV (Wang et
-al. (2023)) and weights both of them acoording to the relative area of
-similar cells (random CV) and dissimilar cells (spatial+ CV).
+al. (2025). It uses adversarial validation (AV) to predict the
+probability that a prediction location is similar to the training
+samples. Then it calculates an RMSE based on random CV, as well as
+spatial+ CV (Wang et al. (2023)), and weights both of them according to
+the relative area of similar cells, random CV, and dissimilar cells,
+spatial+ CV.
 
 The more detailed workflow is:
 
 1.  Generate an AV dataset consisting of the training samples and an
     equal number of randomly sampled prediction locations.
 2.  Train the AV classifier based on the available predictors to predict
-    the probability of a data point to belong to the training samples
+    the probability that a data point belongs to the training samples,
     using 50% of the AV dataset.
-3.  Evaluate the AV classifier on the other 50% and calcuate the AUC.
-4.  Normalize the AUC to \[0,1\] by starting with 0 at $`AUC = 0.5`$.
-    This normalized AUC is then interpreted as the overall dissimilarity
-    $`D`$.
-5.  Derive the threshold to distinguish similar from dissimilar areas
-    from the overall dissimilarity as $`T(D) = 0.5*D`$.
+3.  Evaluate the AV classifier on the other 50% and calculate the AUC.
+4.  Normalize the AUC to \[0, 1\] by assigning 0 to AUC = 0.5. This
+    normalized AUC is then interpreted as the overall dissimilarity, D.
+5.  Derive the threshold used to distinguish similar from dissimilar
+    areas from the overall dissimilarity as T(D) = 0.5 × D.
 6.  Predict the similarity of all prediction locations using the AV
     classifier.
-7.  Binarize the similarity map using $`T(D)`$.
-8.  Calculate the weighted RMSE as
-    $`RMSE_{DA} = \sqrt{W_{RDM} * RMSE^2_{RDM} + W_{SP} * RMSE^2_{SP}}`$
+7.  Binarize the similarity map using T(D).
+8.  Calculate the weighted RMSE as RMSE_(DA) = √(W_(RDM) × RMSE_(RDM)² +
+    W_(SP) × RMSE_(SP)²).
 
 Spatial+ CV works as follows:
 
 1.  Divide samples into blocks using agglomerative hierarchical
-    clustering, where the maximum linkage (i.e., the maximum distance
-    between samples in one cluster / block size) is derived from the
-    semivariogram of the response values measured at the sampling
-    locations (i.e., spatial autocorrelation range)
-
-2.  Average the predictor values, response values and coordinates of all
-    samples belonging to one block.
-
+    clustering. The maximum linkage, i.e. the maximum distance between
+    samples in one cluster/block, is derived from the semivariogram of
+    the response values measured at the sampling locations, i.e. the
+    spatial autocorrelation range.
+2.  Average the predictor values, response values, and coordinates of
+    all samples belonging to one block.
 3.  Cluster the blocks in three ways:
-
-    3.1. K-Means clustering of the coordinates
-
-    3.2. K-Prototypes clustering of the predictor values
-
-    3.3. K-Means clustering of the response
-
+    1.  k-means clustering of the coordinates.
+    2.  k-prototypes clustering of the predictor values.
+    3.  k-means clustering of the response.
 4.  Combine the three clustering results into k folds using the cluster
-    ensemble function “Hybrid Bipartite Graph Formulation” that finds
+    ensemble function “Hybrid Bipartite Graph Formulation”, which finds
     consistency between the three clustering results.
 
 ## Setup

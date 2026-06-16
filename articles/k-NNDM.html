@@ -16,7 +16,7 @@
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
-    <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
+    <nav class="navbar navbar-expand-lg fixed-top bg-primary" data-bs-theme="dark" aria-label="Site navigation"><div class="container">
 
     <a class="navbar-brand me-2" href="../index.html">PDAV</a>
 
@@ -70,63 +70,51 @@
 <h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
 <p>k-fold nearest-neighbour distance matching (kNNDM) cross-validation
-was developed by <span class="citation">@Linnenbrink2024</span>. It is
-the k-fold version of NNDM (<span class="citation">@Mila2022</span>),
-and as such much faster and better suited towards medium to large sized
-datasets. As NNDM, kNNDM also matches the distribution of
-nearest-neighbour distances (NND) between prediction locations and
-training samples during CV, but opposed to NNDM uses a clustering
-algorithm instead of excluding training samples.</p>
+was developed by <span class="citation">Linnenbrink et al.
+(2024)</span>. It is the k-fold version of NNDM (<span class="citation">Milà et al. (2022)</span>), and as such much faster and
+better suited towards medium to large sized datasets. As NNDM, kNNDM
+also matches the distribution of nearest-neighbour distances (NND)
+between prediction locations and training samples during CV, but opposed
+to NNDM uses a clustering algorithm instead of excluding training
+samples.</p>
 <p>The more detailed workflow is:</p>
-<ol style="list-style-type: decimal">
-<li>Conmpute the distribution of NNDs between training samples
-(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>G</mi><mi>j</mi></msub><annotation encoding="application/x-tex">G_j</annotation></semantics></math>),
-as well as between prediction locations and training samples
-(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>G</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><annotation encoding="application/x-tex">G_{ij}</annotation></semantics></math>).</li>
-<li>Use the KS-test to evaluate wether
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>G</mi><mi>j</mi></msub><mo>&gt;</mo><mo>=</mo><msub><mi>G</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub></mrow><annotation encoding="application/x-tex">G_j &gt;= G_{ij}</annotation></semantics></math>,
-i.e., wether the samples are randomly distributed in the prediction
-area.</li>
-<li><ol style="list-style-type: upper-alpha">
-<li>If
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>G</mi><mi>j</mi></msub><mo>&gt;</mo><mo>=</mo><msub><mi>G</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub></mrow><annotation encoding="application/x-tex">G_j &gt;= G_{ij}</annotation></semantics></math>;
-return a random CV split and stop the algorithm here.</li>
-</ol></li>
-<li><ol start="2" style="list-style-type: upper-alpha">
-<li>Otherwise, continue by clustering the training points into
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>q</mi><mo>∈</mo><mi>Q</mi></mrow><annotation encoding="application/x-tex">q \in Q</annotation></semantics></math>,
-where
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Q</mi><mo>=</mo><mo stretchy="false" form="prefix">[</mo><mi>k</mi><mo>,</mo><mi>.</mi><mi>.</mi><mi>.</mi><mo>,</mo><mi>N</mi><mo stretchy="false" form="postfix">]</mo></mrow><annotation encoding="application/x-tex">Q = [k, ..., N]</annotation></semantics></math>.
-This yields a gradient from
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>k</mi><annotation encoding="application/x-tex">k</annotation></semantics></math>
-clusters (i.e., one cluster per fold) to
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>N</mi><annotation encoding="application/x-tex">N</annotation></semantics></math>
-clusters (i.e., one cluster per training sample).</li>
-</ol></li>
-<li>The
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>q</mi><annotation encoding="application/x-tex">q</annotation></semantics></math>
-clusters are then merged along the first principal component of the
-training points coordinates’ until
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>k</mi><annotation encoding="application/x-tex">k</annotation></semantics></math>
-is reached. This means that for
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>q</mi><mo>=</mo><mi>N</mi></mrow><annotation encoding="application/x-tex">q = N</annotation></semantics></math>,
-nothing happens and a strongly clustered fold configuration is returned.
-For
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>q</mi><mo>=</mo><mi>N</mi></mrow><annotation encoding="application/x-tex">q = N</annotation></semantics></math>,
-a random fold assignment is returned. For everything in-between
-(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>q</mi><mo>&gt;</mo><mi>k</mi><mo>&lt;</mo><mi>N</mi></mrow><annotation encoding="application/x-tex">q&gt;k&lt;N</annotation></semantics></math>),
-a gradient from strongly to weak clustered folds is returned.</li>
-<li>For each of the
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>q</mi><annotation encoding="application/x-tex">q</annotation></semantics></math>
-fold configurations, the NND distribution between the unique folds is
-calculated
-(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>G</mi><mi>j</mi><mo>*</mo></msubsup><annotation encoding="application/x-tex">G_{j}^*</annotation></semantics></math>),
-and the distance between
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>G</mi><mi>j</mi><mo>*</mo></msubsup><annotation encoding="application/x-tex">G_j^*</annotation></semantics></math>
-and
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>G</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><annotation encoding="application/x-tex">G_{ij}</annotation></semantics></math>
-is calculated using the Wasserstein statistic (W).</li>
-<li>The fold configuration yielding the lowest W is returned.</li>
+<ol>
+<li>
+Compute the distribution of NNDs between training samples,
+G<sub>j</sub>, as well as between prediction locations and training
+samples, G<sub>ij</sub>.
+</li>
+<li>
+Use the KS-test to evaluate whether G<sub>j</sub> ≥ G<sub>ij</sub>,
+i.e. whether the samples are randomly distributed in the prediction
+area.
+</li>
+<li>
+<p>Depending on the KS-test result:</p>
+<ol type="A">
+<li>
+If G<sub>j</sub> ≥ G<sub>ij</sub>, return a random CV split and stop the
+algorithm here.
+</li>
+<li>
+Otherwise, continue by clustering the training points into q ∈ Q, where
+Q = [k, …, N].
+</li>
+</ol>
+</li>
+<li>
+The q clusters are then merged along the first principal component of
+the training-point coordinates until k folds are reached.
+</li>
+<li>
+For each of the q fold configurations, the NND distribution between the
+unique folds is calculated, G<sub>j</sub><sup><em></em></sup>, and the
+distance between G<sub>j</sub><sup></sup> and G<sub>ij</sub> is
+calculated using the Wasserstein statistic, W.
+</li>
+<li>
+The fold configuration yielding the lowest W is returned.
+</li>
 </ol>
 </div>
 <div class="section level2">
@@ -184,21 +172,14 @@ is calculated using the Wasserstein statistic (W).</li>
 <h2 id="knndm-in-geographical-space">kNNDM in geographical space<a class="anchor" aria-label="anchor" href="#knndm-in-geographical-space"></a>
 </h2>
 <div class="section level3">
-<h3 id="compute-g_j-and-g_ij">1. Compute
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>G</mi><mi>j</mi></msub><annotation encoding="application/x-tex">G_j</annotation></semantics></math>
-and
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>G</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><annotation encoding="application/x-tex">G_{ij}</annotation></semantics></math><a class="anchor" aria-label="anchor" href="#compute-g_j-and-g_ij"></a>
+<h3 id="compute-gj-and-gij">1. Compute G<sub>j</sub> and G<sub>ij</sub><a class="anchor" aria-label="anchor" href="#compute-gj-and-gij"></a>
 </h3>
 <p>Firstly, the kNNDM algorithm calcuates the distribution of NND
-between samples
-(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>G</mi><mi>j</mi></msub><annotation encoding="application/x-tex">G_j</annotation></semantics></math>),
-as well as the distribution of NNDs between prediction points and
-samples
-(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>G</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><annotation encoding="application/x-tex">G_{ij}</annotation></semantics></math>).
-The calculation of NNDs is shown in the following figure: the nearest
-neighbour distance between samples is shown in the left panel, while the
-right panel shows nearest neighbour distances between prediction points
-and samples.</p>
+between samples (G<sub>j</sub>), as well as the distribution of NNDs
+between prediction points and samples (G<sub>ij</sub>). The calculation
+of NNDs is shown in the following figure: the nearest neighbour distance
+between samples is shown in the left panel, while the right panel shows
+nearest neighbour distances between prediction points and samples.</p>
 <p><img src="k-NNDM_files/figure-html/unnamed-chunk-4-1.png" class="r-plt" alt="" width="768"></p>
 <p>To characterize the distribution of these NNDs, their empirical
 cumulative density functions (ECDFs) are calculated:</p>
@@ -212,40 +193,26 @@ cumulative density functions (ECDFs) are calculated:</p>
 <p><img src="k-NNDM_files/figure-html/unnamed-chunk-6-1.png" class="r-plt" alt="" width="384"></p>
 </div>
 <div class="section level3">
-<h3 id="test-wether-g_j-g_ij">2. Test wether
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>G</mi><mi>j</mi></msub><mo>&lt;</mo><mo>=</mo><msub><mi>G</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub></mrow><annotation encoding="application/x-tex">G_j &lt;= G_{ij}</annotation></semantics></math><a class="anchor" aria-label="anchor" href="#test-wether-g_j-g_ij"></a>
+<h3 id="test-wether-gj-gij">2. Test wether G<sub>j</sub> &lt;= G<sub>ij</sub><a class="anchor" aria-label="anchor" href="#test-wether-gj-gij"></a>
 </h3>
-<p>Next, we test if
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>G</mi><mi>j</mi></msub><annotation encoding="application/x-tex">G_j</annotation></semantics></math>
-&lt;=
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>G</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><annotation encoding="application/x-tex">G_{ij}</annotation></semantics></math>,
-which would imply a random sampling design. In that case, the algorithm
-would stop and return a random fold assignment. However, as can bee seen
-below (and also from the figure above), this is not the case:</p>
+<p>Next, we test if G<sub>j</sub> &lt;= G<sub>ij</sub>, which would
+imply a random sampling design. In that case, the algorithm would stop
+and return a random fold assignment. However, as can bee seen below (and
+also from the figure above), this is not the case:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">testks</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/warning.html" class="external-link">suppressWarnings</a></span><span class="op">(</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/ks.test.html" class="external-link">ks.test</a></span><span class="op">(</span><span class="va">Gj</span>, <span class="va">Gij</span>, alternative <span class="op">=</span> <span class="st">"great"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">testks</span><span class="op">$</span><span class="va">p.value</span> <span class="op">&gt;=</span> <span class="fl">0.05</span></span>
 <span><span class="co">#&gt; [1] FALSE</span></span></code></pre></div>
 </div>
 <div class="section level3">
-<h3 id="cluster-samples-into-q-clusters">3. Cluster samples into
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>q</mi><annotation encoding="application/x-tex">q</annotation></semantics></math>
-clusters<a class="anchor" aria-label="anchor" href="#cluster-samples-into-q-clusters"></a>
+<h3 id="cluster-samples-into-q-clusters">3. Cluster samples into <em>q</em> clusters<a class="anchor" aria-label="anchor" href="#cluster-samples-into-q-clusters"></a>
 </h3>
-<p>Next, we cluster the training points into
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>q</mi><annotation encoding="application/x-tex">q</annotation></semantics></math>
-clusters, where
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>q</mi><mo>∈</mo><mi>Q</mi></mrow><annotation encoding="application/x-tex">q \in Q</annotation></semantics></math>
-and
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Q</mi><mo>=</mo><mo stretchy="false" form="prefix">[</mo><mi>k</mi><mo>,</mo><mi>.</mi><mi>.</mi><mi>.</mi><mo>,</mo><mi>N</mi><mo stretchy="false" form="postfix">]</mo></mrow><annotation encoding="application/x-tex">Q = [k, ..., N]</annotation></semantics></math>.
-This means, that
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>q</mi><annotation encoding="application/x-tex">q</annotation></semantics></math>
-is a integer sequence ranging from the number of folds
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>k</mi><annotation encoding="application/x-tex">k</annotation></semantics></math>
-to the number of training points
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>N</mi><annotation encoding="application/x-tex">N</annotation></semantics></math>.
-The length of this sequence is by default 100, but for visualization
-purposes it is reduced to 3 here.</p>
+<p>Next, we cluster the training points into <em>q</em> clusters, where
+<em>q</em> ∈ <em>Q</em> and <em>Q</em> = [<em>k</em>, …, <em>N</em>].
+This means that <em>q</em> is an integer sequence ranging from the
+number of folds, <em>k</em>, to the number of training points,
+<em>N</em>. The length of this sequence is 100 by default, but for
+visualization purposes it is reduced to 3 here.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">nk_length</span> <span class="op">&lt;-</span> <span class="fl">3</span></span>
 <span></span>
@@ -277,12 +244,9 @@ purposes it is reduced to 3 here.</p>
 <span><span class="co">#&gt; 1  2 NA</span></span>
 <span><span class="co">#&gt; 2 14 NA</span></span>
 <span><span class="co">#&gt; 3 98 NA</span></span></code></pre></div>
-<p>The sampled sequence of
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>q</mi><annotation encoding="application/x-tex">q</annotation></semantics></math>
-clusters is in this case 2, 14, 98. The following figure shows the
-training points coloured by their cluster for each of the
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>q</mi><annotation encoding="application/x-tex">q</annotation></semantics></math>
-clusters:</p>
+<p>The sampled sequence of <em>q</em> clusters is in this case 2, 14,
+98. The following figure shows the training points coloured by their
+cluster for each of the <em>q</em> clusters:</p>
 <pre><code><span><span class="co">#&gt; `summarise()` has regrouped the output.</span></span>
 <span><span class="co">#&gt; `summarise()` has regrouped the output.</span></span>
 <span><span class="co">#&gt; `summarise()` has regrouped the output.</span></span>
@@ -294,26 +258,19 @@ clusters:</p>
 <p><img src="k-NNDM_files/figure-html/unnamed-chunk-9-1.png" class="r-plt" alt="" width="768"></p>
 </div>
 <div class="section level3">
-<h3 id="merge-the-q-clusters-along-their-first-pc-into-k-folds">4. Merge the
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>q</mi><annotation encoding="application/x-tex">q</annotation></semantics></math>
-clusters along their first PC into
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>k</mi><annotation encoding="application/x-tex">k</annotation></semantics></math>
-folds<a class="anchor" aria-label="anchor" href="#merge-the-q-clusters-along-their-first-pc-into-k-folds"></a>
+<h3 id="merge-the-q-clusters-along-their-first-pc-into-k-folds">4. Merge the <em>q</em> clusters along their first PC into
+<em>k</em> folds<a class="anchor" aria-label="anchor" href="#merge-the-q-clusters-along-their-first-pc-into-k-folds"></a>
 </h3>
-<p>The
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>q</mi><annotation encoding="application/x-tex">q</annotation></semantics></math>
-clusters are then merged along the first principal component of the
-samples coordinates if
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>q</mi><mo>&gt;</mo><mi>k</mi></mrow><annotation encoding="application/x-tex">q &gt; k</annotation></semantics></math>.
-This prevents contigous clusters to end up in the same fold.</p>
+<p>The <em>q</em> clusters are then merged along the first principal
+component of the samples coordinates if <em>q</em> &gt; <em>k</em>. This
+prevents contigous clusters to end up in the same fold.</p>
 <p>Therefore, we first calculate the PCA over the samples coordinates to
 capture the axis of largest spatial variation (first PC, red arrow):</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pcacoords</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/prcomp.html" class="external-link">prcomp</a></span><span class="op">(</span><span class="va">sample_coords</span>, center <span class="op">=</span> <span class="cn">TRUE</span>, scale. <span class="op">=</span> <span class="cn">FALSE</span>, rank <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
 <p><img src="k-NNDM_files/figure-html/unnamed-chunk-11-1.png" class="r-plt" alt="" width="768"></p>
-<p>Then, we order the
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>q</mi><annotation encoding="application/x-tex">q</annotation></semantics></math>
-clusters according to the first principal component:</p>
+<p>Then, we order the <em>q</em> clusters according to the first
+principal component:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">for</span> <span class="op">(</span><span class="va">nk</span> <span class="kw">in</span> <span class="va">clustgrid</span><span class="op">$</span><span class="va">nk</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="co"># compute cluster centroids and project that centroid to the first PC</span></span>
@@ -327,9 +284,8 @@ clusters according to the first principal component:</p>
 <span>    <span class="va">tabclust</span><span class="op">[[</span><span class="va">nk</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">tabclust</span><span class="op">[[</span><span class="va">nk</span><span class="op">]</span><span class="op">]</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">tabclust</span><span class="op">[[</span><span class="va">nk</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">centrpca</span><span class="op">)</span>, <span class="op">]</span></span>
 <span><span class="op">}</span></span></code></pre></div>
 <p><img src="k-NNDM_files/figure-html/unnamed-chunk-13-1.png" class="r-plt" alt="" width="768"></p>
-<p>And lastly, we merge the
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>q</mi><annotation encoding="application/x-tex">q</annotation></semantics></math>
-clusters along the first principal component:</p>
+<p>And lastly, we merge the <em>q</em> clusters along the first
+principal component:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">clust_k</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">tabclust2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
@@ -367,12 +323,8 @@ clusters along the first principal component:</p>
 <p><img src="k-NNDM_files/figure-html/unnamed-chunk-15-1.png" class="r-plt" alt="" width="768"></p>
 </div>
 <div class="section level3">
-<h3 id="calculate-g_j-for-each-q-configuration-and-calculate-w">5. Calculate
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>G</mi><mi>j</mi><mo>*</mo></msubsup><annotation encoding="application/x-tex">G_j^*</annotation></semantics></math>
-for each
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>q</mi><annotation encoding="application/x-tex">q</annotation></semantics></math>
-configuration and calculate
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>W</mi><annotation encoding="application/x-tex">W</annotation></semantics></math><a class="anchor" aria-label="anchor" href="#calculate-g_j-for-each-q-configuration-and-calculate-w"></a>
+<h3 id="calculate-gj-for-each-q-configuration-and-calculate-w">5. Calculate G<sub>j</sub><sup>*</sup> for each <em>q</em>
+configuration and calculate <em>W</em><a class="anchor" aria-label="anchor" href="#calculate-gj-for-each-q-configuration-and-calculate-w"></a>
 </h3>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">distclust_euclidean</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">tr_coords</span>, <span class="va">folds</span><span class="op">)</span> <span class="op">{</span></span>
@@ -403,8 +355,7 @@ configuration and calculate
 <span><span class="co">#&gt; 3 98 15.824061</span></span></code></pre>
 </div>
 <div class="section level3">
-<h3 id="return-the-configuration-yielding-the-lowest-w">6. Return the configuration yielding the lowest
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>W</mi><annotation encoding="application/x-tex">W</annotation></semantics></math><a class="anchor" aria-label="anchor" href="#return-the-configuration-yielding-the-lowest-w"></a>
+<h3 id="return-the-configuration-yielding-the-lowest-w">6. Return the configuration yielding the lowest <em>W</em><a class="anchor" aria-label="anchor" href="#return-the-configuration-yielding-the-lowest-w"></a>
 </h3>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">k_final</span> <span class="op">&lt;-</span> <span class="va">clustgrid</span><span class="op">$</span><span class="va">nk</span><span class="op">[</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/summarize-generics.html" class="external-link">which.min</a></span><span class="op">(</span><span class="va">clustgrid</span><span class="op">$</span><span class="va">W</span><span class="op">)</span><span class="op">]</span></span>
@@ -423,6 +374,23 @@ assignment:</p>
 <h2 id="summary">Summary<a class="anchor" aria-label="anchor" href="#summary"></a>
 </h2>
 <p><img src="k-NNDM_files/figure-html/unnamed-chunk-20-1.png" class="r-plt" alt="" width="1152"></p>
+<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-Linnenbrink2024" class="csl-entry">
+Linnenbrink, Jan, Carles Milà, Marvin Ludwig, and Hanna Meyer. 2024.
+<span>“<span class="nocase">kNNDM</span> <span>CV</span>: <em>K</em>
+-Fold Nearest-Neighbour Distance Matching Cross-Validation for Map
+Accuracy Estimation.”</span> <em>Geoscientific Model Development</em> 17
+(15): 5897–912. <a href="https://doi.org/10.5194/gmd-17-5897-2024" class="external-link">https://doi.org/10.5194/gmd-17-5897-2024</a>.
+</div>
+<div id="ref-Mila2022" class="csl-entry">
+Milà, Carles, Jorge Mateu, Edzer Pebesma, and Hanna Meyer. 2022.
+<span>“Nearest Neighbour Distance Matching <span>&lt;</span>Span
+Style="font-Variant:small-Caps;"<span>&gt;</span><span>Leave</span>‐<span>One</span>‐<span>Out</span>
+<span>Cross</span>‐<span>Validation</span><span>&lt;</span>/Span<span>&gt;</span>
+for Map Validation.”</span> <em>Methods in Ecology and Evolution</em> 13
+(6): 1304–16. <a href="https://doi.org/10.1111/2041-210X.13851" class="external-link">https://doi.org/10.1111/2041-210X.13851</a>.
+</div>
+</div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
@@ -431,7 +399,7 @@ assignment:</p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by First Last.</p>
+  <p>Developed by Jan Linnenbrink.</p>
 </div>
 
 <div class="pkgdown-footer-right">
