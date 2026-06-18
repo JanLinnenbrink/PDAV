@@ -119,7 +119,7 @@ rel_columns <- c("fold", "obs", "pred", "error", "elev")
 ```{r}
 #| fig-width: 6
 #| fig-height: 4
-#| fig-cap: "Figure 1: The predictor stack"
+#| fig-cap: "Figure 1: The training points and one predictor (elevation)"
 #| echo: false
 ggplot() +
 	geom_spatraster(data = predictor_stack$elev) +
@@ -236,6 +236,8 @@ knitr::kable(head(aug$grid_tasks))
 
 ### 3. Calculate quantiles of the balancing variables
 
+The quantiles are calculated based on the distribution of the values of the predictor variable at the prediction locations, and then applied to the training points.
+
 ```{r}
 cv_losses <- aug$losses
 grid_tasks <- aug$grid_tasks
@@ -265,191 +267,15 @@ bal <- list(
 ```
 
 ```{r plot, echo=FALSE, fig.width=10, fig.height=5}
-#-----------------------------
-# 1. Helper: order Q-levels
-#-----------------------------
-
-get_q_levels <- function(x) {
-	if (is.factor(x)) {
-		levs <- levels(x)
-	} else {
-		levs <- unique(as.character(stats::na.omit(x)))
-	}
-
-	qnum <- suppressWarnings(as.integer(sub(".*_Q", "", levs)))
-
-	if (all(!is.na(qnum))) {
-		levs[order(qnum)]
-	} else {
-		sort(levs)
-	}
-}
-
-#-----------------------------
-# 2. Create bands from existing quintile variable
-#-----------------------------
-
-make_bands_from_existing_bins <- function(ref_dat, x_var = "elev", cat_var = "elev_cat", xlim = NULL) {
-	levs <- get_q_levels(ref_dat[[cat_var]])
-
-	ranges <- ref_dat %>%
-		transmute(
-			x = .data[[x_var]],
-			cat = factor(as.character(.data[[cat_var]]), levels = levs)
-		) %>%
-		filter(!is.na(x), !is.na(cat)) %>%
-		group_by(cat) %>%
-		summarise(
-			lo = min(x),
-			hi = max(x),
-			.groups = "drop"
-		) %>%
-		arrange(cat)
-
-	# Boundaries between adjacent existing bins.
-	# Since exact cut points are not stored, these are reconstructed
-	# from adjacent observed bin ranges.
-	cuts <- (head(ranges$hi, -1) + tail(ranges$lo, -1)) / 2
-
-	if (is.null(xlim)) {
-		xlim <- range(ref_dat[[x_var]], na.rm = TRUE)
-	}
-
-	tibble(
-		cat = ranges$cat,
-		xmin = c(xlim[1], cuts),
-		xmax = c(cuts, xlim[2])
-	)
-}
-
-#-----------------------------
-# 3. Common x-range across both data frames
-#-----------------------------
-
-x_rng <- range(
-	c(
-		bal$sample_tasks_bal$elev,
-		bal$grid_tasks_bal$elev
-	),
-	na.rm = TRUE
+PDAV:::plot_task_density_bands(
+	sample_tasks = bal$sample_tasks_bal,
+	grid_tasks = bal$grid_tasks_bal,
+	var = "elev",
+	sample_title = "Training points",
+	grid_title = "Prediction points",
+	x_lab = "Elevation",
+	fill_lab = "Elevation quintile"
 )
-
-#-----------------------------
-# 4. Build elevation bands using existing grid elev_cat
-#-----------------------------
-
-elev_bands <- make_bands_from_existing_bins(
-	ref_dat = bal$grid_tasks_bal,
-	x_var = "elev",
-	cat_var = "elev_cat",
-	xlim = x_rng
-)
-
-#-----------------------------
-# 5. Plot function
-#-----------------------------
-
-make_density_band_plot <- function(dat, bands, title = "", x_var = "elev", x_lab = "Elevation") {
-	ggplot(dat, aes(x = .data[[x_var]])) +
-		geom_rect(
-			data = bands,
-			aes(
-				xmin = xmin,
-				xmax = xmax,
-				ymin = -Inf,
-				ymax = Inf,
-				fill = cat
-			),
-			inherit.aes = FALSE,
-			alpha = 0.18
-		) +
-		geom_density(
-			fill = "grey70",
-			color = "grey20",
-			alpha = 0.35,
-			linewidth = 1
-		) +
-		geom_vline(
-			data = bands[-nrow(bands), ],
-			aes(xintercept = xmax),
-			inherit.aes = FALSE,
-			linetype = "dashed",
-			color = "grey30"
-		) +
-		coord_cartesian(
-			xlim = range(c(bands$xmin, bands$xmax), na.rm = TRUE)
-		) +
-		scale_fill_brewer(
-			palette = "Set2",
-			drop = FALSE
-		) +
-		labs(
-			title = title,
-			x = x_lab,
-			y = "Density",
-			fill = "Elevation quintile"
-		) +
-		theme_minimal() +
-		theme(
-			legend.position = "bottom"
-		)
-}
-
-#-----------------------------
-# 6. Create individual plots
-#-----------------------------
-
-p_sample <- make_density_band_plot(
-	dat = bal$sample_tasks_bal,
-	bands = elev_bands,
-	title = "Sample tasks",
-	x_var = "elev",
-	x_lab = "Elevation"
-)
-
-p_grid <- make_density_band_plot(
-	dat = bal$grid_tasks_bal,
-	bands = elev_bands,
-	title = "Grid tasks",
-	x_var = "elev",
-	x_lab = "Elevation"
-)
-
-#-----------------------------
-# 7. Extract shared legend
-#-----------------------------
-
-shared_legend <- cowplot::get_legend(
-	p_sample +
-		theme(
-			legend.position = "bottom",
-			legend.box = "horizontal"
-		)
-)
-
-# Remove legends from individual panels
-p_sample_noleg <- p_sample + theme(legend.position = "none")
-p_grid_noleg <- p_grid + theme(legend.position = "none")
-
-#-----------------------------
-# 8. Combine panels and shared legend
-#-----------------------------
-
-combined_plot <- cowplot::plot_grid(
-	cowplot::plot_grid(
-		p_sample_noleg,
-		p_grid_noleg,
-		nrow = 1,
-		align = "hv",
-		axis = "tblr",
-		labels = c("A", "B")
-	),
-	shared_legend,
-	ncol = 1,
-	rel_heights = c(1, 0.12)
-)
-
-combined_plot
 ```
 
 ### 4. Calculate frequencies for the quantiles
@@ -480,7 +306,7 @@ However, this does not return an error.
 Instead, if a quintile is not covered by the training points, the weights shrink towards 0 and the algorithm "converges"
 A better approach would likely be to stop the algorithm and return an error message hinting towards avoiding this extreme extrapolation.
 
-```{r, message=FALSE, warning=FALSE, results='hide'}
+```{r}
 margin_names <- names(target_margins)
 max_iter <- 500
 tol = 1e-6
