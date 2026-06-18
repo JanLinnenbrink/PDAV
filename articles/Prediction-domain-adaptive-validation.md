@@ -101,7 +101,7 @@ names(results) <- unique(samples$sampling)
 ```
 
 For randomly distributed samples, the AV classifier has a performance of
-AUC = 0.5. This is then normalized to D = 0, because the classifier is
+AUC = 0.6. This is then normalized to D = 0, because the classifier is
 not better than random guessing at distinguishing whether a prediction
 location is similar or dissimilar to the training samples; see Wang et
 al. (2025b), section 2.1, for more information. The threshold is then
@@ -111,12 +111,12 @@ extrapolation correction is required, as shown in the following map.
 Consequently, all weight is assigned to random CV.
 
 For clustered samples, the AV classifier achieves a performance of AUC =
-0.81. This leads to D = (0.81 - 0.5) / (1 - 0.5) = 0.62. The threshold
-is then T(D) = 0.5 × 0.62 = 0.31. Hence, all prediction cells with a
-similarity score lower than 0.31 are classified as dissimilar. The
+0.82. This leads to D = (0.82 - 0.5) / (1 - 0.5) = 0.64. The threshold
+is then T(D) = 0.5 × 0.64 = 0.32. Hence, all prediction cells with a
+similarity score lower than 0.32 are classified as dissimilar. The
 relative fraction of prediction locations classified as similar to the
-sampling locations is 0.84, while the fraction classified as dissimilar
-is 0.16.
+sampling locations is 0.5, while the fraction classified as dissimilar
+is 0.5.
 
 ``` r
 
@@ -208,8 +208,8 @@ weighted_RMSE <- lapply(unique(samples$sampling), function(smpling) {
 
 ![](Prediction-domain-adaptive-validation_files/figure-html/unnamed-chunk-8-1.png)
 
-The RMSE obtained by DA-CV are 0.038 for the random sampling design,
-0.05 for the biased sampling and 0.054 for the clustered design.
+The RMSE obtained by DA-CV are 0.054 for the random sampling design,
+0.045 for the biased sampling and 0.038 for the clustered design.
 
 ### kNNDM CV
 

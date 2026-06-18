@@ -160,8 +160,11 @@ consistency between the three clustering results.</li>
 <span><span class="va">predictor_stack</span> <span class="op">&lt;-</span> <span class="va">r</span><span class="op">[[</span><span class="fu"><a href="https://generics.r-lib.org/reference/setops.html" class="external-link">setdiff</a></span><span class="op">(</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">r</span><span class="op">)</span>, <span class="st">"outcome"</span><span class="op">)</span><span class="op">]</span><span class="op">]</span></span>
 <span><span class="va">cate_rasters</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">r</span><span class="op">)</span> <span class="op"><a href="https://rspatial.github.io/terra/reference/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"forest"</span>, <span class="st">"grass"</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
+<span><span class="va">sampling_r</span> <span class="op">&lt;-</span> <span class="va">r</span></span>
+<span><span class="va">sampling_r</span><span class="op">[</span><span class="va">sampling_r</span><span class="op">$</span><span class="va">elev</span> <span class="op">&gt;</span> <span class="fl">1</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">NA</span></span>
+<span></span>
 <span><span class="va">samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/simsam/man/sam_field.html" class="external-link">sam_field</a></span><span class="op">(</span></span>
-<span>    x <span class="op">=</span> <span class="va">r</span>,</span>
+<span>    x <span class="op">=</span> <span class="va">sampling_r</span>,</span>
 <span>    size <span class="op">=</span> <span class="fl">100</span>,</span>
 <span>    method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/simsam/man/sample_clustered.html" class="external-link">sample_clustered</a></span><span class="op">(</span>nclusters <span class="op">=</span> <span class="fl">10</span>, radius <span class="op">=</span> <span class="fl">30</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -203,15 +206,15 @@ extrapolation<a class="anchor" aria-label="anchor" href="#adversial-validation-t
 <span><span class="co">#&gt; Setting direction: controls &lt; cases</span></span></code></pre></div>
 <p>For the biased sampling design shown here, the AV classifier achieves
 a performance of
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>A</mi><mi>U</mi><mi>C</mi><mo>=</mo><mn>0.8</mn></mrow><annotation encoding="application/x-tex">AUC = 0.8</annotation></semantics></math>.
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>A</mi><mi>U</mi><mi>C</mi><mo>=</mo><mn>0.77</mn></mrow><annotation encoding="application/x-tex">AUC = 0.77</annotation></semantics></math>.
 This leads to
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>D</mi><mo>=</mo><mfrac><mrow><mn>0.8</mn><mo>−</mo><mn>0.5</mn></mrow><mrow><mn>1</mn><mo>−</mo><mn>0.5</mn></mrow></mfrac><mo>=</mo><mn>0.6</mn></mrow><annotation encoding="application/x-tex">D = \frac{0.8 - 0.5}{1 - 0.5} = 0.6</annotation></semantics></math>.
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>D</mi><mo>=</mo><mfrac><mrow><mn>0.77</mn><mo>−</mo><mn>0.5</mn></mrow><mrow><mn>1</mn><mo>−</mo><mn>0.5</mn></mrow></mfrac><mo>=</mo><mn>0.54</mn></mrow><annotation encoding="application/x-tex">D = \frac{0.77 - 0.5}{1 - 0.5} = 0.54</annotation></semantics></math>.
 The threshold is then
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>T</mi><mo stretchy="false" form="prefix">(</mo><mi>D</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mn>0.5</mn><mo>*</mo><mn>0.6</mn><mo>=</mo><mn>0.3</mn></mrow><annotation encoding="application/x-tex">T(D) = 0.5* 0.6 = 0.3</annotation></semantics></math>.
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>T</mi><mo stretchy="false" form="prefix">(</mo><mi>D</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mn>0.5</mn><mo>*</mo><mn>0.54</mn><mo>=</mo><mn>0.3</mn></mrow><annotation encoding="application/x-tex">T(D) = 0.5* 0.54 = 0.3</annotation></semantics></math>.
 Hence, all prediction cells with a similarity score lower than 0.3 are
 classified as dissimilar. The relative fraction of prediction locations
-being similar from the sampling locations is 0.82, while the fraction
-being dissimilar is 0.18.</p>
+being similar from the sampling locations is 0.73, while the fraction
+being dissimilar is 0.27.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot.html">plot</a></span><span class="op">(</span><span class="va">results</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="https://eliocamp.github.io/ggnewscale/reference/new_scale.html" class="external-link">new_scale_fill</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
@@ -289,7 +292,7 @@ to calculate the weighted RMSE of a spatial predictive model.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">prediction</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">r</span>, <span class="va">rand_mod</span><span class="op">)</span></span></code></pre></div>
-<p>The RMSE obtained by DA-CV is 0.044. The maps below depict the
+<p>The RMSE obtained by DA-CV is 0.062. The maps below depict the
 difference between predicted and true response:</p>
 <div class="figure">
 <img src="DA-CV_files/figure-html/unnamed-chunk-8-1.png" class="r-plt" alt="Figure 4: The different CV fold assignments and their respective weight." width="768"><p class="caption">

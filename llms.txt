@@ -1,7 +1,9 @@
 # PDAV
 
 Prediction-domain adaptive validation methods provide estimates of map
-accuracy that are adapted to the deployment or prediction domain.
+accuracy that are adapted to the deployment or prediction domain
+([Linnenbrink, Nowosad & Meyer,
+2026](https://doi.org/10.48550/arXiv.2605.13689)).
 
 The package aims to:
 
@@ -18,7 +20,7 @@ The package aims to:
 | NNDM | Leave-one-out nearest-neighbour distance matching. Matches the nearest-neighbour distance distribution encountered during prediction by excluding training points from the LOO CV. | [Milà et al. (2022)](https://doi.org/10.1111/2041-210X.13851) | [Function](https://janlinnenbrink.github.io/PDAV/reference/nndm.md), [Article](https://janlinnenbrink.github.io/PDAV/articles/NNDM.md) |
 | kNNDM | k-fold nearest-neighbour distance matching. Uses clustering to create fold configurations ranging from random to spatially clustered CV and selects the configuration that best approximates the prediction situation. | [Linnenbrink & Milà et al. (2024)](https://doi.org/10.5194/gmd-17-5897-2024) | [Function](https://janlinnenbrink.github.io/PDAV/reference/knndm.md), [Article](https://janlinnenbrink.github.io/PDAV/articles/k-NNDM.md) |
 | DA-CV | Uses adversarial validation to classify the prediction area into (dis-)similar to the training data, and then weights random and spatial CV results based on the proportion of the two areas. | [Wang et al. (2025)](https://doi.org/10.1016/j.ecoinf.2025.103287) | [Function](https://janlinnenbrink.github.io/PDAV/reference/da_cv.md), [Article](https://janlinnenbrink.github.io/PDAV/articles/DA-CV.md) |
-| TWCV | Uses raking to weight the error estimates at the training points to match the frequency distribution of the predictor variables at the prediction locations. | [Brenning & Suesse (2026)](https://doi.org/10.48550/arXiv.2603.29981) | [Function](https://janlinnenbrink.github.io/PDAV/reference/compute_cv_estimators.md), [Article](https://janlinnenbrink.github.io/PDAV/articles/TWCV.md) |
+| TWCV | Uses raking to weight the error estimates at the training points to match the frequency distribution of the predictor variables at the prediction locations. | [Brenning & Suesse (2026)](https://doi.org/10.48550/arXiv.2603.29981) | [Function](https://janlinnenbrink.github.io/PDAV/reference/compute_cv_estimators.md), [Article](https://janlinnenbrink.github.io/PDAV/articles/twcv.md) |
 
 ## Detailed comparison
 

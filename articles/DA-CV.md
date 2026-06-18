@@ -88,8 +88,11 @@ r <- PDAV:::generate_rast()
 predictor_stack <- r[[setdiff(names(r), "outcome")]]
 cate_rasters <- which(names(r) %in% c("forest", "grass"))
 
+sampling_r <- r
+sampling_r[sampling_r$elev > 1] <- NA
+
 samples <- sam_field(
-    x = r,
+    x = sampling_r,
     size = 100,
     method = sample_clustered(nclusters = 10, radius = 30, na.rm = TRUE)
 )
@@ -132,12 +135,12 @@ results <- da_cv(
 ```
 
 For the biased sampling design shown here, the AV classifier achieves a
-performance of $`AUC = 0.8`$. This leads to
-$`D = \frac{0.8 - 0.5}{1 - 0.5} = 0.6`$. The threshold is then
-$`T(D) = 0.5* 0.6 = 0.3`$. Hence, all prediction cells with a similarity
-score lower than 0.3 are classified as dissimilar. The relative fraction
-of prediction locations being similar from the sampling locations is
-0.82, while the fraction being dissimilar is 0.18.
+performance of $`AUC = 0.77`$. This leads to
+$`D = \frac{0.77 - 0.5}{1 - 0.5} = 0.54`$. The threshold is then
+$`T(D) = 0.5* 0.54 = 0.3`$. Hence, all prediction cells with a
+similarity score lower than 0.3 are classified as dissimilar. The
+relative fraction of prediction locations being similar from the
+sampling locations is 0.73, while the fraction being dissimilar is 0.27.
 
 ``` r
 
@@ -221,7 +224,7 @@ err_stats_weighted <- sqrt(
 prediction <- predict(r, rand_mod)
 ```
 
-The RMSE obtained by DA-CV is 0.044. The maps below depict the
+The RMSE obtained by DA-CV is 0.062. The maps below depict the
 difference between predicted and true response:
 
 ![Figure 4: The different CV fold assignments and their respective

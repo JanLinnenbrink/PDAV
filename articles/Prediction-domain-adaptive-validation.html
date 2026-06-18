@@ -237,7 +237,7 @@ CV).</p>
 <span></span>
 <span><span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">results</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">samples</span><span class="op">$</span><span class="va">sampling</span><span class="op">)</span></span></code></pre></div>
 <p>For randomly distributed samples, the AV classifier has a performance
-of AUC = 0.5. This is then normalized to D = 0, because the classifier
+of AUC = 0.6. This is then normalized to D = 0, because the classifier
 is not better than random guessing at distinguishing whether a
 prediction location is similar or dissimilar to the training samples;
 see <span class="citation">Wang et al. (2025b)</span>, section 2.1, for
@@ -247,12 +247,12 @@ similar to the training samples, and no extrapolation correction is
 required, as shown in the following map. Consequently, all weight is
 assigned to random CV.</p>
 <p>For clustered samples, the AV classifier achieves a performance of
-AUC = 0.81. This leads to D = (0.81 - 0.5) / (1 - 0.5) = 0.62. The
-threshold is then T(D) = 0.5 × 0.62 = 0.31. Hence, all prediction cells
-with a similarity score lower than 0.31 are classified as dissimilar.
+AUC = 0.82. This leads to D = (0.82 - 0.5) / (1 - 0.5) = 0.64. The
+threshold is then T(D) = 0.5 × 0.64 = 0.32. Hence, all prediction cells
+with a similarity score lower than 0.32 are classified as dissimilar.
 The relative fraction of prediction locations classified as similar to
-the sampling locations is 0.84, while the fraction classified as
-dissimilar is 0.16.</p>
+the sampling locations is 0.5, while the fraction classified as
+dissimilar is 0.5.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">samples</span><span class="op">$</span><span class="va">sampling</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">smpling</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="fu"><a href="../reference/plot.html">plot</a></span><span class="op">(</span><span class="va">results</span><span class="op">[[</span><span class="va">smpling</span><span class="op">]</span><span class="op">]</span><span class="op">)</span> <span class="op">+</span></span>
@@ -335,8 +335,8 @@ to calculate the weighted RMSE of a spatial predictive model.</p>
 <span><span class="co">#&gt; Warning in nominalTrainWorkflow(x = x, y = y, wts = weights, info = trainInfo,</span></span>
 <span><span class="co">#&gt; : There were missing values in resampled performance measures.</span></span></code></pre></div>
 <p><img src="Prediction-domain-adaptive-validation_files/figure-html/unnamed-chunk-8-1.png" class="r-plt" alt="" width="576"></p>
-<p>The RMSE obtained by DA-CV are 0.038 for the random sampling design,
-0.05 for the biased sampling and 0.054 for the clustered design.</p>
+<p>The RMSE obtained by DA-CV are 0.054 for the random sampling design,
+0.045 for the biased sampling and 0.038 for the clustered design.</p>
 </div>
 <div class="section level3">
 <h3 id="knndm-cv">kNNDM CV<a class="anchor" aria-label="anchor" href="#knndm-cv"></a>
