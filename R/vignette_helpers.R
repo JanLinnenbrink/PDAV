@@ -1,11 +1,14 @@
 #' @keywords internal
 #' @noRd
 generate_rast <- function() {
-	set.seed(100)
+	set.seed(10)
 
 	rast_grid <- rast(xmin = 0, xmax = 200, ymin = 0, ymax = 200, ncols = 200, nrows = 200)
 
-	grad_predictors <- sim_covariates(rast_grid, n = 8, method = simulate_gaussian(psill = 1, model = "Exp", range = 50))
+	grad_predictors <- sim_covariates(rast_grid, n = 7, method = simulate_gaussian(psill = 1, model = "Exp", range = 50))
+	elev <- generate_elevation(rast_grid = rast_grid)
+	grad_predictors <- c(grad_predictors, elev)
+
 	landcover <- sim_covariates(
 		rast_grid,
 		n = 2,
@@ -13,7 +16,7 @@ generate_rast <- function() {
 	)
 
 	predictors <- c(grad_predictors, landcover)
-	names(predictors) <- c("temp", "moisture", "ph", "elev", "slope", "solar", "dist_road", "prod", "forest", "grass")
+	names(predictors) <- c("temp", "moisture", "ph", "slope", "solar", "dist_road", "prod", "elev", "forest", "grass")
 
 	outcome_pred <- blend_rasters(
 		predictors,
@@ -73,4 +76,90 @@ generate_samples <- function(r, n_samples) {
 		mutate(sampling = factor(sampling, levels = c("random", "biased", "clustered")))
 
 	return(samples)
+}
+
+#' @keywords internal
+#' @noRd
+generate_elevation <- function(rast_grid) {
+	# Helper: standardize raster values
+	standardize_raster <- function(x) {
+		v <- values(x)[, 1]
+		values(x) <- as.numeric(scale(v))
+		x
+	}
+
+	# Helper: rescale vector to [0, 1]
+	scale01 <- function(x) {
+		(x - min(x, na.rm = TRUE)) / diff(range(x, na.rm = TRUE))
+	}
+
+	# Coordinates
+	xy <- crds(rast_grid, df = TRUE)
+	x <- xy$x
+	y <- xy$y
+
+	# 1. Broad-scale elevation pattern: lowlands to mountains
+	broad_elev <- sim_covariates(
+		rast_grid,
+		n = 1,
+		method = simulate_gaussian(
+			psill = 2,
+			model = "Exp",
+			range = 80
+		)
+	)
+
+	# 2. Local terrain roughness
+	rough_elev <- sim_covariates(
+		rast_grid,
+		n = 1,
+		method = simulate_gaussian(
+			psill = 2,
+			model = "Exp",
+			range = 10
+		)
+	)
+
+	# 3. Optional directional trend: lower southwest, higher northeast
+	trend_vals <- 0.6 * scale01(x) + 0.4 * scale01(y)
+
+	trend <- rast_grid
+	values(trend) <- trend_vals
+
+	# 4. Optional mountain massif
+	mountain_vals <- exp(
+		-(((x - 150)^2) / (2 * 35^2) + ((y - 150)^2) / (2 * 35^2))
+	)
+
+	mountain <- rast_grid
+	values(mountain) <- mountain_vals
+
+	# 5. Optional lowland / valley
+	valley_vals <- exp(-((y - 35)^2) / (2 * 25^2))
+
+	valley <- rast_grid
+	values(valley) <- valley_vals
+
+	# Combine components
+	elev <-
+		1.2 *
+		standardize_raster(broad_elev) +
+		0.4 * standardize_raster(rough_elev) +
+		0.8 * standardize_raster(trend) +
+		1.0 * standardize_raster(mountain) -
+		0.7 * standardize_raster(valley)
+
+	# Smooth slightly
+	elev <- focal(
+		elev,
+		w = matrix(1, 3, 3),
+		fun = mean,
+		expand = TRUE,
+		na.rm = TRUE
+	)
+
+	# Final standardized elevation layer
+	elev <- standardize_raster(elev)
+	names(elev) <- "elev"
+	return(elev)
 }

@@ -58,8 +58,11 @@ cate_rasters <- which(names(r) %in% c("forest", "grass"))
 
 n_sample <- 100
 
+sampling_r <- r
+sampling_r[sampling_r$elev > 1] <- NA
+
 samples <- sam_field(
-	x = r,
+	x = sampling_r,
 	size = n_sample,
 	method = sample_clustered(nclusters = 10, radius = 30, na.rm = TRUE)
 )
@@ -109,6 +112,8 @@ predict_fun <- function(fit, newdata, ...) {
 model = "rf"
 
 folds <- sample(rep(1:5, length.out = n_sample))
+
+rel_columns <- c("fold", "obs", "pred", "error", "elev")
 ```
 
 ```{r}
@@ -117,7 +122,8 @@ folds <- sample(rep(1:5, length.out = n_sample))
 #| fig-cap: "Figure 1: The predictor stack"
 #| echo: false
 ggplot() +
-	geom_spatraster(data = predictor_stack) +
+	geom_spatraster(data = predictor_stack$elev) +
+	geom_sf(data = samples) +
 	coord_sf(expand = FALSE, datum = st_crs(predictor_stack)) +
 	scale_fill_viridis_c() +
 	facet_wrap(~lyr) +
@@ -256,9 +262,6 @@ bal <- list(
 	sample_tasks_bal = sample_tasks_bal,
 	grid_tasks_bal = grid_tasks_bal
 )
-
-knitr::kable(head(bal$sample_tasks_bal))
-knitr::kable(head(bal$grid_tasks_bal))
 ```
 
 ```{r plot, echo=FALSE, fig.width=10, fig.height=5}
@@ -463,9 +466,19 @@ target_margins <- PDAV:::compute_target_margins_generic(
 	balancing_vars = twcv_specs$twcv_extended$balancing_vars
 )
 target_margins$elev
+
+# For visualization only: margins of samples
+levs <- seq_along(target_margins[["elev"]])
+freq_samples <- table(factor(as.integer(balance_df[["elev"]]), levels = levs))
+as.numeric(freq_samples) / sum(freq_samples)
 ```
 
 ### 5. Apply Raking
+
+In this example, one elevation quintile of the prediction locations is not covered by the training points. 
+However, this does not return an error.
+Instead, if a quintile is not covered by the training points, the weights shrink towards 0 and the algorithm "converges"
+A better approach would likely be to stop the algorithm and return an error message hinting towards avoiding this extreme extrapolation.
 
 ```{r, message=FALSE, warning=FALSE, results='hide'}
 margin_names <- names(target_margins)
@@ -500,9 +513,11 @@ for (iter in seq_len(max_iter)) {
 		adj[ok] <- target_totals[ok] / current_totals[ok]
 		adj[!ok] <- NA_real_
 
+		# Checks for all training points if they fall in the distribution of the grid
+		# However, if one quintile of the prediction domain is not covered by the training data, this does not return an error
+		# Instead, if a quintile is not covered by the training points, the weights shrink towards 0 and the algorithm "converges"
 		valid <- !is.na(adj[x])
 		w[valid] <- w[valid] * adj[x[valid]]
-		print(paste(m, w))
 	}
 
 	# Compute the relative strength of the absolute change of weights from base (or previous) to new weights
@@ -521,9 +536,6 @@ tw <- list(
 	converged = converged,
 	iterations = iter
 )
-```
-
-```{r}
 tw$weights
 ```
 

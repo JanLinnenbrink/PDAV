@@ -1,5 +1,5 @@
 # PDAV
-This repository is a collection of prediction-domain adaptive validation methods. Due to the growing application of spatial predictive models in geoscientific fields, there is also a growing need for reliable validation of the resulting maps. Prediction-domain adaptive validation methods provide reliable proxies of map accuracies that can be used during model selection and also -- in the absence of an independent probability sample -- as a proxy of the final map accuracy. This repository aims at:
+This repository is a collection of prediction-domain adaptive validation methods. Due to the growing application of spatial predictive models in geoscientific fields, there is also a growing need for reliable validation of the resulting maps. Prediction-domain adaptive validation methods provide reliable proxies of map accuracies that can be used during model selection and also -- in the absence of an independent probability sample -- as a proxy of the final map accuracy ([Linnenbrink, Nowosad & Meyer, 2026](https://doi.org/10.48550/arXiv.2605.13689)). This repository aims at:
 
 1) collecting and consistently [implementing](R/) prediction-domain adaptive validation methods applicable for spatial predictive modelling.
 2) providing [vignettes](vignettes/) that describe their functioning and application.
@@ -30,7 +30,10 @@ The table below summarises some advantages and disadvantages of the different me
 | [TWCV](R/twcv.R) | - applies **weighting** to match the prediction situation, which is more flexible than resampling-based matching of the prediction situation | - **integration of geographic distances** implicit and weighting of the predictor vs geographical space is automatically done by the raking algorithm |
 
 ## List of research papers
-* Milà, C., Mateu, J., Pebesma, E., Meyer, H. (2022): Nearest Neighbour Distance Matching Leave-One-Out Cross-Validation for map validation. Methods in Ecology and Evolution 00, 1– 13.
+
+* Linnenbrink, J., Nowosad, J. and Meyer, H. (2026): Moving beyond spatial and random cross-validation in environmental modelling: a call for prediction-domain adaptive evaluation. Preprint. https://doi.org/10.48550/arXiv.2605.13689
+
+* Milà, C., Mateu, J., Pebesma, E. and Meyer, H. (2022): Nearest Neighbour Distance Matching Leave-One-Out Cross-Validation for map validation. Methods in Ecology and Evolution 00, 1– 13.
 https://doi.org/10.1111/2041-210X.13851
 
 * Linnenbrink, J., Milà, C., Ludwig, M., and Meyer, H. (2024): kNNDM: k-fold Nearest Neighbour Distance Matching Cross-Validation for map accuracy estimation. GMD, 17, 5897–5912.

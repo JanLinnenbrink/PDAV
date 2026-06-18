@@ -64,8 +64,11 @@ r <- PDAV:::generate_rast()
 predictor_stack <- r[[setdiff(names(r), "outcome")]]
 cate_rasters <- which(names(r) %in% c("forest", "grass"))
 
+sampling_r <- r
+sampling_r[sampling_r$elev > 1] <- NA
+
 samples <- sam_field(
-	x = r,
+	x = sampling_r,
 	size = 100,
 	method = sample_clustered(nclusters = 10, radius = 30, na.rm = TRUE)
 )
@@ -90,6 +93,7 @@ ggplot() +
 #| echo: false
 library(sp)
 library(gstat)
+response_name <- "outcome"
 
 samples_sp <- as(samples, "Spatial")
 vg_samples <- variogram(as.formula(paste(response_name, "~ 1")), data = samples_sp)
