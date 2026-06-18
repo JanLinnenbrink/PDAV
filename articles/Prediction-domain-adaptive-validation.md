@@ -209,7 +209,7 @@ weighted_RMSE <- lapply(unique(samples$sampling), function(smpling) {
 ![](Prediction-domain-adaptive-validation_files/figure-html/unnamed-chunk-8-1.png)
 
 The RMSE obtained by DA-CV are 0.054 for the random sampling design,
-0.045 for the biased sampling and 0.038 for the clustered design.
+0.045 for the biased sampling and 0.037 for the clustered design.
 
 ### kNNDM CV
 

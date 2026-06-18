@@ -206,8 +206,8 @@ values.</li>
 <span></span>
 <span><span class="va">rel_columns</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"fold"</span>, <span class="st">"obs"</span>, <span class="st">"pred"</span>, <span class="st">"error"</span>, <span class="st">"elev"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
-<img src="twcv_files/figure-html/unnamed-chunk-3-1.png" class="r-plt" alt="Figure 1: The predictor stack" width="576"><p class="caption">
-Figure 1: The predictor stack
+<img src="twcv_files/figure-html/unnamed-chunk-3-1.png" class="r-plt" alt="Figure 1: The training points and one predictor (elevation)" width="576"><p class="caption">
+Figure 1: The training points and one predictor (elevation)
 </p>
 </div>
 </div>
@@ -260,55 +260,55 @@ resulting pointwise CV error:</p>
 <td align="right">1</td>
 <td align="right">4</td>
 <td align="right">0.0250339</td>
-<td align="right">0.0477339</td>
-<td align="right">-0.0226999</td>
-<td align="right">0.0005153</td>
-<td align="right">0.0226999</td>
+<td align="right">0.0473620</td>
+<td align="right">-0.0223280</td>
+<td align="right">0.0004985</td>
+<td align="right">0.0223280</td>
 </tr>
 <tr class="even">
 <td align="right">2</td>
 <td align="right">4</td>
 <td align="right">0.0194739</td>
-<td align="right">0.0017141</td>
-<td align="right">0.0177599</td>
-<td align="right">0.0003154</td>
-<td align="right">0.0177599</td>
+<td align="right">-0.0000727</td>
+<td align="right">0.0195467</td>
+<td align="right">0.0003821</td>
+<td align="right">0.0195467</td>
 </tr>
 <tr class="odd">
 <td align="right">3</td>
 <td align="right">2</td>
 <td align="right">0.0295682</td>
-<td align="right">0.0369364</td>
-<td align="right">-0.0073683</td>
-<td align="right">0.0000543</td>
-<td align="right">0.0073683</td>
+<td align="right">0.0358232</td>
+<td align="right">-0.0062550</td>
+<td align="right">0.0000391</td>
+<td align="right">0.0062550</td>
 </tr>
 <tr class="even">
 <td align="right">4</td>
 <td align="right">3</td>
 <td align="right">-0.1403769</td>
-<td align="right">-0.0757283</td>
-<td align="right">-0.0646486</td>
-<td align="right">0.0041794</td>
-<td align="right">0.0646486</td>
+<td align="right">-0.0776827</td>
+<td align="right">-0.0626942</td>
+<td align="right">0.0039306</td>
+<td align="right">0.0626942</td>
 </tr>
 <tr class="odd">
 <td align="right">5</td>
 <td align="right">1</td>
 <td align="right">-0.1468337</td>
-<td align="right">-0.0656559</td>
-<td align="right">-0.0811778</td>
-<td align="right">0.0065898</td>
-<td align="right">0.0811778</td>
+<td align="right">-0.0647938</td>
+<td align="right">-0.0820399</td>
+<td align="right">0.0067305</td>
+<td align="right">0.0820399</td>
 </tr>
 <tr class="even">
 <td align="right">6</td>
 <td align="right">2</td>
 <td align="right">-0.0060736</td>
-<td align="right">0.0310038</td>
-<td align="right">-0.0370774</td>
-<td align="right">0.0013747</td>
-<td align="right">0.0370774</td>
+<td align="right">0.0295548</td>
+<td align="right">-0.0356284</td>
+<td align="right">0.0012694</td>
+<td align="right">0.0356284</td>
 </tr>
 </tbody>
 </table>
@@ -425,10 +425,10 @@ resulting pointwise CV error:</p>
 <td align="right">1</td>
 <td align="right">4</td>
 <td align="right">0.0250339</td>
-<td align="right">0.0477339</td>
-<td align="right">-0.0226999</td>
-<td align="right">0.0005153</td>
-<td align="right">0.0226999</td>
+<td align="right">0.0473620</td>
+<td align="right">-0.0223280</td>
+<td align="right">0.0004985</td>
+<td align="right">0.0223280</td>
 <td align="right">0.8769668</td>
 <td align="right">-1.5636978</td>
 <td align="right">-1.4725255</td>
@@ -445,10 +445,10 @@ resulting pointwise CV error:</p>
 <td align="right">2</td>
 <td align="right">4</td>
 <td align="right">0.0194739</td>
-<td align="right">0.0017141</td>
-<td align="right">0.0177599</td>
-<td align="right">0.0003154</td>
-<td align="right">0.0177599</td>
+<td align="right">-0.0000727</td>
+<td align="right">0.0195467</td>
+<td align="right">0.0003821</td>
+<td align="right">0.0195467</td>
 <td align="right">-0.1627803</td>
 <td align="right">-2.4732208</td>
 <td align="right">-1.7179238</td>
@@ -465,10 +465,10 @@ resulting pointwise CV error:</p>
 <td align="right">3</td>
 <td align="right">2</td>
 <td align="right">0.0295682</td>
-<td align="right">0.0369364</td>
-<td align="right">-0.0073683</td>
-<td align="right">0.0000543</td>
-<td align="right">0.0073683</td>
+<td align="right">0.0358232</td>
+<td align="right">-0.0062550</td>
+<td align="right">0.0000391</td>
+<td align="right">0.0062550</td>
 <td align="right">1.1839176</td>
 <td align="right">0.0311049</td>
 <td align="right">-0.5123982</td>
@@ -485,10 +485,10 @@ resulting pointwise CV error:</p>
 <td align="right">4</td>
 <td align="right">3</td>
 <td align="right">-0.1403769</td>
-<td align="right">-0.0757283</td>
-<td align="right">-0.0646486</td>
-<td align="right">0.0041794</td>
-<td align="right">0.0646486</td>
+<td align="right">-0.0776827</td>
+<td align="right">-0.0626942</td>
+<td align="right">0.0039306</td>
+<td align="right">0.0626942</td>
 <td align="right">-0.1536180</td>
 <td align="right">-1.4972850</td>
 <td align="right">-0.9786745</td>
@@ -505,10 +505,10 @@ resulting pointwise CV error:</p>
 <td align="right">5</td>
 <td align="right">1</td>
 <td align="right">-0.1468337</td>
-<td align="right">-0.0656559</td>
-<td align="right">-0.0811778</td>
-<td align="right">0.0065898</td>
-<td align="right">0.0811778</td>
+<td align="right">-0.0647938</td>
+<td align="right">-0.0820399</td>
+<td align="right">0.0067305</td>
+<td align="right">0.0820399</td>
 <td align="right">-0.1915660</td>
 <td align="right">-1.4061724</td>
 <td align="right">-1.3192238</td>
@@ -525,10 +525,10 @@ resulting pointwise CV error:</p>
 <td align="right">6</td>
 <td align="right">2</td>
 <td align="right">-0.0060736</td>
-<td align="right">0.0310038</td>
-<td align="right">-0.0370774</td>
-<td align="right">0.0013747</td>
-<td align="right">0.0370774</td>
+<td align="right">0.0295548</td>
+<td align="right">-0.0356284</td>
+<td align="right">0.0012694</td>
+<td align="right">0.0356284</td>
 <td align="right">-0.5612379</td>
 <td align="right">-1.7635113</td>
 <td align="right">-1.2023100</td>
@@ -665,6 +665,9 @@ resulting pointwise CV error:</p>
 <div class="section level3">
 <h3 id="calculate-quantiles-of-the-balancing-variables">3. Calculate quantiles of the balancing variables<a class="anchor" aria-label="anchor" href="#calculate-quantiles-of-the-balancing-variables"></a>
 </h3>
+<p>The quantiles are calculated based on the distribution of the values
+of the predictor variable at the prediction locations, and then applied
+to the training points.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cv_losses</span> <span class="op">&lt;-</span> <span class="va">aug</span><span class="op">$</span><span class="va">losses</span></span>
 <span><span class="va">grid_tasks</span> <span class="op">&lt;-</span> <span class="va">aug</span><span class="op">$</span><span class="va">grid_tasks</span></span>
@@ -781,7 +784,27 @@ hinting towards avoiding this extreme extrapolation.</p>
 <span>    converged <span class="op">=</span> <span class="va">converged</span>,</span>
 <span>    iterations <span class="op">=</span> <span class="va">iter</span></span>
 <span><span class="op">)</span></span>
-<span><span class="va">tw</span><span class="op">$</span><span class="va">weights</span></span></code></pre></div>
+<span><span class="va">tw</span><span class="op">$</span><span class="va">weights</span></span>
+<span><span class="co">#&gt;   [1] 1.546291e-18 4.148793e-66 1.032109e-42 2.217215e-38 5.202124e-47</span></span>
+<span><span class="co">#&gt;   [6] 8.997038e-20 1.578688e-46 9.969292e-39 7.849260e-67 1.576836e-29</span></span>
+<span><span class="co">#&gt;  [11] 6.266124e-20 9.930564e-66 2.831398e-85 9.221373e-20 4.328783e-58</span></span>
+<span><span class="co">#&gt;  [16] 2.755575e-19 2.722809e-30 1.073265e-61 4.438338e-39 2.047475e-66</span></span>
+<span><span class="co">#&gt;  [21] 2.614331e-19 2.147166e-50 2.246440e-20 5.515744e-20 1.050174e-67</span></span>
+<span><span class="co">#&gt;  [26] 2.488615e-45 6.964517e-83 4.607134e-35 1.946819e-71 7.985663e-19</span></span>
+<span><span class="co">#&gt;  [31] 1.354045e-19 8.641852e-44 1.683661e-52 1.895823e-31 1.371655e-19</span></span>
+<span><span class="co">#&gt;  [36] 2.283214e-26 7.370738e-45 1.732577e-19 3.148109e-30 2.895379e-45</span></span>
+<span><span class="co">#&gt;  [41] 3.539499e-38 2.648313e-19 2.383438e-20 9.762012e-66 7.897869e-50</span></span>
+<span><span class="co">#&gt;  [46] 5.858668e-91 1.306593e-37 6.903661e-22 9.116535e-44 4.741888e-34</span></span>
+<span><span class="co">#&gt;  [51] 1.109488e-42 2.339870e-35 5.517157e-21 2.167854e-24 4.016150e-44</span></span>
+<span><span class="co">#&gt;  [56] 4.878633e-21 1.157224e-55 8.468785e-20 1.557859e-46 6.234899e-48</span></span>
+<span><span class="co">#&gt;  [61] 4.575108e-37 4.407268e-19 1.488039e-30 9.110897e-20 4.449209e-31</span></span>
+<span><span class="co">#&gt;  [66] 1.417004e-59 3.935172e-50 2.074565e-87 1.989836e-64 4.336042e-59</span></span>
+<span><span class="co">#&gt;  [71] 2.639448e-54 1.804805e-21 1.659560e-50 2.644150e-57 2.439549e-19</span></span>
+<span><span class="co">#&gt;  [76] 5.121019e-29 1.257570e-44 1.587784e-22 1.983218e-19 7.266281e-38</span></span>
+<span><span class="co">#&gt;  [81] 2.617053e-32 1.402788e-57 1.061832e-31 1.583289e-19 5.046371e-42</span></span>
+<span><span class="co">#&gt;  [86] 3.821361e-20 3.350088e-30 1.889152e-35 3.015619e-31 2.137022e-56</span></span>
+<span><span class="co">#&gt;  [91] 4.058218e-46 5.316846e-25 8.398841e-38 1.407038e-24 2.136704e-19</span></span>
+<span><span class="co">#&gt;  [96] 3.868186e-29 1.603727e-19 4.760317e-47 2.116170e-19 3.847544e-19</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="normalize-and-shrink-weights">6. Normalize and shrink weights<a class="anchor" aria-label="anchor" href="#normalize-and-shrink-weights"></a>
@@ -834,12 +857,12 @@ hinting towards avoiding this extreme extrapolation.</p>
 <span><span class="va">unweighted_losses</span></span>
 <span><span class="co">#&gt; $unweighted</span></span>
 <span><span class="co">#&gt;         bias          mse         rmse          mae </span></span>
-<span><span class="co">#&gt; 0.0009066178 0.0032602974 0.0570990138 0.0432061638</span></span>
+<span><span class="co">#&gt; 0.0009018562 0.0032533993 0.0570385769 0.0431583042</span></span>
 <span></span>
 <span><span class="co"># Weighted error:</span></span>
 <span><span class="va">result</span><span class="op">$</span><span class="va">estimators</span></span>
 <span><span class="co">#&gt;         bias          mse         rmse          mae </span></span>
-<span><span class="co">#&gt; -0.005962343  0.003049602  0.055223204  0.042842620</span></span></code></pre></div>
+<span><span class="co">#&gt; -0.005843179  0.003056844  0.055288736  0.042902310</span></span></code></pre></div>
 <div id="refs" class="references csl-bib-body hanging-indent">
 <div id="ref-Brenning2026" class="csl-entry">
 Brenning, Alexander, and Thomas Suesse. 2026. <em>Aligning
