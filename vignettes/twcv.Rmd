@@ -47,7 +47,7 @@ library(cowplot)
 library(tidyterra)
 library(ggnewscale)
 
-set.seed(100)
+set.seed(10)
 ```
 
 ## Simulate predictors and response
@@ -59,12 +59,12 @@ cate_rasters <- which(names(r) %in% c("forest", "grass"))
 n_sample <- 100
 
 sampling_r <- r
-sampling_r[sampling_r$elev > 1] <- NA
+sampling_r[sampling_r$elev > 60] <- NA
 
 samples <- sam_field(
 	x = sampling_r,
 	size = n_sample,
-	method = sample_clustered(nclusters = 10, radius = 30, na.rm = TRUE)
+	method = sample_clustered(nclusters = 10, radius = 60, na.rm = TRUE)
 )
 
 predictor_vars <- names(predictor_stack)
@@ -112,8 +112,6 @@ predict_fun <- function(fit, newdata, ...) {
 model = "rf"
 
 folds <- sample(rep(1:5, length.out = n_sample))
-
-rel_columns <- c("fold", "obs", "pred", "error", "elev")
 ```
 
 ```{r}
@@ -266,7 +264,7 @@ bal <- list(
 )
 ```
 
-```{r plot, echo=FALSE, fig.width=10, fig.height=5}
+```{r plot, echo=FALSE, fig.width=10, fig.height=5, fig.cap="Figure 2: The quintiles of elevation at the prediction points, overlaid by the density of the elevation values at the training points (A) and the prediction points (B)."}
 PDAV:::plot_task_density_bands(
 	sample_tasks = bal$sample_tasks_bal,
 	grid_tasks = bal$grid_tasks_bal,
@@ -304,7 +302,7 @@ as.numeric(freq_samples) / sum(freq_samples)
 In this example, one elevation quintile of the prediction locations is not covered by the training points. 
 However, this does not return an error.
 Instead, if a quintile is not covered by the training points, the weights shrink towards 0 and the algorithm "converges"
-A better approach would likely be to stop the algorithm and return an error message hinting towards avoiding this extreme extrapolation.
+A better approach would likely be to stop the algorithm and return an error message hinting towards avoiding this extreme extrapolation. See section 8 and Figure 2.
 
 ```{r}
 margin_names <- names(target_margins)
@@ -362,7 +360,10 @@ tw <- list(
 	converged = converged,
 	iterations = iter
 )
-tw$weights
+
+ggplot() +
+	geom_histogram(data = data.frame(weights = tw$weights), aes(x = weights)) +
+	geom_vline(xintercept = 0)
 ```
 
 ### 6. Normalize and shrink weights
@@ -375,7 +376,10 @@ tw$weights <- PDAV:::shrink_weights(tw$weights_raw, lambda = shrink_lambda)
 tw$shrink_lambda <- twcv_specs$twcv_extended$shrink_lambda
 tw$balancing_vars <- twcv_specs$twcv_extended$balancing_vars
 
-tw$weights
+ggplot() +
+	geom_histogram(data = data.frame(weights = tw$weights), aes(x = weights)) +
+	xlab("weights after normalization") +
+	geom_vline(xintercept = 0)
 ```
 
 ### 7. Return weighted error estimates
@@ -396,4 +400,69 @@ unweighted_losses
 
 # Weighted error:
 result$estimators
+```
+
+True error:
+
+```{r, echo=FALSE}
+# True error:
+fit <- fit_fun(
+	sample_dat |> select(!c(id, x, y)),
+	model = model,
+	response = response
+)
+prediction <- terra::predict(
+	predictor_stack,
+	fit,
+	fun = function(model, data, ...) {
+		predict(model, data = data)$predictions
+	},
+	na.rm = TRUE
+)
+samples_pred <- terra::spatSample(prediction, 1000, as.points = TRUE, na.rm = TRUE, method = "regular") |>
+	st_as_sf() |>
+	rename("prediction" = lyr1)
+samples_pred <- terra::extract(r$outcome, samples_pred, bind = TRUE)
+
+rmse <- sqrt(mean((samples_pred$prediction - samples_pred$outcome)^2))
+mae <- mean(abs(samples_pred$prediction - samples_pred$outcome))
+
+data.frame(
+	RMSE = rmse,
+	MAE = mae
+)
+```
+
+### 8. Check if the inputs were supported for raking {#sec-problems}
+
+Elevation quintile 5 of the prediction points not supported by the training points (if clustering was higher, e.g., radius = 30, then distance would also be not supported). Raking is infeasible in this case, and the prediction domain should be constrained e.g. to the Area of Applicability )(@Meyer2021). At least, the algorithm should stop with an error message. The normalization of weights by their means creates the illusion that the weights were meaningful and hides this problem.
+```{r}
+check_balance_support <- function(balance_df, target_margins, eps = 1e-12) {
+	out <- lapply(names(target_margins), function(m) {
+		levs <- seq_along(target_margins[[m]])
+
+		sample_counts <- table(
+			factor(as.integer(balance_df[[m]]), levels = levs)
+		)
+
+		data.frame(
+			var = m,
+			level = levs,
+			sample_n = as.numeric(sample_counts),
+			target_prop = as.numeric(target_margins[[m]]),
+			unsupported = as.numeric(sample_counts) == 0 &
+				as.numeric(target_margins[[m]]) > eps
+		)
+	})
+
+	dplyr::bind_rows(out)
+}
+support_check <- check_balance_support(balance_df, target_margins)
+support_check |>
+	dplyr::group_by(var) |>
+	dplyr::summarise(
+		target_mass_covered = sum(target_prop[sample_n > 0]),
+		n_unsupported_bins = sum(unsupported),
+		.groups = "drop"
+	)
 ```

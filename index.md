@@ -6,7 +6,7 @@ The package aims to:
 
 1. provide consistent implementations of prediction-domain adaptive validation methods for spatial predictive modelling;
 2. provide vignettes that describe how the methods work and how they can be applied;
-3. provide an overview of currently available methods.
+3. provide an [overview](articles/Prediction-domain-adaptive-validation.html) of currently available methods.
 
 ## Available methods
 
@@ -20,4 +20,4 @@ The package aims to:
 
 ## Detailed comparison
 
-For a more detailed comparison of advantages, disadvantages, and assumptions, see the [overview article](vignettes/Prediction-domain-adaptive-validation.html).
+For a more detailed comparison of advantages, disadvantages, and assumptions, see the [overview article](articles/Prediction-domain-adaptive-validation.html).

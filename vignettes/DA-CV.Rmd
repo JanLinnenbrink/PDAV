@@ -65,7 +65,7 @@ predictor_stack <- r[[setdiff(names(r), "outcome")]]
 cate_rasters <- which(names(r) %in% c("forest", "grass"))
 
 sampling_r <- r
-sampling_r[sampling_r$elev > 1] <- NA
+sampling_r[sampling_r$elev > 60] <- NA
 
 samples <- sam_field(
 	x = sampling_r,

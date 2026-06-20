@@ -5,7 +5,11 @@ generate_rast <- function() {
 
 	rast_grid <- rast(xmin = 0, xmax = 200, ymin = 0, ymax = 200, ncols = 200, nrows = 200)
 
-	grad_predictors <- sim_covariates(rast_grid, n = 7, method = simulate_gaussian(psill = 1, model = "Exp", range = 50))
+	grad_predictors <- sim_covariates(
+		rast_grid,
+		n = 7,
+		method = simulate_gaussian(nugget = 0, beta = 50, psill = 100, model = "Exp", range = 50)
+	)
 	elev <- generate_elevation(rast_grid = rast_grid)
 	grad_predictors <- c(grad_predictors, elev)
 
@@ -32,9 +36,11 @@ generate_rast <- function() {
 		# forest boosts, grass reduces, small slope term
 	)
 
-	noise <- sim_covariates(rast_grid, n = 1, method = simulate_gaussian(psill = 0.001, model = "Exp", range = 5))
+	outcome_signal <- rescale_raster(outcome_pred, to = c(1, 100))
+
+	noise <- sim_covariates(rast_grid, n = 1, method = simulate_gaussian(psill = 10, model = "Exp", range = 5))
 	names(noise) <- "noise"
-	outcome <- outcome_pred + noise
+	outcome <- outcome_signal + noise
 
 	r <- c(predictors, outcome)
 	terra::crs(r) <- "EPSG:3857"
@@ -77,6 +83,7 @@ generate_samples <- function(r, n_samples) {
 
 	return(samples)
 }
+
 
 #' @keywords internal
 #' @noRd
@@ -121,7 +128,7 @@ generate_elevation <- function(rast_grid) {
 	)
 
 	# 3. Optional directional trend: lower southwest, higher northeast
-	trend_vals <- 0.6 * scale01(x) + 0.4 * scale01(y)
+	trend_vals <- 0.6 * x + 0.4 * y
 
 	trend <- rast_grid
 	values(trend) <- trend_vals
@@ -160,6 +167,25 @@ generate_elevation <- function(rast_grid) {
 
 	# Final standardized elevation layer
 	elev <- standardize_raster(elev)
+	# Rescale to 1–100 m
+	v <- values(elev)[, 1]
+	values(elev) <- 1 + 99 * scale01(v)
+
 	names(elev) <- "elev"
 	return(elev)
+}
+
+
+#' @keywords internal
+#' @noRd
+rescale_raster <- function(x, to = c(1, 100)) {
+	mn <- terra::global(x, "min", na.rm = TRUE)[1, 1]
+	mx <- terra::global(x, "max", na.rm = TRUE)[1, 1]
+
+	if (mx == mn) {
+		x[] <- mean(to)
+		return(x)
+	}
+
+	to[1] + (x - mn) * diff(to) / (mx - mn)
 }
