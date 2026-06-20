@@ -469,8 +469,7 @@ result$estimators
 
 True error:
 
-    #>       RMSE     MAE
-    #> 1 9.163015 6.52641
+    #> [1] 9.163015
 
 ### 8. Check if the inputs were supported for raking
 
