@@ -425,12 +425,7 @@ samples_pred <- terra::spatSample(prediction, 1000, as.points = TRUE, na.rm = TR
 samples_pred <- terra::extract(r$outcome, samples_pred, bind = TRUE)
 
 rmse <- sqrt(mean((samples_pred$prediction - samples_pred$outcome)^2))
-mae <- mean(abs(samples_pred$prediction - samples_pred$outcome))
-
-data.frame(
-	RMSE = rmse,
-	MAE = mae
-)
+rmse
 ```
 
 ### 8. Check if the inputs were supported for raking {#sec-problems}

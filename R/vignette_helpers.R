@@ -10,7 +10,8 @@ generate_rast <- function() {
 		n = 7,
 		method = simulate_gaussian(nugget = 0, beta = 50, psill = 100, model = "Exp", range = 50)
 	)
-	elev <- generate_elevation(rast_grid = rast_grid)
+	elev <- generate_elevation(rast_grid = rast_grid) |>
+		rescale_raster(to = c(1, 100))
 	grad_predictors <- c(grad_predictors, elev)
 
 	landcover <- sim_covariates(
@@ -95,11 +96,6 @@ generate_elevation <- function(rast_grid) {
 		x
 	}
 
-	# Helper: rescale vector to [0, 1]
-	scale01 <- function(x) {
-		(x - min(x, na.rm = TRUE)) / diff(range(x, na.rm = TRUE))
-	}
-
 	# Coordinates
 	xy <- crds(rast_grid, df = TRUE)
 	x <- xy$x
@@ -167,9 +163,6 @@ generate_elevation <- function(rast_grid) {
 
 	# Final standardized elevation layer
 	elev <- standardize_raster(elev)
-	# Rescale to 1–100 m
-	v <- values(elev)[, 1]
-	values(elev) <- 1 + 99 * scale01(v)
 
 	names(elev) <- "elev"
 	return(elev)
