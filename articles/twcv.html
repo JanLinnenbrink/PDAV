@@ -36,7 +36,7 @@
 <li><a class="dropdown-item" href="../articles/DA-CV.html">DA-CV</a></li>
     <li><a class="dropdown-item" href="../articles/k-NNDM.html">k-NNDM</a></li>
     <li><a class="dropdown-item" href="../articles/NNDM.html">NNDM</a></li>
-    <li><a class="dropdown-item" href="../articles/Prediction-domain-adaptive-validation.html">PDAV</a></li>
+    <li><a class="dropdown-item" href="../articles/Prediction-domain-adaptive-validation.html">Prediction-domain adaptive evaluation</a></li>
     <li><a class="dropdown-item" href="../articles/twcv.html">TWCV</a></li>
   </ul>
 </li>
@@ -137,7 +137,7 @@ values.</li>
 <span><span class="co">#&gt;     filter</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://eliocamp.github.io/ggnewscale/" class="external-link">ggnewscale</a></span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">100</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">10</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="simulate-predictors-and-response">Simulate predictors and response<a class="anchor" aria-label="anchor" href="#simulate-predictors-and-response"></a>
@@ -150,12 +150,12 @@ values.</li>
 <span><span class="va">n_sample</span> <span class="op">&lt;-</span> <span class="fl">100</span></span>
 <span></span>
 <span><span class="va">sampling_r</span> <span class="op">&lt;-</span> <span class="va">r</span></span>
-<span><span class="va">sampling_r</span><span class="op">[</span><span class="va">sampling_r</span><span class="op">$</span><span class="va">elev</span> <span class="op">&gt;</span> <span class="fl">1</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">NA</span></span>
+<span><span class="va">sampling_r</span><span class="op">[</span><span class="va">sampling_r</span><span class="op">$</span><span class="va">elev</span> <span class="op">&gt;</span> <span class="fl">60</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">NA</span></span>
 <span></span>
 <span><span class="va">samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/simsam/man/sam_field.html" class="external-link">sam_field</a></span><span class="op">(</span></span>
 <span>    x <span class="op">=</span> <span class="va">sampling_r</span>,</span>
 <span>    size <span class="op">=</span> <span class="va">n_sample</span>,</span>
-<span>    method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/simsam/man/sample_clustered.html" class="external-link">sample_clustered</a></span><span class="op">(</span>nclusters <span class="op">=</span> <span class="fl">10</span>, radius <span class="op">=</span> <span class="fl">30</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span>    method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/pkg/simsam/man/sample_clustered.html" class="external-link">sample_clustered</a></span><span class="op">(</span>nclusters <span class="op">=</span> <span class="fl">10</span>, radius <span class="op">=</span> <span class="fl">60</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">predictor_vars</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">predictor_stack</span><span class="op">)</span></span>
@@ -202,9 +202,7 @@ values.</li>
 <span></span>
 <span><span class="va">model</span> <span class="op">=</span> <span class="st">"rf"</span></span>
 <span></span>
-<span><span class="va">folds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, length.out <span class="op">=</span> <span class="va">n_sample</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">rel_columns</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"fold"</span>, <span class="st">"obs"</span>, <span class="st">"pred"</span>, <span class="st">"error"</span>, <span class="st">"elev"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">folds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, length.out <span class="op">=</span> <span class="va">n_sample</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
 <img src="twcv_files/figure-html/unnamed-chunk-3-1.png" class="r-plt" alt="Figure 1: The training points and one predictor (elevation)" width="576"><p class="caption">
 Figure 1: The training points and one predictor (elevation)
@@ -258,57 +256,57 @@ resulting pointwise CV error:</p>
 <tbody>
 <tr class="odd">
 <td align="right">1</td>
-<td align="right">4</td>
-<td align="right">0.0250339</td>
-<td align="right">0.0473620</td>
-<td align="right">-0.0223280</td>
-<td align="right">0.0004985</td>
-<td align="right">0.0223280</td>
+<td align="right">5</td>
+<td align="right">44.28207</td>
+<td align="right">43.82087</td>
+<td align="right">0.4611929</td>
+<td align="right">0.2126989</td>
+<td align="right">0.4611929</td>
 </tr>
 <tr class="even">
 <td align="right">2</td>
-<td align="right">4</td>
-<td align="right">0.0194739</td>
-<td align="right">-0.0000727</td>
-<td align="right">0.0195467</td>
-<td align="right">0.0003821</td>
-<td align="right">0.0195467</td>
+<td align="right">2</td>
+<td align="right">44.17117</td>
+<td align="right">49.99404</td>
+<td align="right">-5.8228636</td>
+<td align="right">33.9057405</td>
+<td align="right">5.8228636</td>
 </tr>
 <tr class="odd">
 <td align="right">3</td>
-<td align="right">2</td>
-<td align="right">0.0295682</td>
-<td align="right">0.0358232</td>
-<td align="right">-0.0062550</td>
-<td align="right">0.0000391</td>
-<td align="right">0.0062550</td>
+<td align="right">3</td>
+<td align="right">53.25563</td>
+<td align="right">53.99884</td>
+<td align="right">-0.7432053</td>
+<td align="right">0.5523542</td>
+<td align="right">0.7432053</td>
 </tr>
 <tr class="even">
 <td align="right">4</td>
-<td align="right">3</td>
-<td align="right">-0.1403769</td>
-<td align="right">-0.0776827</td>
-<td align="right">-0.0626942</td>
-<td align="right">0.0039306</td>
-<td align="right">0.0626942</td>
+<td align="right">2</td>
+<td align="right">42.51499</td>
+<td align="right">46.98822</td>
+<td align="right">-4.4732310</td>
+<td align="right">20.0097955</td>
+<td align="right">4.4732310</td>
 </tr>
 <tr class="odd">
 <td align="right">5</td>
-<td align="right">1</td>
-<td align="right">-0.1468337</td>
-<td align="right">-0.0647938</td>
-<td align="right">-0.0820399</td>
-<td align="right">0.0067305</td>
-<td align="right">0.0820399</td>
+<td align="right">2</td>
+<td align="right">53.21769</td>
+<td align="right">49.30701</td>
+<td align="right">3.9106775</td>
+<td align="right">15.2933984</td>
+<td align="right">3.9106775</td>
 </tr>
 <tr class="even">
 <td align="right">6</td>
 <td align="right">2</td>
-<td align="right">-0.0060736</td>
-<td align="right">0.0295548</td>
-<td align="right">-0.0356284</td>
-<td align="right">0.0012694</td>
-<td align="right">0.0356284</td>
+<td align="right">53.90230</td>
+<td align="right">46.42331</td>
+<td align="right">7.4789830</td>
+<td align="right">55.9351869</td>
+<td align="right">7.4789830</td>
 </tr>
 </tbody>
 </table>
@@ -379,26 +377,26 @@ resulting pointwise CV error:</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/headtail.html" class="external-link">head</a></span><span class="op">(</span><span class="va">aug</span><span class="op">$</span><span class="va">losses</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<table class="table">
+<table style="width:100%;" class="table">
 <colgroup>
 <col width="1%">
-<col width="2%">
-<col width="6%">
-<col width="6%">
-<col width="6%">
-<col width="5%">
-<col width="5%">
-<col width="6%">
-<col width="6%">
-<col width="6%">
-<col width="6%">
-<col width="6%">
-<col width="6%">
-<col width="6%">
-<col width="6%">
-<col width="4%">
 <col width="3%">
 <col width="5%">
+<col width="5%">
+<col width="7%">
+<col width="7%">
+<col width="6%">
+<col width="5%">
+<col width="5%">
+<col width="5%">
+<col width="5%">
+<col width="5%">
+<col width="6%">
+<col width="5%">
+<col width="5%">
+<col width="4%">
+<col width="3%">
+<col width="6%">
 </colgroup>
 <thead><tr class="header">
 <th align="right">id</th>
@@ -423,123 +421,123 @@ resulting pointwise CV error:</p>
 <tbody>
 <tr class="odd">
 <td align="right">1</td>
-<td align="right">4</td>
-<td align="right">0.0250339</td>
-<td align="right">0.0473620</td>
-<td align="right">-0.0223280</td>
-<td align="right">0.0004985</td>
-<td align="right">0.0223280</td>
-<td align="right">0.8769668</td>
-<td align="right">-1.5636978</td>
-<td align="right">-1.4725255</td>
-<td align="right">0.5039787</td>
-<td align="right">-1.5788051</td>
-<td align="right">-0.0977249</td>
-<td align="right">1.0431762</td>
-<td align="right">-0.2515965</td>
+<td align="right">5</td>
+<td align="right">44.28207</td>
+<td align="right">43.82087</td>
+<td align="right">0.4611929</td>
+<td align="right">0.2126989</td>
+<td align="right">0.4611929</td>
+<td align="right">46.76168</td>
+<td align="right">33.78805</td>
+<td align="right">44.62300</td>
+<td align="right">46.50822</td>
+<td align="right">50.10956</td>
+<td align="right">61.96061</td>
+<td align="right">60.75672</td>
+<td align="right">45.15465</td>
 <td align="right">1</td>
 <td align="right">1</td>
-<td align="right">26.683328</td>
+<td align="right">14.422205</td>
 </tr>
 <tr class="even">
 <td align="right">2</td>
-<td align="right">4</td>
-<td align="right">0.0194739</td>
-<td align="right">-0.0000727</td>
-<td align="right">0.0195467</td>
-<td align="right">0.0003821</td>
-<td align="right">0.0195467</td>
-<td align="right">-0.1627803</td>
-<td align="right">-2.4732208</td>
-<td align="right">-1.7179238</td>
-<td align="right">-0.6153057</td>
-<td align="right">-1.2322361</td>
-<td align="right">0.8162922</td>
-<td align="right">0.0095712</td>
-<td align="right">-0.9679169</td>
+<td align="right">2</td>
+<td align="right">44.17117</td>
+<td align="right">49.99404</td>
+<td align="right">-5.8228636</td>
+<td align="right">33.9057405</td>
+<td align="right">5.8228636</td>
+<td align="right">51.25996</td>
+<td align="right">54.53092</td>
+<td align="right">50.67009</td>
+<td align="right">47.29233</td>
+<td align="right">58.28259</td>
+<td align="right">52.55031</td>
+<td align="right">65.24689</td>
+<td align="right">46.87057</td>
 <td align="right">1</td>
 <td align="right">1</td>
-<td align="right">9.848858</td>
+<td align="right">19.235384</td>
 </tr>
 <tr class="odd">
 <td align="right">3</td>
-<td align="right">2</td>
-<td align="right">0.0295682</td>
-<td align="right">0.0358232</td>
-<td align="right">-0.0062550</td>
-<td align="right">0.0000391</td>
-<td align="right">0.0062550</td>
-<td align="right">1.1839176</td>
-<td align="right">0.0311049</td>
-<td align="right">-0.5123982</td>
-<td align="right">-1.1399273</td>
-<td align="right">-1.2682281</td>
-<td align="right">0.5378851</td>
-<td align="right">-0.2595845</td>
-<td align="right">0.4287385</td>
+<td align="right">3</td>
+<td align="right">53.25563</td>
+<td align="right">53.99884</td>
+<td align="right">-0.7432053</td>
+<td align="right">0.5523542</td>
+<td align="right">0.7432053</td>
+<td align="right">38.82998</td>
+<td align="right">46.77043</td>
+<td align="right">41.82119</td>
+<td align="right">56.02720</td>
+<td align="right">35.20767</td>
+<td align="right">54.98906</td>
+<td align="right">59.52938</td>
+<td align="right">47.50634</td>
 <td align="right">1</td>
 <td align="right">1</td>
-<td align="right">11.661904</td>
+<td align="right">4.123106</td>
 </tr>
 <tr class="even">
 <td align="right">4</td>
-<td align="right">3</td>
-<td align="right">-0.1403769</td>
-<td align="right">-0.0776827</td>
-<td align="right">-0.0626942</td>
-<td align="right">0.0039306</td>
-<td align="right">0.0626942</td>
-<td align="right">-0.1536180</td>
-<td align="right">-1.4972850</td>
-<td align="right">-0.9786745</td>
-<td align="right">-0.2723358</td>
-<td align="right">-0.9876763</td>
-<td align="right">0.9412718</td>
-<td align="right">0.7548076</td>
-<td align="right">-0.3165647</td>
-<td align="right">0</td>
+<td align="right">2</td>
+<td align="right">42.51499</td>
+<td align="right">46.98822</td>
+<td align="right">-4.4732310</td>
+<td align="right">20.0097955</td>
+<td align="right">4.4732310</td>
+<td align="right">49.48175</td>
+<td align="right">34.19502</td>
+<td align="right">46.44462</td>
+<td align="right">46.57739</td>
+<td align="right">49.54025</td>
+<td align="right">44.47137</td>
+<td align="right">57.23566</td>
+<td align="right">38.47061</td>
 <td align="right">1</td>
-<td align="right">16.552945</td>
+<td align="right">1</td>
+<td align="right">16.031219</td>
 </tr>
 <tr class="odd">
 <td align="right">5</td>
+<td align="right">2</td>
+<td align="right">53.21769</td>
+<td align="right">49.30701</td>
+<td align="right">3.9106775</td>
+<td align="right">15.2933984</td>
+<td align="right">3.9106775</td>
+<td align="right">40.43763</td>
+<td align="right">31.31003</td>
+<td align="right">47.23048</td>
+<td align="right">51.68053</td>
+<td align="right">51.58667</td>
+<td align="right">61.96604</td>
+<td align="right">55.45958</td>
+<td align="right">47.84091</td>
 <td align="right">1</td>
-<td align="right">-0.1468337</td>
-<td align="right">-0.0647938</td>
-<td align="right">-0.0820399</td>
-<td align="right">0.0067305</td>
-<td align="right">0.0820399</td>
-<td align="right">-0.1915660</td>
-<td align="right">-1.4061724</td>
-<td align="right">-1.3192238</td>
-<td align="right">0.6799157</td>
-<td align="right">-0.7441159</td>
-<td align="right">0.5422058</td>
-<td align="right">-0.1562645</td>
-<td align="right">-0.9152544</td>
-<td align="right">0</td>
 <td align="right">1</td>
-<td align="right">8.602325</td>
+<td align="right">14.422205</td>
 </tr>
 <tr class="even">
 <td align="right">6</td>
 <td align="right">2</td>
-<td align="right">-0.0060736</td>
-<td align="right">0.0295548</td>
-<td align="right">-0.0356284</td>
-<td align="right">0.0012694</td>
-<td align="right">0.0356284</td>
-<td align="right">-0.5612379</td>
-<td align="right">-1.7635113</td>
-<td align="right">-1.2023100</td>
-<td align="right">-0.8075206</td>
-<td align="right">-1.2668175</td>
-<td align="right">-0.1518995</td>
-<td align="right">-0.2905415</td>
-<td align="right">0.1555381</td>
+<td align="right">53.90230</td>
+<td align="right">46.42331</td>
+<td align="right">7.4789830</td>
+<td align="right">55.9351869</td>
+<td align="right">7.4789830</td>
+<td align="right">46.13120</td>
+<td align="right">31.85287</td>
+<td align="right">40.65304</td>
+<td align="right">49.93170</td>
+<td align="right">43.47339</td>
+<td align="right">67.90408</td>
+<td align="right">49.48730</td>
+<td align="right">32.93662</td>
 <td align="right">1</td>
-<td align="right">1</td>
-<td align="right">10.198039</td>
+<td align="right">0</td>
+<td align="right">8.246211</td>
 </tr>
 </tbody>
 </table>
@@ -547,18 +545,18 @@ resulting pointwise CV error:</p>
 <code class="sourceCode R"><span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/headtail.html" class="external-link">head</a></span><span class="op">(</span><span class="va">aug</span><span class="op">$</span><span class="va">grid_tasks</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <table style="width:100%;" class="table">
 <colgroup>
-<col width="2%">
-<col width="8%">
+<col width="3%">
 <col width="9%">
 <col width="9%">
 <col width="9%">
 <col width="9%">
 <col width="9%">
-<col width="8%">
+<col width="9%">
+<col width="10%">
 <col width="9%">
 <col width="9%">
+<col width="7%">
 <col width="6%">
-<col width="5%">
 </colgroup>
 <thead><tr class="header">
 <th align="right">id</th>
@@ -577,85 +575,85 @@ resulting pointwise CV error:</p>
 <tbody>
 <tr class="odd">
 <td align="right">1</td>
-<td align="right">7.615773</td>
-<td align="right">-0.7063682</td>
-<td align="right">1.6181636</td>
-<td align="right">0.3247341</td>
-<td align="right">-0.1572279</td>
-<td align="right">-1.5364642</td>
-<td align="right">-0.656340</td>
-<td align="right">-0.0769430</td>
-<td align="right">-1.9746046</td>
+<td align="right">65.30697</td>
+<td align="right">42.93632</td>
+<td align="right">66.18163</td>
+<td align="right">53.24734</td>
+<td align="right">48.42772</td>
+<td align="right">34.63536</td>
+<td align="right">43.43660</td>
+<td align="right">49.23057</td>
+<td align="right">12.29096</td>
 <td align="right">1</td>
 <td align="right">1</td>
 </tr>
 <tr class="even">
 <td align="right">2</td>
-<td align="right">4.472136</td>
-<td align="right">-0.2595710</td>
-<td align="right">0.5600811</td>
-<td align="right">0.1500221</td>
-<td align="right">-0.4940667</td>
-<td align="right">-1.0587877</td>
-<td align="right">-1.305025</td>
-<td align="right">0.3643323</td>
-<td align="right">-1.5782595</td>
+<td align="right">62.96825</td>
+<td align="right">47.40429</td>
+<td align="right">55.60081</td>
+<td align="right">51.50022</td>
+<td align="right">45.05933</td>
+<td align="right">39.41212</td>
+<td align="right">36.94975</td>
+<td align="right">53.64332</td>
+<td align="right">19.57157</td>
 <td align="right">1</td>
 <td align="right">1</td>
 </tr>
 <tr class="odd">
 <td align="right">3</td>
-<td align="right">2.828427</td>
-<td align="right">-0.2050061</td>
-<td align="right">0.0364014</td>
-<td align="right">0.0129812</td>
-<td align="right">-0.3565046</td>
-<td align="right">-0.3649710</td>
-<td align="right">-1.736716</td>
-<td align="right">0.8307905</td>
-<td align="right">-1.1459060</td>
+<td align="right">61.13101</td>
+<td align="right">47.94994</td>
+<td align="right">50.36401</td>
+<td align="right">50.12981</td>
+<td align="right">46.43496</td>
+<td align="right">46.35029</td>
+<td align="right">32.63284</td>
+<td align="right">58.30790</td>
+<td align="right">27.51362</td>
 <td align="right">1</td>
 <td align="right">1</td>
 </tr>
 <tr class="even">
 <td align="right">4</td>
-<td align="right">8.246211</td>
-<td align="right">0.1409018</td>
-<td align="right">-1.1082273</td>
-<td align="right">0.0015563</td>
-<td align="right">-0.3931227</td>
-<td align="right">0.0028835</td>
-<td align="right">-1.469470</td>
-<td align="right">0.8723531</td>
-<td align="right">-0.8795467</td>
+<td align="right">59.84146</td>
+<td align="right">51.40902</td>
+<td align="right">38.91773</td>
+<td align="right">50.01556</td>
+<td align="right">46.06878</td>
+<td align="right">50.02884</td>
+<td align="right">35.30530</td>
+<td align="right">58.72353</td>
+<td align="right">32.40647</td>
 <td align="right">1</td>
 <td align="right">1</td>
 </tr>
 <tr class="odd">
 <td align="right">5</td>
-<td align="right">10.049876</td>
-<td align="right">0.3179103</td>
-<td align="right">-0.5781679</td>
-<td align="right">-0.6160732</td>
-<td align="right">-0.2139655</td>
-<td align="right">0.6954836</td>
-<td align="right">-1.924319</td>
-<td align="right">0.3423136</td>
-<td align="right">-1.5066579</td>
+<td align="right">58.79626</td>
+<td align="right">53.17910</td>
+<td align="right">44.21832</td>
+<td align="right">43.83926</td>
+<td align="right">47.86035</td>
+<td align="right">56.95484</td>
+<td align="right">30.75681</td>
+<td align="right">53.42314</td>
+<td align="right">20.88684</td>
 <td align="right">1</td>
 <td align="right">1</td>
 </tr>
 <tr class="even">
 <td align="right">6</td>
-<td align="right">12.206556</td>
-<td align="right">0.5716950</td>
-<td align="right">-0.6276057</td>
-<td align="right">-0.2341143</td>
-<td align="right">0.0015311</td>
-<td align="right">0.1396628</td>
-<td align="right">-1.451022</td>
-<td align="right">0.5832729</td>
-<td align="right">-1.1956650</td>
+<td align="right">54.45181</td>
+<td align="right">55.71695</td>
+<td align="right">43.72394</td>
+<td align="right">47.65885</td>
+<td align="right">50.01531</td>
+<td align="right">51.39663</td>
+<td align="right">35.48978</td>
+<td align="right">55.83273</td>
+<td align="right">26.59958</td>
 <td align="right">1</td>
 <td align="right">1</td>
 </tr>
@@ -694,7 +692,13 @@ to the training points.</p>
 <span>    sample_tasks_bal <span class="op">=</span> <span class="va">sample_tasks_bal</span>,</span>
 <span>    grid_tasks_bal <span class="op">=</span> <span class="va">grid_tasks_bal</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="twcv_files/figure-html/plot-1.png" class="r-plt" alt="" width="960"></p>
+<div class="figure">
+<img src="twcv_files/figure-html/plot-1.png" class="r-plt" alt="Figure 2: The quintiles of elevation at the prediction points, overlaid by the density of the elevation values at the training points (A) and the prediction points (B)." width="960"><p class="caption">
+Figure 2: The quintiles of elevation at the prediction points, overlaid
+by the density of the elevation values at the training points (A) and
+the prediction points (B).
+</p>
+</div>
 </div>
 <div class="section level3">
 <h3 id="calculate-frequencies-for-the-quantiles">4. Calculate frequencies for the quantiles<a class="anchor" aria-label="anchor" href="#calculate-frequencies-for-the-quantiles"></a>
@@ -717,7 +721,7 @@ to the training points.</p>
 <span><span class="va">levs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_along</a></span><span class="op">(</span><span class="va">target_margins</span><span class="op">[[</span><span class="st">"elev"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="va">freq_samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="va">balance_df</span><span class="op">[[</span><span class="st">"elev"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span>, levels <span class="op">=</span> <span class="va">levs</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">freq_samples</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">freq_samples</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.40 0.16 0.24 0.19 0.01</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.18 0.32 0.36 0.14 0.00</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="apply-raking">5. Apply Raking<a class="anchor" aria-label="anchor" href="#apply-raking"></a>
@@ -727,7 +731,8 @@ is not covered by the training points. However, this does not return an
 error. Instead, if a quintile is not covered by the training points, the
 weights shrink towards 0 and the algorithm “converges” A better approach
 would likely be to stop the algorithm and return an error message
-hinting towards avoiding this extreme extrapolation.</p>
+hinting towards avoiding this extreme extrapolation. See section 8 and
+Figure 2.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">margin_names</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">target_margins</span><span class="op">)</span></span>
 <span><span class="va">max_iter</span> <span class="op">&lt;-</span> <span class="fl">500</span></span>
@@ -784,27 +789,12 @@ hinting towards avoiding this extreme extrapolation.</p>
 <span>    converged <span class="op">=</span> <span class="va">converged</span>,</span>
 <span>    iterations <span class="op">=</span> <span class="va">iter</span></span>
 <span><span class="op">)</span></span>
-<span><span class="va">tw</span><span class="op">$</span><span class="va">weights</span></span>
-<span><span class="co">#&gt;   [1] 1.546291e-18 4.148793e-66 1.032109e-42 2.217215e-38 5.202124e-47</span></span>
-<span><span class="co">#&gt;   [6] 8.997038e-20 1.578688e-46 9.969292e-39 7.849260e-67 1.576836e-29</span></span>
-<span><span class="co">#&gt;  [11] 6.266124e-20 9.930564e-66 2.831398e-85 9.221373e-20 4.328783e-58</span></span>
-<span><span class="co">#&gt;  [16] 2.755575e-19 2.722809e-30 1.073265e-61 4.438338e-39 2.047475e-66</span></span>
-<span><span class="co">#&gt;  [21] 2.614331e-19 2.147166e-50 2.246440e-20 5.515744e-20 1.050174e-67</span></span>
-<span><span class="co">#&gt;  [26] 2.488615e-45 6.964517e-83 4.607134e-35 1.946819e-71 7.985663e-19</span></span>
-<span><span class="co">#&gt;  [31] 1.354045e-19 8.641852e-44 1.683661e-52 1.895823e-31 1.371655e-19</span></span>
-<span><span class="co">#&gt;  [36] 2.283214e-26 7.370738e-45 1.732577e-19 3.148109e-30 2.895379e-45</span></span>
-<span><span class="co">#&gt;  [41] 3.539499e-38 2.648313e-19 2.383438e-20 9.762012e-66 7.897869e-50</span></span>
-<span><span class="co">#&gt;  [46] 5.858668e-91 1.306593e-37 6.903661e-22 9.116535e-44 4.741888e-34</span></span>
-<span><span class="co">#&gt;  [51] 1.109488e-42 2.339870e-35 5.517157e-21 2.167854e-24 4.016150e-44</span></span>
-<span><span class="co">#&gt;  [56] 4.878633e-21 1.157224e-55 8.468785e-20 1.557859e-46 6.234899e-48</span></span>
-<span><span class="co">#&gt;  [61] 4.575108e-37 4.407268e-19 1.488039e-30 9.110897e-20 4.449209e-31</span></span>
-<span><span class="co">#&gt;  [66] 1.417004e-59 3.935172e-50 2.074565e-87 1.989836e-64 4.336042e-59</span></span>
-<span><span class="co">#&gt;  [71] 2.639448e-54 1.804805e-21 1.659560e-50 2.644150e-57 2.439549e-19</span></span>
-<span><span class="co">#&gt;  [76] 5.121019e-29 1.257570e-44 1.587784e-22 1.983218e-19 7.266281e-38</span></span>
-<span><span class="co">#&gt;  [81] 2.617053e-32 1.402788e-57 1.061832e-31 1.583289e-19 5.046371e-42</span></span>
-<span><span class="co">#&gt;  [86] 3.821361e-20 3.350088e-30 1.889152e-35 3.015619e-31 2.137022e-56</span></span>
-<span><span class="co">#&gt;  [91] 4.058218e-46 5.316846e-25 8.398841e-38 1.407038e-24 2.136704e-19</span></span>
-<span><span class="co">#&gt;  [96] 3.868186e-29 1.603727e-19 4.760317e-47 2.116170e-19 3.847544e-19</span></span></code></pre></div>
+<span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_histogram.html" class="external-link">geom_histogram</a></span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>weights <span class="op">=</span> <span class="va">tw</span><span class="op">$</span><span class="va">weights</span><span class="op">)</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">weights</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">geom_vline</a></span><span class="op">(</span>xintercept <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></span>
+<span><span class="co">#&gt; `stat_bin()` using `bins = 30`. Pick better value `binwidth`.</span></span></code></pre></div>
+<p><img src="twcv_files/figure-html/unnamed-chunk-8-1.png" class="r-plt" alt="" width="700"></p>
 </div>
 <div class="section level3">
 <h3 id="normalize-and-shrink-weights">6. Normalize and shrink weights<a class="anchor" aria-label="anchor" href="#normalize-and-shrink-weights"></a>
@@ -817,27 +807,12 @@ hinting towards avoiding this extreme extrapolation.</p>
 <span><span class="va">tw</span><span class="op">$</span><span class="va">shrink_lambda</span> <span class="op">&lt;-</span> <span class="va">twcv_specs</span><span class="op">$</span><span class="va">twcv_extended</span><span class="op">$</span><span class="va">shrink_lambda</span></span>
 <span><span class="va">tw</span><span class="op">$</span><span class="va">balancing_vars</span> <span class="op">&lt;-</span> <span class="va">twcv_specs</span><span class="op">$</span><span class="va">twcv_extended</span><span class="op">$</span><span class="va">balancing_vars</span></span>
 <span></span>
-<span><span class="va">tw</span><span class="op">$</span><span class="va">weights</span></span>
-<span><span class="co">#&gt;   [1] 2.503053e+01 6.715845e-47 1.670722e-23 3.589109e-19 8.420921e-28</span></span>
-<span><span class="co">#&gt;   [6] 1.456392e+00 2.555495e-27 1.613776e-19 1.270596e-47 2.552497e-10</span></span>
-<span><span class="co">#&gt;  [11] 1.014327e+00 1.607507e-46 4.583316e-66 1.492707e+00 7.007203e-39</span></span>
-<span><span class="co">#&gt;  [16] 4.460577e+00 4.407537e-11 1.737345e-42 7.184545e-20 3.314342e-47</span></span>
-<span><span class="co">#&gt;  [21] 4.231939e+00 3.475718e-31 3.636416e-01 8.928592e-01 1.699966e-48</span></span>
-<span><span class="co">#&gt;  [26] 4.028438e-26 1.127379e-63 7.457782e-16 3.151407e-52 1.292677e+01</span></span>
-<span><span class="co">#&gt;  [31] 2.191856e+00 1.398897e-24 2.725420e-33 3.068857e-12 2.220361e+00</span></span>
-<span><span class="co">#&gt;  [36] 3.695944e-07 1.193136e-25 2.804604e+00 5.095991e-11 4.686885e-26</span></span>
-<span><span class="co">#&gt;  [41] 5.729552e-19 4.286948e+00 3.858182e-01 1.580222e-46 1.278465e-30</span></span>
-<span><span class="co">#&gt;  [46] 9.483699e-72 2.115043e-18 1.117528e-02 1.475736e-24 7.675915e-15</span></span>
-<span><span class="co">#&gt;  [51] 1.795980e-23 3.787657e-16 8.930879e-02 3.509206e-05 6.501129e-25</span></span>
-<span><span class="co">#&gt;  [56] 7.897270e-02 1.873253e-36 1.370882e+00 2.521778e-27 1.009272e-28</span></span>
-<span><span class="co">#&gt;  [61] 7.405940e-18 7.134251e+00 2.408758e-11 1.474823e+00 7.202142e-12</span></span>
-<span><span class="co">#&gt;  [66] 2.293770e-40 6.370046e-31 3.358196e-68 3.221041e-45 7.018954e-40</span></span>
-<span><span class="co">#&gt;  [71] 4.272597e-35 2.921522e-02 2.686407e-31 4.280209e-38 3.949011e+00</span></span>
-<span><span class="co">#&gt;  [76] 8.289632e-10 2.035687e-25 2.570220e-03 3.210328e+00 1.176227e-18</span></span>
-<span><span class="co">#&gt;  [81] 4.236346e-13 2.270758e-38 1.718837e-12 2.562944e+00 8.168795e-23</span></span>
-<span><span class="co">#&gt;  [86] 6.185815e-01 5.422943e-11 3.058058e-16 4.881522e-12 3.459297e-37</span></span>
-<span><span class="co">#&gt;  [91] 6.569227e-27 8.606627e-06 1.359560e-18 2.277638e-05 3.458782e+00</span></span>
-<span><span class="co">#&gt;  [96] 6.261614e-10 2.596027e+00 7.705747e-28 3.425543e+00 6.228199e+00</span></span></code></pre></div>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_histogram.html" class="external-link">geom_histogram</a></span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>weights <span class="op">=</span> <span class="va">tw</span><span class="op">$</span><span class="va">weights</span><span class="op">)</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">weights</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">xlab</a></span><span class="op">(</span><span class="st">"weights after normalization"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">geom_vline</a></span><span class="op">(</span>xintercept <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></span>
+<span><span class="co">#&gt; `stat_bin()` using `bins = 30`. Pick better value `binwidth`.</span></span></code></pre></div>
+<p><img src="twcv_files/figure-html/unnamed-chunk-9-1.png" class="r-plt" alt="" width="700"></p>
 </div>
 <div class="section level3">
 <h3 id="return-weighted-error-estimates">7. Return weighted error estimates<a class="anchor" aria-label="anchor" href="#return-weighted-error-estimates"></a>
@@ -856,13 +831,71 @@ hinting towards avoiding this extreme extrapolation.</p>
 <span><span class="co"># Unweighted error:</span></span>
 <span><span class="va">unweighted_losses</span></span>
 <span><span class="co">#&gt; $unweighted</span></span>
-<span><span class="co">#&gt;         bias          mse         rmse          mae </span></span>
-<span><span class="co">#&gt; 0.0009018562 0.0032533993 0.0570385769 0.0431583042</span></span>
+<span><span class="co">#&gt;        bias         mse        rmse         mae </span></span>
+<span><span class="co">#&gt; -0.01230107 37.65568875  6.13642312  4.63613016</span></span>
 <span></span>
 <span><span class="co"># Weighted error:</span></span>
 <span><span class="va">result</span><span class="op">$</span><span class="va">estimators</span></span>
-<span><span class="co">#&gt;         bias          mse         rmse          mae </span></span>
-<span><span class="co">#&gt; -0.005843179  0.003056844  0.055288736  0.042902310</span></span></code></pre></div>
+<span><span class="co">#&gt;       bias        mse       rmse        mae </span></span>
+<span><span class="co">#&gt;   1.049788 107.893390  10.387174   8.222190</span></span></code></pre></div>
+<p>True error:</p>
+<pre><code><span><span class="co">#&gt;       RMSE     MAE</span></span>
+<span><span class="co">#&gt; 1 9.163015 6.52641</span></span></code></pre>
+</div>
+<div class="section level3">
+<h3 id="sec-problems">8. Check if the inputs were supported for raking<a class="anchor" aria-label="anchor" href="#sec-problems"></a>
+</h3>
+<p>Elevation quintile 5 of the prediction points not supported by the
+training points (if clustering was higher, e.g., radius = 30, then
+distance would also be not supported). Raking is infeasible in this
+case, and the prediction domain should be constrained e.g. to the Area
+of Applicability )(<span class="citation">Meyer and Pebesma
+(2021)</span>). At least, the algorithm should stop with an error
+message. The normalization of weights by their means creates the
+illusion that the weights were meaningful and hides this problem.</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">check_balance_support</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">balance_df</span>, <span class="va">target_margins</span>, <span class="va">eps</span> <span class="op">=</span> <span class="fl">1e-12</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="va">out</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">target_margins</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">m</span><span class="op">)</span> <span class="op">{</span></span>
+<span>        <span class="va">levs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_along</a></span><span class="op">(</span><span class="va">target_margins</span><span class="op">[[</span><span class="va">m</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
+<span></span>
+<span>        <span class="va">sample_counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span></span>
+<span>            <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="va">balance_df</span><span class="op">[[</span><span class="va">m</span><span class="op">]</span><span class="op">]</span><span class="op">)</span>, levels <span class="op">=</span> <span class="va">levs</span><span class="op">)</span></span>
+<span>        <span class="op">)</span></span>
+<span></span>
+<span>        <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>            var <span class="op">=</span> <span class="va">m</span>,</span>
+<span>            level <span class="op">=</span> <span class="va">levs</span>,</span>
+<span>            sample_n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">sample_counts</span><span class="op">)</span>,</span>
+<span>            target_prop <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">target_margins</span><span class="op">[[</span><span class="va">m</span><span class="op">]</span><span class="op">]</span><span class="op">)</span>,</span>
+<span>            unsupported <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">sample_counts</span><span class="op">)</span> <span class="op">==</span> <span class="fl">0</span> <span class="op">&amp;</span></span>
+<span>                <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">target_margins</span><span class="op">[[</span><span class="va">m</span><span class="op">]</span><span class="op">]</span><span class="op">)</span> <span class="op">&gt;</span> <span class="va">eps</span></span>
+<span>        <span class="op">)</span></span>
+<span>    <span class="op">}</span><span class="op">)</span></span>
+<span></span>
+<span>    <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind_rows.html" class="external-link">bind_rows</a></span><span class="op">(</span><span class="va">out</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span><span class="va">support_check</span> <span class="op">&lt;-</span> <span class="fu">check_balance_support</span><span class="op">(</span><span class="va">balance_df</span>, <span class="va">target_margins</span><span class="op">)</span></span>
+<span><span class="va">support_check</span> <span class="op">|&gt;</span></span>
+<span>    <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">var</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>    <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarise</a></span><span class="op">(</span></span>
+<span>        target_mass_covered <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">target_prop</span><span class="op">[</span><span class="va">sample_n</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">]</span><span class="op">)</span>,</span>
+<span>        n_unsupported_bins <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">unsupported</span><span class="op">)</span>,</span>
+<span>        .groups <span class="op">=</span> <span class="st">"drop"</span></span>
+<span>    <span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 11 × 3</span></span></span>
+<span><span class="co">#&gt;    var       target_mass_covered n_unsupported_bins</span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>              <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> d                       1                      0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> dist_road               1                      0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> elev                    0.800                  1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> forest                  1                      0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> grass                   1                      0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> moisture                1                      0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> ph                      1                      0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> prod                    1                      0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> slope                   1                      0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> solar                   1                      0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span> temp                    1                      0</span></span></code></pre></div>
 <div id="refs" class="references csl-bib-body hanging-indent">
 <div id="ref-Brenning2026" class="csl-entry">
 Brenning, Alexander, and Thomas Suesse. 2026. <em>Aligning
@@ -870,6 +903,12 @@ Brenning, Alexander, and Thomas Suesse. 2026. <em>Aligning
 <span>Target</span>-<span>Weighted</span>
 <span>Cross</span>-<span>Validation</span> for <span>Spatial</span>
 <span>Prediction</span></em>. arXiv. <a href="https://doi.org/10.48550/ARXIV.2603.29981" class="external-link">https://doi.org/10.48550/ARXIV.2603.29981</a>.
+</div>
+<div id="ref-Meyer2021" class="csl-entry">
+Meyer, Hanna, and Edzer Pebesma. 2021. <span>“Predicting into Unknown
+Space? Estimating the Area of Applicability of Spatial Prediction
+Models.”</span> <em>Methods in Ecology and Evolution</em> 12 (9):
+1620–33. https://doi.org/<a href="https://doi.org/10.1111/2041-210X.13650" class="external-link">https://doi.org/10.1111/2041-210X.13650</a>.
 </div>
 </div>
 </div>

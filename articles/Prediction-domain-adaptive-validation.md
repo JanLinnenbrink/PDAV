@@ -1,4 +1,4 @@
-# PDAV
+# Prediction-domain adaptive evaluation
 
 ## Introduction
 
@@ -101,7 +101,7 @@ names(results) <- unique(samples$sampling)
 ```
 
 For randomly distributed samples, the AV classifier has a performance of
-AUC = 0.6. This is then normalized to D = 0, because the classifier is
+AUC = 0.5. This is then normalized to D = 0, because the classifier is
 not better than random guessing at distinguishing whether a prediction
 location is similar or dissimilar to the training samples; see Wang et
 al. (2025b), section 2.1, for more information. The threshold is then
@@ -202,14 +202,12 @@ weighted_RMSE <- lapply(unique(samples$sampling), function(smpling) {
 #>   method     from
 #>   plot.knndm PDAV
 #>   plot.nndm  PDAV
-#> Warning in nominalTrainWorkflow(x = x, y = y, wts = weights, info = trainInfo,
-#> : There were missing values in resampled performance measures.
 ```
 
 ![](Prediction-domain-adaptive-validation_files/figure-html/unnamed-chunk-8-1.png)
 
-The RMSE obtained by DA-CV are 0.054 for the random sampling design,
-0.045 for the biased sampling and 0.037 for the clustered design.
+The RMSE obtained by DA-CV are 6.127 for the random sampling design,
+4.222 for the biased sampling and 5.317 for the clustered design.
 
 ### kNNDM CV
 

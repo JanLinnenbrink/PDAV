@@ -11,7 +11,9 @@ The package aims to:
     validation methods for spatial predictive modelling;
 2.  provide vignettes that describe how the methods work and how they
     can be applied;
-3.  provide an overview of currently available methods.
+3.  provide an
+    [overview](https://janlinnenbrink.github.io/PDAV/articles/Prediction-domain-adaptive-validation.md)
+    of currently available methods.
 
 ## Available methods
 
@@ -26,4 +28,4 @@ The package aims to:
 
 For a more detailed comparison of advantages, disadvantages, and
 assumptions, see the [overview
-article](https://janlinnenbrink.github.io/PDAV/vignettes/Prediction-domain-adaptive-validation.md).
+article](https://janlinnenbrink.github.io/PDAV/articles/Prediction-domain-adaptive-validation.md).

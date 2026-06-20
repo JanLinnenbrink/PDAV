@@ -89,7 +89,7 @@ predictor_stack <- r[[setdiff(names(r), "outcome")]]
 cate_rasters <- which(names(r) %in% c("forest", "grass"))
 
 sampling_r <- r
-sampling_r[sampling_r$elev > 1] <- NA
+sampling_r[sampling_r$elev > 60] <- NA
 
 samples <- sam_field(
     x = sampling_r,
@@ -135,9 +135,9 @@ results <- da_cv(
 ```
 
 For the biased sampling design shown here, the AV classifier achieves a
-performance of $`AUC = 0.77`$. This leads to
-$`D = \frac{0.77 - 0.5}{1 - 0.5} = 0.54`$. The threshold is then
-$`T(D) = 0.5* 0.54 = 0.3`$. Hence, all prediction cells with a
+performance of $`AUC = 0.78`$. This leads to
+$`D = \frac{0.78 - 0.5}{1 - 0.5} = 0.56`$. The threshold is then
+$`T(D) = 0.5* 0.56 = 0.3`$. Hence, all prediction cells with a
 similarity score lower than 0.3 are classified as dissimilar. The
 relative fraction of prediction locations being similar from the
 sampling locations is 0.73, while the fraction being dissimilar is 0.27.
@@ -224,7 +224,7 @@ err_stats_weighted <- sqrt(
 prediction <- predict(r, rand_mod)
 ```
 
-The RMSE obtained by DA-CV is 0.062. The maps below depict the
+The RMSE obtained by DA-CV is 5.718. The maps below depict the
 difference between predicted and true response:
 
 ![Figure 4: The different CV fold assignments and their respective

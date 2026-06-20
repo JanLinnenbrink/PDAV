@@ -68,7 +68,7 @@ library(tidyterra)
 #>     filter
 library(ggnewscale)
 
-set.seed(100)
+set.seed(10)
 ```
 
 ## Simulate predictors and response
@@ -82,12 +82,12 @@ cate_rasters <- which(names(r) %in% c("forest", "grass"))
 n_sample <- 100
 
 sampling_r <- r
-sampling_r[sampling_r$elev > 1] <- NA
+sampling_r[sampling_r$elev > 60] <- NA
 
 samples <- sam_field(
     x = sampling_r,
     size = n_sample,
-    method = sample_clustered(nclusters = 10, radius = 30, na.rm = TRUE)
+    method = sample_clustered(nclusters = 10, radius = 60, na.rm = TRUE)
 )
 
 predictor_vars <- names(predictor_stack)
@@ -135,8 +135,6 @@ predict_fun <- function(fit, newdata, ...) {
 model = "rf"
 
 folds <- sample(rep(1:5, length.out = n_sample))
-
-rel_columns <- c("fold", "obs", "pred", "error", "elev")
 ```
 
 ![Figure 1: The training points and one predictor
@@ -180,14 +178,14 @@ cv_losses <- data.frame(
 knitr::kable(head(cv_losses))
 ```
 
-|  id | fold |        obs |       pred |      error |        se |        ae |
-|----:|-----:|-----------:|-----------:|-----------:|----------:|----------:|
-|   1 |    4 |  0.0250339 |  0.0473620 | -0.0223280 | 0.0004985 | 0.0223280 |
-|   2 |    4 |  0.0194739 | -0.0000727 |  0.0195467 | 0.0003821 | 0.0195467 |
-|   3 |    2 |  0.0295682 |  0.0358232 | -0.0062550 | 0.0000391 | 0.0062550 |
-|   4 |    3 | -0.1403769 | -0.0776827 | -0.0626942 | 0.0039306 | 0.0626942 |
-|   5 |    1 | -0.1468337 | -0.0647938 | -0.0820399 | 0.0067305 | 0.0820399 |
-|   6 |    2 | -0.0060736 |  0.0295548 | -0.0356284 | 0.0012694 | 0.0356284 |
+|  id | fold |      obs |     pred |      error |         se |        ae |
+|----:|-----:|---------:|---------:|-----------:|-----------:|----------:|
+|   1 |    5 | 44.28207 | 43.82087 |  0.4611929 |  0.2126989 | 0.4611929 |
+|   2 |    2 | 44.17117 | 49.99404 | -5.8228636 | 33.9057405 | 5.8228636 |
+|   3 |    3 | 53.25563 | 53.99884 | -0.7432053 |  0.5523542 | 0.7432053 |
+|   4 |    2 | 42.51499 | 46.98822 | -4.4732310 | 20.0097955 | 4.4732310 |
+|   5 |    2 | 53.21769 | 49.30701 |  3.9106775 | 15.2933984 | 3.9106775 |
+|   6 |    2 | 53.90230 | 46.42331 |  7.4789830 | 55.9351869 | 7.4789830 |
 
 ### 2. Compute the CV validation task and the prediction task
 
@@ -259,12 +257,12 @@ knitr::kable(head(aug$losses))
 
 | id | fold | obs | pred | error | se | ae | temp | moisture | ph | slope | solar | dist_road | prod | elev | forest | grass | d |
 |---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| 1 | 4 | 0.0250339 | 0.0473620 | -0.0223280 | 0.0004985 | 0.0223280 | 0.8769668 | -1.5636978 | -1.4725255 | 0.5039787 | -1.5788051 | -0.0977249 | 1.0431762 | -0.2515965 | 1 | 1 | 26.683328 |
-| 2 | 4 | 0.0194739 | -0.0000727 | 0.0195467 | 0.0003821 | 0.0195467 | -0.1627803 | -2.4732208 | -1.7179238 | -0.6153057 | -1.2322361 | 0.8162922 | 0.0095712 | -0.9679169 | 1 | 1 | 9.848858 |
-| 3 | 2 | 0.0295682 | 0.0358232 | -0.0062550 | 0.0000391 | 0.0062550 | 1.1839176 | 0.0311049 | -0.5123982 | -1.1399273 | -1.2682281 | 0.5378851 | -0.2595845 | 0.4287385 | 1 | 1 | 11.661904 |
-| 4 | 3 | -0.1403769 | -0.0776827 | -0.0626942 | 0.0039306 | 0.0626942 | -0.1536180 | -1.4972850 | -0.9786745 | -0.2723358 | -0.9876763 | 0.9412718 | 0.7548076 | -0.3165647 | 0 | 1 | 16.552945 |
-| 5 | 1 | -0.1468337 | -0.0647938 | -0.0820399 | 0.0067305 | 0.0820399 | -0.1915660 | -1.4061724 | -1.3192238 | 0.6799157 | -0.7441159 | 0.5422058 | -0.1562645 | -0.9152544 | 0 | 1 | 8.602325 |
-| 6 | 2 | -0.0060736 | 0.0295548 | -0.0356284 | 0.0012694 | 0.0356284 | -0.5612379 | -1.7635113 | -1.2023100 | -0.8075206 | -1.2668175 | -0.1518995 | -0.2905415 | 0.1555381 | 1 | 1 | 10.198039 |
+| 1 | 5 | 44.28207 | 43.82087 | 0.4611929 | 0.2126989 | 0.4611929 | 46.76168 | 33.78805 | 44.62300 | 46.50822 | 50.10956 | 61.96061 | 60.75672 | 45.15465 | 1 | 1 | 14.422205 |
+| 2 | 2 | 44.17117 | 49.99404 | -5.8228636 | 33.9057405 | 5.8228636 | 51.25996 | 54.53092 | 50.67009 | 47.29233 | 58.28259 | 52.55031 | 65.24689 | 46.87057 | 1 | 1 | 19.235384 |
+| 3 | 3 | 53.25563 | 53.99884 | -0.7432053 | 0.5523542 | 0.7432053 | 38.82998 | 46.77043 | 41.82119 | 56.02720 | 35.20767 | 54.98906 | 59.52938 | 47.50634 | 1 | 1 | 4.123106 |
+| 4 | 2 | 42.51499 | 46.98822 | -4.4732310 | 20.0097955 | 4.4732310 | 49.48175 | 34.19502 | 46.44462 | 46.57739 | 49.54025 | 44.47137 | 57.23566 | 38.47061 | 1 | 1 | 16.031219 |
+| 5 | 2 | 53.21769 | 49.30701 | 3.9106775 | 15.2933984 | 3.9106775 | 40.43763 | 31.31003 | 47.23048 | 51.68053 | 51.58667 | 61.96604 | 55.45958 | 47.84091 | 1 | 1 | 14.422205 |
+| 6 | 2 | 53.90230 | 46.42331 | 7.4789830 | 55.9351869 | 7.4789830 | 46.13120 | 31.85287 | 40.65304 | 49.93170 | 43.47339 | 67.90408 | 49.48730 | 32.93662 | 1 | 0 | 8.246211 |
 
 ``` r
 
@@ -273,12 +271,12 @@ knitr::kable(head(aug$grid_tasks))
 
 | id | d | temp | moisture | ph | slope | solar | dist_road | prod | elev | forest | grass |
 |---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| 1 | 7.615773 | -0.7063682 | 1.6181636 | 0.3247341 | -0.1572279 | -1.5364642 | -0.656340 | -0.0769430 | -1.9746046 | 1 | 1 |
-| 2 | 4.472136 | -0.2595710 | 0.5600811 | 0.1500221 | -0.4940667 | -1.0587877 | -1.305025 | 0.3643323 | -1.5782595 | 1 | 1 |
-| 3 | 2.828427 | -0.2050061 | 0.0364014 | 0.0129812 | -0.3565046 | -0.3649710 | -1.736716 | 0.8307905 | -1.1459060 | 1 | 1 |
-| 4 | 8.246211 | 0.1409018 | -1.1082273 | 0.0015563 | -0.3931227 | 0.0028835 | -1.469470 | 0.8723531 | -0.8795467 | 1 | 1 |
-| 5 | 10.049876 | 0.3179103 | -0.5781679 | -0.6160732 | -0.2139655 | 0.6954836 | -1.924319 | 0.3423136 | -1.5066579 | 1 | 1 |
-| 6 | 12.206556 | 0.5716950 | -0.6276057 | -0.2341143 | 0.0015311 | 0.1396628 | -1.451022 | 0.5832729 | -1.1956650 | 1 | 1 |
+| 1 | 65.30697 | 42.93632 | 66.18163 | 53.24734 | 48.42772 | 34.63536 | 43.43660 | 49.23057 | 12.29096 | 1 | 1 |
+| 2 | 62.96825 | 47.40429 | 55.60081 | 51.50022 | 45.05933 | 39.41212 | 36.94975 | 53.64332 | 19.57157 | 1 | 1 |
+| 3 | 61.13101 | 47.94994 | 50.36401 | 50.12981 | 46.43496 | 46.35029 | 32.63284 | 58.30790 | 27.51362 | 1 | 1 |
+| 4 | 59.84146 | 51.40902 | 38.91773 | 50.01556 | 46.06878 | 50.02884 | 35.30530 | 58.72353 | 32.40647 | 1 | 1 |
+| 5 | 58.79626 | 53.17910 | 44.21832 | 43.83926 | 47.86035 | 56.95484 | 30.75681 | 53.42314 | 20.88684 | 1 | 1 |
+| 6 | 54.45181 | 55.71695 | 43.72394 | 47.65885 | 50.01531 | 51.39663 | 35.48978 | 55.83273 | 26.59958 | 1 | 1 |
 
 ### 3. Calculate quantiles of the balancing variables
 
@@ -315,7 +313,13 @@ bal <- list(
 )
 ```
 
-![](twcv_files/figure-html/plot-1.png)
+![Figure 2: The quintiles of elevation at the prediction points,
+overlaid by the density of the elevation values at the training points
+(A) and the prediction points (B).](twcv_files/figure-html/plot-1.png)
+
+Figure 2: The quintiles of elevation at the prediction points, overlaid
+by the density of the elevation values at the training points (A) and
+the prediction points (B).
 
 ### 4. Calculate frequencies for the quantiles
 
@@ -338,7 +342,7 @@ target_margins$elev
 levs <- seq_along(target_margins[["elev"]])
 freq_samples <- table(factor(as.integer(balance_df[["elev"]]), levels = levs))
 as.numeric(freq_samples) / sum(freq_samples)
-#> [1] 0.40 0.16 0.24 0.19 0.01
+#> [1] 0.18 0.32 0.36 0.14 0.00
 ```
 
 ### 5. Apply Raking
@@ -348,7 +352,8 @@ not covered by the training points. However, this does not return an
 error. Instead, if a quintile is not covered by the training points, the
 weights shrink towards 0 and the algorithm “converges” A better approach
 would likely be to stop the algorithm and return an error message
-hinting towards avoiding this extreme extrapolation.
+hinting towards avoiding this extreme extrapolation. See section 8 and
+Figure 2.
 
 ``` r
 
@@ -407,28 +412,14 @@ tw <- list(
     converged = converged,
     iterations = iter
 )
-tw$weights
-#>   [1] 1.546291e-18 4.148793e-66 1.032109e-42 2.217215e-38 5.202124e-47
-#>   [6] 8.997038e-20 1.578688e-46 9.969292e-39 7.849260e-67 1.576836e-29
-#>  [11] 6.266124e-20 9.930564e-66 2.831398e-85 9.221373e-20 4.328783e-58
-#>  [16] 2.755575e-19 2.722809e-30 1.073265e-61 4.438338e-39 2.047475e-66
-#>  [21] 2.614331e-19 2.147166e-50 2.246440e-20 5.515744e-20 1.050174e-67
-#>  [26] 2.488615e-45 6.964517e-83 4.607134e-35 1.946819e-71 7.985663e-19
-#>  [31] 1.354045e-19 8.641852e-44 1.683661e-52 1.895823e-31 1.371655e-19
-#>  [36] 2.283214e-26 7.370738e-45 1.732577e-19 3.148109e-30 2.895379e-45
-#>  [41] 3.539499e-38 2.648313e-19 2.383438e-20 9.762012e-66 7.897869e-50
-#>  [46] 5.858668e-91 1.306593e-37 6.903661e-22 9.116535e-44 4.741888e-34
-#>  [51] 1.109488e-42 2.339870e-35 5.517157e-21 2.167854e-24 4.016150e-44
-#>  [56] 4.878633e-21 1.157224e-55 8.468785e-20 1.557859e-46 6.234899e-48
-#>  [61] 4.575108e-37 4.407268e-19 1.488039e-30 9.110897e-20 4.449209e-31
-#>  [66] 1.417004e-59 3.935172e-50 2.074565e-87 1.989836e-64 4.336042e-59
-#>  [71] 2.639448e-54 1.804805e-21 1.659560e-50 2.644150e-57 2.439549e-19
-#>  [76] 5.121019e-29 1.257570e-44 1.587784e-22 1.983218e-19 7.266281e-38
-#>  [81] 2.617053e-32 1.402788e-57 1.061832e-31 1.583289e-19 5.046371e-42
-#>  [86] 3.821361e-20 3.350088e-30 1.889152e-35 3.015619e-31 2.137022e-56
-#>  [91] 4.058218e-46 5.316846e-25 8.398841e-38 1.407038e-24 2.136704e-19
-#>  [96] 3.868186e-29 1.603727e-19 4.760317e-47 2.116170e-19 3.847544e-19
+
+ggplot() +
+    geom_histogram(data = data.frame(weights = tw$weights), aes(x = weights)) +
+    geom_vline(xintercept = 0)
+#> `stat_bin()` using `bins = 30`. Pick better value `binwidth`.
 ```
+
+![](twcv_files/figure-html/unnamed-chunk-8-1.png)
 
 ### 6. Normalize and shrink weights
 
@@ -441,28 +432,14 @@ tw$weights <- PDAV:::shrink_weights(tw$weights_raw, lambda = shrink_lambda)
 tw$shrink_lambda <- twcv_specs$twcv_extended$shrink_lambda
 tw$balancing_vars <- twcv_specs$twcv_extended$balancing_vars
 
-tw$weights
-#>   [1] 2.503053e+01 6.715845e-47 1.670722e-23 3.589109e-19 8.420921e-28
-#>   [6] 1.456392e+00 2.555495e-27 1.613776e-19 1.270596e-47 2.552497e-10
-#>  [11] 1.014327e+00 1.607507e-46 4.583316e-66 1.492707e+00 7.007203e-39
-#>  [16] 4.460577e+00 4.407537e-11 1.737345e-42 7.184545e-20 3.314342e-47
-#>  [21] 4.231939e+00 3.475718e-31 3.636416e-01 8.928592e-01 1.699966e-48
-#>  [26] 4.028438e-26 1.127379e-63 7.457782e-16 3.151407e-52 1.292677e+01
-#>  [31] 2.191856e+00 1.398897e-24 2.725420e-33 3.068857e-12 2.220361e+00
-#>  [36] 3.695944e-07 1.193136e-25 2.804604e+00 5.095991e-11 4.686885e-26
-#>  [41] 5.729552e-19 4.286948e+00 3.858182e-01 1.580222e-46 1.278465e-30
-#>  [46] 9.483699e-72 2.115043e-18 1.117528e-02 1.475736e-24 7.675915e-15
-#>  [51] 1.795980e-23 3.787657e-16 8.930879e-02 3.509206e-05 6.501129e-25
-#>  [56] 7.897270e-02 1.873253e-36 1.370882e+00 2.521778e-27 1.009272e-28
-#>  [61] 7.405940e-18 7.134251e+00 2.408758e-11 1.474823e+00 7.202142e-12
-#>  [66] 2.293770e-40 6.370046e-31 3.358196e-68 3.221041e-45 7.018954e-40
-#>  [71] 4.272597e-35 2.921522e-02 2.686407e-31 4.280209e-38 3.949011e+00
-#>  [76] 8.289632e-10 2.035687e-25 2.570220e-03 3.210328e+00 1.176227e-18
-#>  [81] 4.236346e-13 2.270758e-38 1.718837e-12 2.562944e+00 8.168795e-23
-#>  [86] 6.185815e-01 5.422943e-11 3.058058e-16 4.881522e-12 3.459297e-37
-#>  [91] 6.569227e-27 8.606627e-06 1.359560e-18 2.277638e-05 3.458782e+00
-#>  [96] 6.261614e-10 2.596027e+00 7.705747e-28 3.425543e+00 6.228199e+00
+ggplot() +
+    geom_histogram(data = data.frame(weights = tw$weights), aes(x = weights)) +
+    xlab("weights after normalization") +
+    geom_vline(xintercept = 0)
+#> `stat_bin()` using `bins = 30`. Pick better value `binwidth`.
 ```
+
+![](twcv_files/figure-html/unnamed-chunk-9-1.png)
 
 ### 7. Return weighted error estimates
 
@@ -481,15 +458,82 @@ result <- list(
 # Unweighted error:
 unweighted_losses
 #> $unweighted
-#>         bias          mse         rmse          mae 
-#> 0.0009018562 0.0032533993 0.0570385769 0.0431583042
+#>        bias         mse        rmse         mae 
+#> -0.01230107 37.65568875  6.13642312  4.63613016
 
 # Weighted error:
 result$estimators
-#>         bias          mse         rmse          mae 
-#> -0.005843179  0.003056844  0.055288736  0.042902310
+#>       bias        mse       rmse        mae 
+#>   1.049788 107.893390  10.387174   8.222190
+```
+
+True error:
+
+    #>       RMSE     MAE
+    #> 1 9.163015 6.52641
+
+### 8. Check if the inputs were supported for raking
+
+Elevation quintile 5 of the prediction points not supported by the
+training points (if clustering was higher, e.g., radius = 30, then
+distance would also be not supported). Raking is infeasible in this
+case, and the prediction domain should be constrained e.g. to the Area
+of Applicability )(Meyer and Pebesma (2021)). At least, the algorithm
+should stop with an error message. The normalization of weights by their
+means creates the illusion that the weights were meaningful and hides
+this problem.
+
+``` r
+
+check_balance_support <- function(balance_df, target_margins, eps = 1e-12) {
+    out <- lapply(names(target_margins), function(m) {
+        levs <- seq_along(target_margins[[m]])
+
+        sample_counts <- table(
+            factor(as.integer(balance_df[[m]]), levels = levs)
+        )
+
+        data.frame(
+            var = m,
+            level = levs,
+            sample_n = as.numeric(sample_counts),
+            target_prop = as.numeric(target_margins[[m]]),
+            unsupported = as.numeric(sample_counts) == 0 &
+                as.numeric(target_margins[[m]]) > eps
+        )
+    })
+
+    dplyr::bind_rows(out)
+}
+support_check <- check_balance_support(balance_df, target_margins)
+support_check |>
+    dplyr::group_by(var) |>
+    dplyr::summarise(
+        target_mass_covered = sum(target_prop[sample_n > 0]),
+        n_unsupported_bins = sum(unsupported),
+        .groups = "drop"
+    )
+#> # A tibble: 11 × 3
+#>    var       target_mass_covered n_unsupported_bins
+#>    <chr>                   <dbl>              <int>
+#>  1 d                       1                      0
+#>  2 dist_road               1                      0
+#>  3 elev                    0.800                  1
+#>  4 forest                  1                      0
+#>  5 grass                   1                      0
+#>  6 moisture                1                      0
+#>  7 ph                      1                      0
+#>  8 prod                    1                      0
+#>  9 slope                   1                      0
+#> 10 solar                   1                      0
+#> 11 temp                    1                      0
 ```
 
 Brenning, Alexander, and Thomas Suesse. 2026. *Aligning Validation with
 Deployment: Target-Weighted Cross-Validation for Spatial Prediction*.
 arXiv. <https://doi.org/10.48550/ARXIV.2603.29981>.
+
+Meyer, Hanna, and Edzer Pebesma. 2021. “Predicting into Unknown Space?
+Estimating the Area of Applicability of Spatial Prediction Models.”
+*Methods in Ecology and Evolution* 12 (9): 1620–33.
+https://doi.org/<https://doi.org/10.1111/2041-210X.13650>.
