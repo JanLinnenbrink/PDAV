@@ -41,7 +41,7 @@
 #'     \item{twcv_specs}{The TWCV specification set actually used.}
 #'   }
 #'
-#' @seealso compute_buffered_estimators(), compute_twcv_weights()]
+#' @seealso twcv_buffered(), compute_twcv_weights()]
 #'
 #' @export
 #'
@@ -78,7 +78,7 @@
 #' # Five-fold CV assignment
 #' folds <- sample(rep(1:5, length.out = n_sample))
 #'
-#' # Simple model adapters used by compute_cv_estimators()
+#' # Simple model adapters used by twcv()
 #' fit_lm <- function(train_dat, model, response, ...) {
 #'   stats::lm(stats::as.formula(
 #'     paste(response, "~", paste(c("x1", "x2"), collapse = " + "))
@@ -89,7 +89,7 @@
 #'   stats::predict(object, newdata = newdata)
 #' }
 #'
-#' res <- compute_cv_estimators(
+#' res <- twcv(
 #'   sample_dat = sample_dat,
 #'   grid_dat = grid_dat,
 #'   folds = folds,
@@ -113,7 +113,7 @@
 #' # TWCV weight object(s)
 #' names(res$weights)
 #' }
-compute_cv_estimators <- function(
+twcv <- function(
 	sample_dat,
 	grid_dat,
 	folds,
@@ -247,15 +247,16 @@ compute_cv_estimators <- function(
 
 		support_check <- check_balance_support(balance_df, target_margins)
 		if (any(support_check$unsupported)) {
-			unsupported_var <- support_check[support_check$unsupported == TRUE, "var"]
+			unsupported_vars <- support_check[support_check$unsupported == TRUE, "var"]
 			unsupported_flag <- 1
 			warning(paste0(
 				"The predictor(s) ",
-				paste0(unsupported_var, collapse = ","),
+				paste0(unsupported_vars, collapse = ","),
 				" have quintiles that are not supported by the training data.
 				Raking is likely to fail in this context, and limiting the prediction area to avoid extrapolation is recommended."
 			))
 		} else {
+			unsupported_vars <- NA
 			unsupported_flag <- 0
 		}
 
@@ -269,6 +270,7 @@ compute_cv_estimators <- function(
 		weights = weight_objects,
 		twcv_specs = twcv_specs,
 		unsupported_flag = unsupported_flag,
+		unsupported_vars = unsupported_vars,
 		use_dist = use_dist,
 		balance_df = balance_df, # added for plotting purpose
 		target_margins = target_margins # added for plotting purpose
@@ -278,9 +280,9 @@ compute_cv_estimators <- function(
 }
 
 
-#' Estimate deployment-oriented predictive performance from buffered tasks
+#' Estimate deployment-oriented predictive performance from buffered tasks (Not used/exported at the momement)
 #'
-#' Analogous to [compute_cv_estimators()], but based on externally generated
+#' Analogous to [twcv()], but based on externally generated
 #' buffered validation tasks, typically from buffered leave-one-out resampling.
 #' Validation losses are computed for the selected buffered tasks, augmented
 #' with realized task descriptors, and summarized using unweighted, DWCV, TWCV,
@@ -330,8 +332,8 @@ compute_cv_estimators <- function(
 #'     \item{twcv_specs}{The TWCV specification set actually used.}
 #'   }
 #'
-#' @seealso [compute_cv_estimators()], [generate_buffered_loo_tasks()]
-compute_buffered_estimators <- function(
+#' @seealso [twcv()], [generate_buffered_loo_tasks()]
+twcv_buffered <- function(
 	sample_dat,
 	grid_dat,
 	task_obj,
@@ -404,7 +406,7 @@ compute_buffered_estimators <- function(
 	# Augments the CV validation task by calling compute_task_descriptors to prepare predictor values
 	# and NNDs between samples, and between predpoints and samples (compute_task_descriptors calls nearest_neighbor_distance which uses FNN).
 	# It does not call compute_cv_prediction_distance to calculate NNDs between folds.
-	# compute_buffered_estimators rather needs those NNDs as input attached to task_obj, and calculated by generate_buffered_loo_tasks
+	# twcv_buffered rather needs those NNDs as input attached to task_obj, and calculated by generate_buffered_loo_tasks
 	aug <- augment_buffered_task_descriptors(
 		task_losses = raw_losses,
 		sample_dat = sample_dat,
