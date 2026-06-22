@@ -356,3 +356,33 @@ prepare_for_balancing <- function(df, vars, ref_df, by = 0.2) {
 
 	df_out
 }
+
+#' Checks if all quintiles of the prediction points are supported by the training points.
+#' Otherwise, raking is prone to errors.
+#'
+#' @param balance_df data frame containing the training margins.
+#' @param target_margins data frame containing the prediction point margins.
+#' @param eps Tolerance
+#'
+#' @return data frame containing the predictors, their quintiles and information if they are supported.
+#' @noRd
+check_balance_support <- function(balance_df, target_margins, eps = 1e-12) {
+	out <- lapply(names(target_margins), function(m) {
+		levs <- seq_along(target_margins[[m]])
+
+		sample_counts <- table(
+			factor(as.integer(balance_df[[m]]), levels = levs)
+		)
+
+		data.frame(
+			var = m,
+			level = levs,
+			sample_n = as.numeric(sample_counts),
+			target_prop = as.numeric(target_margins[[m]]),
+			unsupported = as.numeric(sample_counts) == 0 &
+				as.numeric(target_margins[[m]]) > eps
+		)
+	})
+
+	dplyr::bind_rows(out)
+}

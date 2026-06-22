@@ -280,7 +280,7 @@ plot.twcv <- function(x, ...) {
 		ggplot2::geom_smooth(method = "lm", formula = y ~ x, se = FALSE, colour = "firebrick") +
 		ggplot2::labs(
 			x = "Weight",
-			y = paste0("Pointwise loss (", "se", ")"),
+			y = paste0("Pointwise loss (", "squared error", ")"),
 			title = "B) Weight vs. loss"
 		) +
 		ggplot2::theme_bw() +

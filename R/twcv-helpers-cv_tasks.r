@@ -9,11 +9,12 @@
 #' @param sample_dat Sample data.
 #' @param grid_dat Grid or population data.
 #' @param task_vars Character vector of task-descriptor variables.
+#' @param use_dist Boolean. Should distance be computed?
 #'
 #' @return List with components \code{losses} (augmented loss table) and
 #'   \code{grid_tasks}.
 #' @noRd
-augment_cv_task_descriptors <- function(cv_losses, sample_dat, grid_dat, task_vars) {
+augment_cv_task_descriptors <- function(cv_losses, sample_dat, grid_dat, task_vars, use_dist) {
 	stopifnot(!is.null(task_vars), length(task_vars) > 0)
 	assert_required_columns(cv_losses, c("id", "fold"))
 	assert_required_columns(sample_dat, c("id"))
@@ -29,7 +30,8 @@ augment_cv_task_descriptors <- function(cv_losses, sample_dat, grid_dat, task_va
 	tasks <- compute_task_descriptors(
 		sample_dat = sample_dat,
 		grid_dat = grid_dat,
-		env_vars = task_vars
+		env_vars = task_vars,
+		use_dist = use_dist
 	)
 
 	sample_desc <- tasks$sample_tasks
@@ -53,14 +55,16 @@ augment_cv_task_descriptors <- function(cv_losses, sample_dat, grid_dat, task_va
 		out[[v]] <- sample_desc[[v]][idx]
 	}
 
-	# Calculates the NND between folds based on distance matrix / matrices
-	d_realized <- compute_cv_prediction_distances(
-		sample_dat = sample_dat,
-		folds = cv_losses$fold
-	)
+	if (use_dist) {
+		# Calculates the NND between folds based on distance matrix / matrices
+		d_realized <- compute_cv_prediction_distances(
+			sample_dat = sample_dat,
+			folds = cv_losses$fold
+		)
 
-	idx_d <- match(out$id, sample_dat$id)
-	out$d <- d_realized[idx_d]
+		idx_d <- match(out$id, sample_dat$id)
+		out$d <- d_realized[idx_d]
+	}
 
 	list(
 		losses = out,
@@ -152,6 +156,7 @@ augment_buffered_task_descriptors <- function(task_losses, sample_dat, grid_dat,
 #' @param env_vars Optional character vector of environmental covariate names to
 #'   include in the task descriptors. If `NULL`, all common non-coordinate,
 #'   non-response variables are used.
+#' @param use_dist Boolean. Should distance be computed?
 #'
 #' @return A named list with two data frames:
 #'   \describe{
@@ -177,7 +182,7 @@ augment_buffered_task_descriptors <- function(task_losses, sample_dat, grid_dat,
 #' compute_task_descriptors(sample_dat, grid_dat, env_vars = "elev")
 #' }
 #' @noRd
-compute_task_descriptors <- function(sample_dat, grid_dat, env_vars = NULL) {
+compute_task_descriptors <- function(sample_dat, grid_dat, env_vars = NULL, use_dist) {
 	if (!all(c("x", "y") %in% names(sample_dat))) {
 		stop("sample_dat must contain columns 'x' and 'y'.", call. = FALSE)
 	}
@@ -200,29 +205,32 @@ compute_task_descriptors <- function(sample_dat, grid_dat, env_vars = NULL) {
 		env_vars <- intersect(env_vars, intersect(names(sample_dat), names(grid_dat)))
 	}
 
-	d_sample <- nearest_neighbor_distance(
-		query_coords = sample_dat[, c("x", "y")],
-		ref_coords = sample_dat[, c("x", "y")],
-		exclude_self = TRUE
-	)
-
-	d_grid <- nearest_neighbor_distance(
-		query_coords = grid_dat[, c("x", "y")],
-		ref_coords = sample_dat[, c("x", "y")],
-		exclude_self = FALSE
-	)
-
 	sample_tasks <- data.frame(
 		id = sample_dat$id,
-		d = d_sample,
 		stringsAsFactors = FALSE
 	)
 
 	grid_tasks <- data.frame(
 		id = grid_dat$id,
-		d = d_grid,
 		stringsAsFactors = FALSE
 	)
+
+	if (use_dist) {
+		d_sample <- nearest_neighbor_distance(
+			query_coords = sample_dat[, c("x", "y")],
+			ref_coords = sample_dat[, c("x", "y")],
+			exclude_self = TRUE
+		)
+
+		d_grid <- nearest_neighbor_distance(
+			query_coords = grid_dat[, c("x", "y")],
+			ref_coords = sample_dat[, c("x", "y")],
+			exclude_self = FALSE
+		)
+
+		sample_tasks$d <- d_sample
+		grid_tasks$d <- d_grid
+	}
 
 	for (v in env_vars) {
 		sample_tasks[[v]] <- sample_dat[[v]]

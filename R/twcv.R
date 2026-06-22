@@ -11,7 +11,7 @@
 #' studies without redefining global adapter functions.
 #'
 #' @param sample_dat Data frame of sampled observations used for validation.
-#'   Must contain an ID column and the response variable.
+#'   Must contain an ID column and the response variable, as well as "x" and "y" columns for the coordinates.
 #' @param grid_dat Data frame representing deployment or prediction locations.
 #' @param folds Integer vector of fold assignments for `sample_dat`.
 #' @param model Character string identifying the prediction model.
@@ -30,6 +30,7 @@
 #'   variables are inferred from `sample_dat` and `grid_dat`.
 #' @param env_vars Optional character vector of environmental variables used as
 #'   task descriptors. Defaults to `predictor_vars`.
+#' @param use_dist Should geographical distances be accounted for during raking? Defaults to TRUE.
 #' @param ... Additional arguments passed to `fit_fun` during validation.
 #'
 #' @return A list with elements:
@@ -41,6 +42,8 @@
 #'   }
 #'
 #' @seealso compute_buffered_estimators(), compute_twcv_weights()]
+#'
+#' @export
 #'
 #' @examples
 #' \dontrun{
@@ -122,6 +125,7 @@ compute_cv_estimators <- function(
 	twcv_specs = NULL,
 	predictor_vars = NULL,
 	env_vars = NULL,
+	use_dist = TRUE,
 	...
 ) {
 	model <- match.arg(model)
@@ -178,7 +182,8 @@ compute_cv_estimators <- function(
 		cv_losses = cv_losses,
 		sample_dat = sample_dat,
 		grid_dat = grid_dat,
-		task_vars = env_vars
+		task_vars = env_vars,
+		use_dist = use_dist
 	)
 
 	cv_losses <- aug$losses
@@ -193,8 +198,14 @@ compute_cv_estimators <- function(
 	for (nm in names(twcv_specs)) {
 		spec <- twcv_specs[[nm]]
 
+		if (use_dist) {
+			balancing_vars <- spec$balancing_vars
+		} else {
+			balancing_vars <- spec$balancing_vars[spec$balancing_vars != "d"]
+		}
+
 		if (
-			is.null(spec$balancing_vars) ||
+			is.null(balancing_vars) ||
 				is.null(spec$balance_by) ||
 				is.null(spec$shrink_lambda)
 		) {
@@ -208,7 +219,7 @@ compute_cv_estimators <- function(
 		bal <- prepare_balanced_tasks_cv(
 			loss_df = cv_losses,
 			grid_tasks = grid_tasks,
-			balancing_vars = spec$balancing_vars,
+			balancing_vars = balancing_vars,
 			by = spec$balance_by
 		)
 
@@ -220,28 +231,45 @@ compute_cv_estimators <- function(
 		tw <- compute_twcv_weights(
 			sample_tasks_bal = bal$sample_tasks_bal,
 			grid_tasks_bal = bal$grid_tasks_bal,
-			balancing_vars = spec$balancing_vars,
+			balancing_vars = balancing_vars,
 			shrink_lambda = spec$shrink_lambda,
 			verbose = max(0, verbose - 1)
 		)
 
+		# Check for any unsupported quintiles and issue a warning
+		balance_df <- bal$sample_tasks_bal[grepl("_cat", names(bal$sample_tasks_bal))]
+		names(balance_df) <- sub("_cat", "", names(balance_df))
+
+		target_margins <- compute_target_margins_generic(
+			grid_tasks_bal = bal$grid_tasks_bal,
+			balancing_vars = balancing_vars
+		)
+
+		support_check <- check_balance_support(balance_df, target_margins)
+		if (any(support_check$unsupported)) {
+			unsupported_var <- support_check[support_check$unsupported == TRUE, "var"]
+			unsupported_flag <- 1
+			warning(paste0(
+				"The predictor(s) ",
+				paste0(unsupported_var, collapse = ","),
+				" have quintiles that are not supported by the training data.
+				Raking is likely to fail in this context, and limiting the prediction area to avoid extrapolation is recommended."
+			))
+		} else {
+			unsupported_flag <- 0
+		}
+
 		est_list[[nm]] <- summarize_losses(cv_losses, tw$weights)
 		weight_objects[[nm]] <- tw
 	}
-
-	# output processing (for plotting only)
-	balance_df <- bal$sample_tasks_bal[grepl("_cat", names(bal$sample_tasks_bal))]
-	names(balance_df) <- sub("_cat", "", names(balance_df))
-	target_margins <- compute_target_margins_generic(
-		grid_tasks_bal = bal$grid_tasks_bal,
-		balancing_vars = spec$balancing_vars
-	)
 
 	res <- list(
 		losses = cv_losses,
 		estimators = est_list,
 		weights = weight_objects,
 		twcv_specs = twcv_specs,
+		unsupported_flag = unsupported_flag,
+		use_dist = use_dist,
 		balance_df = balance_df, # added for plotting purpose
 		target_margins = target_margins # added for plotting purpose
 	)

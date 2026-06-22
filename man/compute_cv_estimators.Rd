@@ -16,12 +16,13 @@ compute_cv_estimators(
   twcv_specs = NULL,
   predictor_vars = NULL,
   env_vars = NULL,
+  use_dist = TRUE,
   ...
 )
 }
 \arguments{
 \item{sample_dat}{Data frame of sampled observations used for validation.
-Must contain an ID column and the response variable.}
+Must contain an ID column and the response variable, as well as "x" and "y" columns for the coordinates.}
 
 \item{grid_dat}{Data frame representing deployment or prediction locations.}
 
@@ -50,6 +51,8 @@ variables are inferred from \code{sample_dat} and \code{grid_dat}.}
 
 \item{env_vars}{Optional character vector of environmental variables used as
 task descriptors. Defaults to \code{predictor_vars}.}
+
+\item{use_dist}{Should geographical distances be accounted for during raking? Defaults to TRUE.}
 
 \item{...}{Additional arguments passed to \code{fit_fun} during validation.}
 }
