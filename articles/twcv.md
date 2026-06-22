@@ -444,6 +444,10 @@ ggplot() +
 
 ### 7. Return weighted error estimates
 
+The following plots show the calibration (i.e., how good could the
+raking match the target proportion). It also shows which points (with
+their corresponding errors) received which weight.
+
 ``` r
 
 est_list <- PDAV:::summarize_losses(cv_losses, tw$weights)
@@ -453,8 +457,19 @@ result <- list(
     losses = cv_losses,
     estimators = est_list,
     weights = weight_objects,
-    twcv_specs = twcv_specs
+    twcv_specs = twcv_specs,
+    balance_df = balance_df, # added for plotting purpose
+    target_margins = target_margins # added for plotting purpose
 )
+class(result) <- "twcv"
+
+plot(result) |>
+    plot_grid(plotlist = _, ncol = 1, align = "v")
+```
+
+![](twcv_files/figure-html/unnamed-chunk-10-1.png)
+
+``` r
 
 # True error:
 fit <- fit_fun(

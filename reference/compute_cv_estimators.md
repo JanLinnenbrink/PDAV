@@ -52,12 +52,12 @@ compute_cv_estimators(
 
 - fit_fun:
 
-  Model-fitting function passed to `compute_cv_losses()`. It must accept
+  Model-fitting function passed to compute_cv_losses(). It must accept
   at least `train_dat`, `model`, and `response`.
 
 - predict_fun:
 
-  Prediction function passed to `compute_cv_losses()`. It must accept a
+  Prediction function passed to compute_cv_losses(). It must accept a
   fitted model object and `newdata`.
 
 - verbose:
@@ -113,8 +113,7 @@ across case studies without redefining global adapter functions.
 
 ## See also
 
-[`compute_buffered_estimators()`](https://janlinnenbrink.github.io/PDAV/reference/compute_buffered_estimators.md),
-`compute_twcv_weights()`\]
+compute_buffered_estimators(), compute_twcv_weights()\]
 
 ## Examples
 
@@ -174,6 +173,8 @@ res <- compute_cv_estimators(
   env_vars = c("x1", "x2"),
   verbose = 1
 )
+
+plot(res)
 
 # Augmented validation losses
 head(res$losses)

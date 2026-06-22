@@ -100,12 +100,12 @@ tries <code>z</code> and then <code>outcome</code>.</p></dd>
 
 
 <dt id="arg-fit-fun">fit_fun<a class="anchor" aria-label="anchor" href="#arg-fit-fun"></a></dt>
-<dd><p>Model-fitting function passed to <code>compute_cv_losses()</code>. It
+<dd><p>Model-fitting function passed to compute_cv_losses(). It
 must accept at least <code>train_dat</code>, <code>model</code>, and <code>response</code>.</p></dd>
 
 
 <dt id="arg-predict-fun">predict_fun<a class="anchor" aria-label="anchor" href="#arg-predict-fun"></a></dt>
-<dd><p>Prediction function passed to <code>compute_cv_losses()</code>. It
+<dd><p>Prediction function passed to compute_cv_losses(). It
 must accept a fitted model object and <code>newdata</code>.</p></dd>
 
 
@@ -158,7 +158,7 @@ studies without redefining global adapter functions.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="compute_buffered_estimators.html">compute_buffered_estimators()</a></code>, <code>compute_twcv_weights()</code>]</p></div>
+    <div class="dont-index"><p>compute_buffered_estimators(), compute_twcv_weights()]</p></div>
     </div>
 
     <div class="section level2">
@@ -218,6 +218,8 @@ studies without redefining global adapter functions.</p>
 <span class="r-in"><span>  env_vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x1"</span>, <span class="st">"x2"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  verbose <span class="op">=</span> <span class="fl">1</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu"><a href="plot.html">plot</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Augmented validation losses</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">losses</span><span class="op">)</span></span></span>

@@ -43,7 +43,7 @@ compute_buffered_estimators(
 - task_obj:
 
   Buffered task object, typically created by
-  [`generate_buffered_loo_tasks()`](https://janlinnenbrink.github.io/PDAV/reference/generate_buffered_loo_tasks.md).
+  generate_buffered_loo_tasks().
 
 - model:
 
@@ -56,13 +56,13 @@ compute_buffered_estimators(
 
 - fit_fun:
 
-  Model-fitting function passed to `compute_buffered_task_losses()`. It
+  Model-fitting function passed to compute_buffered_task_losses(). It
   must accept at least `train_dat`, `model`, and `response`.
 
 - predict_fun:
 
-  Prediction function passed to `compute_buffered_task_losses()`. It
-  must accept a fitted model object and `newdata`.
+  Prediction function passed to compute_buffered_task_losses(). It must
+  accept a fitted model object and `newdata`.
 
 - verbose:
 

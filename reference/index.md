@@ -22,6 +22,7 @@
 - [`plot(`*`<nndm>`*`)`](https://janlinnenbrink.github.io/PDAV/reference/plot.md)
   [`plot(`*`<knndm>`*`)`](https://janlinnenbrink.github.io/PDAV/reference/plot.md)
   [`plot(`*`<da_cv>`*`)`](https://janlinnenbrink.github.io/PDAV/reference/plot.md)
+  [`plot(`*`<twcv>`*`)`](https://janlinnenbrink.github.io/PDAV/reference/plot.md)
   : Plot PDAV classes
 - [`spatial_plus_cv()`](https://janlinnenbrink.github.io/PDAV/reference/spatial_plus_cv.md)
   : Spatially-Aware Cross-Validation (SP-CV) Split

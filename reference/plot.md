@@ -14,13 +14,16 @@ plot(x, type = "strict", stat = "ecdf", ...)
 
 # S3 method for class 'da_cv'
 plot(x, ...)
+
+# S3 method for class 'twcv'
+plot(x, ...)
 ```
 
 ## Arguments
 
 - x:
 
-  An object of type *da_cv*.
+  An object of type *twcv*.
 
 - type:
 

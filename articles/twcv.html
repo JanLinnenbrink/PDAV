@@ -818,6 +818,9 @@ section 8 and Figure 2.</p>
 <div class="section level3">
 <h3 id="return-weighted-error-estimates">7. Return weighted error estimates<a class="anchor" aria-label="anchor" href="#return-weighted-error-estimates"></a>
 </h3>
+<p>The following plots show the calibration (i.e., how good could the
+raking match the target proportion). It also shows which points (with
+their corresponding errors) received which weight.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">est_list</span> <span class="op">&lt;-</span> <span class="fu">PDAV</span><span class="fu">:::</span><span class="fu">summarize_losses</span><span class="op">(</span><span class="va">cv_losses</span>, <span class="va">tw</span><span class="op">$</span><span class="va">weights</span><span class="op">)</span></span>
 <span><span class="va">weight_objects</span> <span class="op">&lt;-</span> <span class="va">tw</span></span>
@@ -826,10 +829,17 @@ section 8 and Figure 2.</p>
 <span>    losses <span class="op">=</span> <span class="va">cv_losses</span>,</span>
 <span>    estimators <span class="op">=</span> <span class="va">est_list</span>,</span>
 <span>    weights <span class="op">=</span> <span class="va">weight_objects</span>,</span>
-<span>    twcv_specs <span class="op">=</span> <span class="va">twcv_specs</span></span>
+<span>    twcv_specs <span class="op">=</span> <span class="va">twcv_specs</span>,</span>
+<span>    balance_df <span class="op">=</span> <span class="va">balance_df</span>, <span class="co"># added for plotting purpose</span></span>
+<span>    target_margins <span class="op">=</span> <span class="va">target_margins</span> <span class="co"># added for plotting purpose</span></span>
 <span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/class.html" class="external-link">class</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="st">"twcv"</span></span>
 <span></span>
-<span><span class="co"># True error:</span></span>
+<span><span class="fu"><a href="../reference/plot.html">plot</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>    <span class="fu"><a href="https://wilkelab.org/cowplot/reference/plot_grid.html" class="external-link">plot_grid</a></span><span class="op">(</span>plotlist <span class="op">=</span> <span class="va">_</span>, ncol <span class="op">=</span> <span class="fl">1</span>, align <span class="op">=</span> <span class="st">"v"</span><span class="op">)</span></span></code></pre></div>
+<p><img src="twcv_files/figure-html/unnamed-chunk-10-1.png" class="r-plt" alt="" width="700"></p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># True error:</span></span>
 <span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu">fit_fun</span><span class="op">(</span></span>
 <span>    <span class="va">sample_dat</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="fu"><a href="https://tidyselect.r-lib.org/reference/all_of.html" class="external-link">all_of</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">predictor_vars</span>, <span class="va">response</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>    model <span class="op">=</span> <span class="va">model</span>,</span>
@@ -867,7 +877,7 @@ normalizing the weights by their mean can make the output look
 reasonable on average, even though most individual weights have
 collapsed towards zero — so this issue is easy to overlook without
 diagnostics such as the effective sample size.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">check_balance_support</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">balance_df</span>, <span class="va">target_margins</span>, <span class="va">eps</span> <span class="op">=</span> <span class="fl">1e-12</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="va">out</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">target_margins</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">m</span><span class="op">)</span> <span class="op">{</span></span>
 <span>        <span class="va">levs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_along</a></span><span class="op">(</span><span class="va">target_margins</span><span class="op">[[</span><span class="va">m</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
