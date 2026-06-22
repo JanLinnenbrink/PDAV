@@ -9,8 +9,6 @@
 <url><loc>https://janlinnenbrink.github.io/PDAV/articles/twcv.html</loc></url>
 <url><loc>https://janlinnenbrink.github.io/PDAV/authors.html</loc></url>
 <url><loc>https://janlinnenbrink.github.io/PDAV/index.html</loc></url>
-<url><loc>https://janlinnenbrink.github.io/PDAV/reference/compute_buffered_estimators.html</loc></url>
-<url><loc>https://janlinnenbrink.github.io/PDAV/reference/compute_cv_estimators.html</loc></url>
 <url><loc>https://janlinnenbrink.github.io/PDAV/reference/da_cv.html</loc></url>
 <url><loc>https://janlinnenbrink.github.io/PDAV/reference/generate_buffered_loo_tasks.html</loc></url>
 <url><loc>https://janlinnenbrink.github.io/PDAV/reference/index.html</loc></url>
@@ -20,5 +18,7 @@
 <url><loc>https://janlinnenbrink.github.io/PDAV/reference/nndm.html</loc></url>
 <url><loc>https://janlinnenbrink.github.io/PDAV/reference/plot.html</loc></url>
 <url><loc>https://janlinnenbrink.github.io/PDAV/reference/spatial_plus_cv.html</loc></url>
+<url><loc>https://janlinnenbrink.github.io/PDAV/reference/twcv.html</loc></url>
+<url><loc>https://janlinnenbrink.github.io/PDAV/reference/twcv_buffered.html</loc></url>
 </urlset>
 

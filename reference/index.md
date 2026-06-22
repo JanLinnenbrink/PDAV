@@ -2,11 +2,6 @@
 
 ## All functions
 
-- [`compute_buffered_estimators()`](https://janlinnenbrink.github.io/PDAV/reference/compute_buffered_estimators.md)
-  : Estimate deployment-oriented predictive performance from buffered
-  tasks
-- [`compute_cv_estimators()`](https://janlinnenbrink.github.io/PDAV/reference/compute_cv_estimators.md)
-  : Estimate deployment-oriented predictive performance from CV tasks
 - [`da_cv()`](https://janlinnenbrink.github.io/PDAV/reference/da_cv.md)
   : Dissimilarity-Adaptive Cross-Validation (DA-CV)
 - [`generate_buffered_loo_tasks()`](https://janlinnenbrink.github.io/PDAV/reference/generate_buffered_loo_tasks.md)
@@ -26,3 +21,8 @@
   : Plot PDAV classes
 - [`spatial_plus_cv()`](https://janlinnenbrink.github.io/PDAV/reference/spatial_plus_cv.md)
   : Spatially-Aware Cross-Validation (SP-CV) Split
+- [`twcv()`](https://janlinnenbrink.github.io/PDAV/reference/twcv.md) :
+  Estimate deployment-oriented predictive performance from CV tasks
+- [`twcv_buffered()`](https://janlinnenbrink.github.io/PDAV/reference/twcv_buffered.md)
+  : Estimate deployment-oriented predictive performance from buffered
+  tasks (Not used/exported at the momement)
