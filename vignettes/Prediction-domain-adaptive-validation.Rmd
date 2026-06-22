@@ -3,7 +3,7 @@ title: "Prediction-domain adaptive evaluation"
 output: rmarkdown::html_vignette
 bibliography: references.bib
 vignette: >
-  %\VignetteIndexEntry{PDAV}
+  %\VignetteIndexEntry{Prediction-domain adaptive evaluation}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

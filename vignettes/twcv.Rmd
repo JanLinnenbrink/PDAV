@@ -109,7 +109,7 @@ predict_fun <- function(fit, newdata, ...) {
 	predict(fit, data = newdata)$predictions
 }
 
-model = "rf"
+model <- "rf"
 
 folds <- sample(rep(1:5, length.out = n_sample))
 ```
@@ -301,13 +301,13 @@ as.numeric(freq_samples) / sum(freq_samples)
 
 In this example, one elevation quintile of the prediction locations is not covered by the training points. 
 However, this does not return an error.
-Instead, if a quintile is not covered by the training points, the weights shrink towards 0 and the algorithm "converges"
+Instead, if a quintile is not covered by the training points, raking keeps trying to assign importance to a region it cannot represent, and drives the weight of most training points toward zero.
 A better approach would likely be to stop the algorithm and return an error message hinting towards avoiding this extreme extrapolation. See section 8 and Figure 2.
 
 ```{r}
 margin_names <- names(target_margins)
 max_iter <- 500
-tol = 1e-6
+tol <- 1e-6
 n <- nrow(balance_df)
 w <- rep(1, n)
 
@@ -370,10 +370,10 @@ ggplot() +
 
 ```{r}
 # Weights are normalized by their mean and shrinked towards 1 to mitigate extreme values
-shrink_lambda <- 0
+shrink_lambda <- twcv_specs$twcv_extended$shrink_lambda
 tw$weights_raw <- PDAV:::normalize_weights(tw$weights)
 tw$weights <- PDAV:::shrink_weights(tw$weights_raw, lambda = shrink_lambda)
-tw$shrink_lambda <- twcv_specs$twcv_extended$shrink_lambda
+tw$shrink_lambda <- shrink_lambda
 tw$balancing_vars <- twcv_specs$twcv_extended$balancing_vars
 
 ggplot() +
@@ -430,7 +430,7 @@ rmse
 
 ### 8. Check if the inputs were supported for raking {#sec-problems}
 
-Elevation quintile 5 of the prediction points not supported by the training points (if clustering was higher, e.g., radius = 30, then distance would also be not supported). Raking is infeasible in this case, and the prediction domain should be constrained e.g. to the Area of Applicability )(@Meyer2021). At least, the algorithm should stop with an error message. The normalization of weights by their means creates the illusion that the weights were meaningful and hides this problem.
+The highest elevation quintile of the prediction area is not represented by any training points (and with stronger clustering, e.g. radius = 30, the distance variable would be unsupported as well). Raking cannot succeed, because it is asked to assign weight to a region the training data does not cover. A possible solution might be to constrain the prediction domain, e.g., to the Area of Applicability (@Meyer2021). Ideally, the algorithm would detect this case and stop. It is worth noting that normalizing the weights by their mean can make the output look reasonable on average, even though most individual weights have collapsed towards zero — so this issue is easy to overlook without diagnostics such as the effective sample size.
 ```{r}
 check_balance_support <- function(balance_df, target_margins, eps = 1e-12) {
 	out <- lapply(names(target_margins), function(m) {
@@ -459,5 +459,18 @@ support_check |>
 		target_mass_covered = sum(target_prop[sample_n > 0]),
 		n_unsupported_bins = sum(unsupported),
 		.groups = "drop"
+	)
+
+# Effective sample size after weighting
+ess <- sum(tw$weights)^2 / sum(tw$weights^2)
+ess_ratio <- ess / length(tw$weights) # warn if << 1, e.g. < 0.3
+ess_ratio
+
+# How much target mass lands in bins the training data barely covers
+support_check |>
+	group_by(var) |>
+	summarise(
+		target_mass_in_thin_bins = sum(target_prop[sample_n <= 2]), # bins with ≤2 points
+		max_ratio = max(target_prop / pmax(sample_n / sum(sample_n), 1e-9))
 	)
 ```
