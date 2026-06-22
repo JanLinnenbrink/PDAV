@@ -80,9 +80,13 @@ samples <- sam_field(
 #| fig-cap: "Figure 1: The predictor stack"
 #| echo: false
 ggplot() +
-	geom_spatraster(data = predictor_stack) +
-	coord_sf(expand = FALSE, datum = st_crs(predictor_stack)) +
+	geom_spatraster(data = predictor_stack[[-cate_rasters]]) +
 	scale_fill_viridis_c() +
+	new_scale_fill() +
+	# categorical with a discrete scale
+	geom_spatraster(data = as.factor(predictor_stack[[cate_rasters]])) +
+	scale_fill_viridis_d() +
+	coord_sf(expand = FALSE, datum = st_crs(predictor_stack)) +
 	facet_wrap(~lyr) +
 	theme_bw() +
 	theme(panel.grid = element_blank())

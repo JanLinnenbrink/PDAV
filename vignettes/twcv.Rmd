@@ -272,7 +272,7 @@ PDAV:::plot_task_density_bands(
 	sample_title = "Training points",
 	grid_title = "Prediction points",
 	x_lab = "Elevation",
-	fill_lab = "Elevation quintile"
+	fill_lab = "Quintile"
 )
 ```
 
@@ -395,19 +395,9 @@ result <- list(
 	twcv_specs = twcv_specs
 )
 
-# Unweighted error:
-unweighted_losses
-
-# Weighted error:
-result$estimators
-```
-
-True error:
-
-```{r, echo=FALSE}
 # True error:
 fit <- fit_fun(
-	sample_dat |> select(!c(id, x, y)),
+	sample_dat |> select(all_of(c(predictor_vars, response))),
 	model = model,
 	response = response
 )
@@ -419,14 +409,16 @@ prediction <- terra::predict(
 	},
 	na.rm = TRUE
 )
-samples_pred <- terra::spatSample(prediction, 1000, as.points = TRUE, na.rm = TRUE, method = "regular") |>
+samples_pred <- terra::as.points(prediction) |>
 	st_as_sf() |>
 	rename("prediction" = lyr1)
 samples_pred <- terra::extract(r$outcome, samples_pred, bind = TRUE)
 
-rmse <- sqrt(mean((samples_pred$prediction - samples_pred$outcome)^2))
-rmse
+map_error <- caret::postResample(pred = samples_pred$prediction, obs = samples_pred$outcome)
 ```
+
+The unweighted CV error is `r round(result$estimators[["rmse"]], 3)`, while the weighted error is `r round(unweighted_losses$unweighted[["rmse"]], 3)`. The true map error is `r round(map_error[["RMSE"]], 3)`.
+
 
 ### 8. Check if the inputs were supported for raking {#sec-problems}
 
@@ -473,4 +465,7 @@ support_check |>
 		target_mass_in_thin_bins = sum(target_prop[sample_n <= 2]), # bins with ≤2 points
 		max_ratio = max(target_prop / pmax(sample_n / sum(sample_n), 1e-9))
 	)
+
+zero_idx <- tw$weights_raw < 0.05 * mean(tw$weights_raw)
+sum(zero_idx)
 ```
