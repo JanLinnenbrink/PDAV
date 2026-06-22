@@ -32,10 +32,10 @@ Must contain an ID column and the response variable.}
 \item{response}{Optional response variable name. If \code{NULL}, the function
 tries \code{z} and then \code{outcome}.}
 
-\item{fit_fun}{Model-fitting function passed to \code{\link[=compute_cv_losses]{compute_cv_losses()}}. It
+\item{fit_fun}{Model-fitting function passed to compute_cv_losses(). It
 must accept at least \code{train_dat}, \code{model}, and \code{response}.}
 
-\item{predict_fun}{Prediction function passed to \code{\link[=compute_cv_losses]{compute_cv_losses()}}. It
+\item{predict_fun}{Prediction function passed to compute_cv_losses(). It
 must accept a fitted model object and \code{newdata}.}
 
 \item{verbose}{Verbosity level.}
@@ -131,6 +131,8 @@ res <- compute_cv_estimators(
   verbose = 1
 )
 
+plot(res)
+
 # Augmented validation losses
 head(res$losses)
 
@@ -142,5 +144,5 @@ names(res$weights)
 }
 }
 \seealso{
-\code{\link[=compute_buffered_estimators]{compute_buffered_estimators()}}, \code{\link[=compute_twcv_weights]{compute_twcv_weights()}}]
+compute_buffered_estimators(), compute_twcv_weights()]
 }

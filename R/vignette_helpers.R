@@ -3,9 +3,9 @@
 generate_rast <- function() {
 	set.seed(10)
 
-	rast_grid <- rast(xmin = 0, xmax = 200, ymin = 0, ymax = 200, ncols = 200, nrows = 200)
+	rast_grid <- terra::rast(xmin = 0, xmax = 200, ymin = 0, ymax = 200, ncols = 200, nrows = 200)
 
-	grad_predictors <- sim_covariates(
+	grad_predictors <- simsam::sim_covariates(
 		rast_grid,
 		n = 7,
 		method = simulate_gaussian(nugget = 0, beta = 50, psill = 100, model = "Exp", range = 50)
@@ -14,7 +14,7 @@ generate_rast <- function() {
 		rescale_raster(to = c(1, 100))
 	grad_predictors <- c(grad_predictors, elev)
 
-	landcover <- sim_covariates(
+	landcover <- simsam::sim_covariates(
 		rast_grid,
 		n = 2,
 		method = simulate_gaussian(psill = 5, model = "Exp", range = 100, beta = 10, indicators = TRUE)
@@ -23,7 +23,7 @@ generate_rast <- function() {
 	predictors <- c(grad_predictors, landcover)
 	names(predictors) <- c("temp", "moisture", "ph", "slope", "solar", "dist_road", "prod", "elev", "forest", "grass")
 
-	outcome_pred <- blend_rasters(
+	outcome_pred <- simsam::blend_rasters(
 		predictors,
 		~
 			# species/habitat suitability score (unscaled)
@@ -39,7 +39,7 @@ generate_rast <- function() {
 
 	outcome_signal <- rescale_raster(outcome_pred, to = c(1, 100))
 
-	noise <- sim_covariates(rast_grid, n = 1, method = simulate_gaussian(psill = 10, model = "Exp", range = 5))
+	noise <- simsam::sim_covariates(rast_grid, n = 1, method = simulate_gaussian(psill = 10, model = "Exp", range = 5))
 	names(noise) <- "noise"
 	outcome <- outcome_signal + noise
 
@@ -52,35 +52,35 @@ generate_rast <- function() {
 #' @noRd
 generate_samples <- function(r, n_samples) {
 	set.seed(100)
-	sample_random <- sam_field(
+	sample_random <- simsam::sam_field(
 		x = r,
 		size = n_samples,
 		method = sample_random(na.rm = TRUE)
 	) |>
 		terra::extract(x = r, bind = TRUE) |>
-		st_as_sf() |>
-		mutate(sampling = "random")
+		sf::st_as_sf() |>
+		dplyr::mutate(sampling = "random")
 
-	sample_biased <- sam_field(
+	sample_biased <- simsam::sam_field(
 		x = r,
 		size = n_samples,
 		method = sample_clustered(nclusters = 10, radius = 30, na.rm = TRUE)
 	) |>
 		terra::extract(x = r, bind = TRUE) |>
-		st_as_sf() |>
-		mutate(sampling = "biased")
+		sf::st_as_sf() |>
+		dplyr::mutate(sampling = "biased")
 
-	sample_clustered <- sam_field(
+	sample_clustered <- simsam::sam_field(
 		x = r,
 		size = n_samples,
 		method = sample_clustered(nclusters = 5, radius = 15, na.rm = TRUE)
 	) |>
 		terra::extract(x = r, bind = TRUE) |>
-		st_as_sf() |>
-		mutate(sampling = "clustered")
+		sf::st_as_sf() |>
+		dplyr::mutate(sampling = "clustered")
 
 	samples <- rbind(sample_random, sample_biased, sample_clustered) |>
-		mutate(sampling = factor(sampling, levels = c("random", "biased", "clustered")))
+		dplyr::mutate(sampling = factor(sampling, levels = c("random", "biased", "clustered")))
 
 	return(samples)
 }
@@ -91,18 +91,18 @@ generate_samples <- function(r, n_samples) {
 generate_elevation <- function(rast_grid) {
 	# Helper: standardize raster values
 	standardize_raster <- function(x) {
-		v <- values(x)[, 1]
+		v <- terra::values(x)[, 1]
 		values(x) <- as.numeric(scale(v))
 		x
 	}
 
 	# Coordinates
-	xy <- crds(rast_grid, df = TRUE)
+	xy <- terra::crds(rast_grid, df = TRUE)
 	x <- xy$x
 	y <- xy$y
 
 	# 1. Broad-scale elevation pattern: lowlands to mountains
-	broad_elev <- sim_covariates(
+	broad_elev <- simsam::sim_covariates(
 		rast_grid,
 		n = 1,
 		method = simulate_gaussian(
@@ -113,7 +113,7 @@ generate_elevation <- function(rast_grid) {
 	)
 
 	# 2. Local terrain roughness
-	rough_elev <- sim_covariates(
+	rough_elev <- simsam::sim_covariates(
 		rast_grid,
 		n = 1,
 		method = simulate_gaussian(
@@ -153,7 +153,7 @@ generate_elevation <- function(rast_grid) {
 		0.7 * standardize_raster(valley)
 
 	# Smooth slightly
-	elev <- focal(
+	elev <- terra::focal(
 		elev,
 		w = matrix(1, 3, 3),
 		fun = mean,

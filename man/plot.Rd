@@ -5,6 +5,7 @@
 \alias{plot.nndm}
 \alias{plot.knndm}
 \alias{plot.da_cv}
+\alias{plot.twcv}
 \title{Plot PDAV classes}
 \usage{
 \method{plot}{nndm}(x, type = "strict", stat = "ecdf", ...)
@@ -12,9 +13,11 @@
 \method{plot}{knndm}(x, type = "strict", stat = "ecdf", ...)
 
 \method{plot}{da_cv}(x, ...)
+
+\method{plot}{twcv}(x, ...)
 }
 \arguments{
-\item{x}{An object of type \emph{da_cv}.}
+\item{x}{An object of type \emph{twcv}.}
 
 \item{type}{String, defaults to "strict" to show the original nearest neighbour distance definitions in the legend.
 Alternatively, set to "simple" to have more intuitive labels.}

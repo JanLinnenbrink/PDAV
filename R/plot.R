@@ -227,3 +227,89 @@ plot.da_cv <- function(x, ...) {
 			panel.grid = ggplot2::element_blank()
 		)
 }
+
+#' @name plot
+#' @param x An object of type \emph{twcv}.
+#' @param ... other arguments.
+#' @author Jan Linnenbrink
+#'
+#' @export
+plot.twcv <- function(x, ...) {
+	ess_warn <- 0.3
+	w_list <- x$weights
+	if (is.list(w_list[[1]])) {
+		w <- w_list[[1]]$weights
+	} else {
+		w <- w_list$weights
+	}
+
+	ess <- sum(w)^2 / sum(w^2)
+	ess_ratio <- ess / length(w)
+	ess_lab <- sprintf("ESS = %.0f / %d  (ratio = %.2f)", ess, length(w), ess_ratio)
+	flagged <- ess_ratio < ess_warn
+
+	# margin calibration
+	cal <- .twcv_calibration_df(x$balance_df, x$target_margins, w)
+	calibration_plot <- ggplot2::ggplot(
+		cal,
+		ggplot2::aes(y = var, x = abs(.data$target - .data$weighted), fill = as.factor(level))
+	) +
+		ggplot2::geom_point(shape = 21, colour = "grey", size = 3) +
+		ggplot2::scale_fill_viridis_d("Quintile", option = 5) +
+		ggplot2::labs(
+			y = "",
+			x = "abs(target proportion - weighted training proportion)",
+			title = "A)  Margin calibration"
+		) +
+		ggplot2::theme_bw() +
+		ggplot2::theme(aspect.ratio = 0.8, panel.grid.minor = ggplot2::element_blank())
+
+	# weight vs loss
+	df <- data.frame(w = w, loss = x$losses[["se"]])
+	rho <- suppressWarnings(stats::cor(df$w, df$loss, use = "complete.obs"))
+	dir <- if (is.na(rho)) {
+		"undefined"
+	} else if (rho < 0) {
+		"high-loss points down-weighted -> optimistic"
+	} else {
+		"high-loss points up-weighted -> pessimistic"
+	}
+
+	bias_plot <- ggplot2::ggplot(df, ggplot2::aes(.data$w, .data$loss)) +
+		ggplot2::geom_point(alpha = 0.6) +
+		ggplot2::geom_smooth(method = "lm", formula = y ~ x, se = FALSE, colour = "firebrick") +
+		ggplot2::labs(
+			x = "Weight",
+			y = paste0("Pointwise loss (", "se", ")"),
+			title = "B) Weight vs. loss"
+		) +
+		ggplot2::theme_bw() +
+		ggplot2::theme(aspect.ratio = 0.8, panel.grid.minor = ggplot2::element_blank())
+
+	return(list(calibration_plot, bias_plot))
+}
+
+#' @keywords internal
+#' @noRd
+.twcv_calibration_df <- function(balance_df, target_margins, w) {
+	vars <- names(target_margins)
+	dplyr::bind_rows(lapply(vars, function(m) {
+		levs <- seq_along(target_margins[[m]])
+		x <- as.integer(balance_df[[m]])
+		f <- factor(x, levels = levs)
+
+		wt <- tapply(w, f, sum)
+		wt[is.na(wt)] <- 0
+		uw <- tapply(rep(1, length(x)), f, sum)
+		uw[is.na(uw)] <- 0
+
+		data.frame(
+			var = m,
+			level = levs,
+			target = as.numeric(target_margins[[m]]),
+			weighted = as.numeric(wt) / sum(wt),
+			unweighted = as.numeric(uw) / sum(uw),
+			stringsAsFactors = FALSE
+		)
+	}))
+}

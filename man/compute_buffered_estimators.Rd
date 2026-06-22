@@ -28,7 +28,7 @@ compute_buffered_estimators(
 \item{grid_dat}{Data frame representing deployment or prediction locations.}
 
 \item{task_obj}{Buffered task object, typically created by
-\code{\link[=generate_buffered_loo_tasks]{generate_buffered_loo_tasks()}}.}
+generate_buffered_loo_tasks().}
 
 \item{model}{Character string identifying the prediction model.}
 
@@ -36,11 +36,11 @@ compute_buffered_estimators(
 tries \code{z} and then \code{outcome}.}
 
 \item{fit_fun}{Model-fitting function passed to
-\code{\link[=compute_buffered_task_losses]{compute_buffered_task_losses()}}. It must accept at least \code{train_dat},
+compute_buffered_task_losses(). It must accept at least \code{train_dat},
 \code{model}, and \code{response}.}
 
 \item{predict_fun}{Prediction function passed to
-\code{\link[=compute_buffered_task_losses]{compute_buffered_task_losses()}}. It must accept a fitted model object and
+compute_buffered_task_losses(). It must accept a fitted model object and
 \code{newdata}.}
 
 \item{verbose}{Verbosity level.}

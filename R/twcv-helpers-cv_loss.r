@@ -12,9 +12,9 @@
 #' @param response Optional response variable name. If `NULL`, the function
 #'   tries `z` and then `outcome`.
 #' @param fit_fun Model-fitting function passed to
-#'   [compute_cv_predictions()].
+#'   compute_cv_predictions().
 #' @param predict_fun Prediction function passed to
-#'   [compute_cv_predictions()].
+#'   compute_cv_predictions().
 #' @param verbose Verbosity level.
 #' @param ... Additional arguments passed to `fit_fun`.
 #'

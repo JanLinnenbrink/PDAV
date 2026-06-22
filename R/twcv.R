@@ -17,9 +17,9 @@
 #' @param model Character string identifying the prediction model.
 #' @param response Optional response variable name. If `NULL`, the function
 #'   tries `z` and then `outcome`.
-#' @param fit_fun Model-fitting function passed to [compute_cv_losses()]. It
+#' @param fit_fun Model-fitting function passed to compute_cv_losses(). It
 #'   must accept at least `train_dat`, `model`, and `response`.
-#' @param predict_fun Prediction function passed to [compute_cv_losses()]. It
+#' @param predict_fun Prediction function passed to compute_cv_losses(). It
 #'   must accept a fitted model object and `newdata`.
 #' @param verbose Verbosity level.
 #' @param twcv_specs Optional named list of TWCV specifications. Each
@@ -40,7 +40,7 @@
 #'     \item{twcv_specs}{The TWCV specification set actually used.}
 #'   }
 #'
-#' @seealso [compute_buffered_estimators()], [compute_twcv_weights()]]
+#' @seealso compute_buffered_estimators(), compute_twcv_weights()]
 #'
 #' @examples
 #' \dontrun{
@@ -98,6 +98,8 @@
 #'   env_vars = c("x1", "x2"),
 #'   verbose = 1
 #' )
+#'
+#' plot(res)
 #'
 #' # Augmented validation losses
 #' head(res$losses)
@@ -227,12 +229,24 @@ compute_cv_estimators <- function(
 		weight_objects[[nm]] <- tw
 	}
 
-	list(
+	# output processing (for plotting only)
+	balance_df <- bal$sample_tasks_bal[grepl("_cat", names(bal$sample_tasks_bal))]
+	names(balance_df) <- sub("_cat", "", names(balance_df))
+	target_margins <- compute_target_margins_generic(
+		grid_tasks_bal = bal$grid_tasks_bal,
+		balancing_vars = spec$balancing_vars
+	)
+
+	res <- list(
 		losses = cv_losses,
 		estimators = est_list,
 		weights = weight_objects,
-		twcv_specs = twcv_specs
+		twcv_specs = twcv_specs,
+		balance_df = balance_df, # added for plotting purpose
+		target_margins = target_margins # added for plotting purpose
 	)
+	class(res) <- "twcv"
+	return(res)
 }
 
 
@@ -251,15 +265,15 @@ compute_cv_estimators <- function(
 #' @param sample_dat Data frame of sampled observations used for validation.
 #' @param grid_dat Data frame representing deployment or prediction locations.
 #' @param task_obj Buffered task object, typically created by
-#'   [generate_buffered_loo_tasks()].
+#'   generate_buffered_loo_tasks().
 #' @param model Character string identifying the prediction model.
 #' @param response Optional response variable name. If `NULL`, the function
 #'   tries `z` and then `outcome`.
 #' @param fit_fun Model-fitting function passed to
-#'   [compute_buffered_task_losses()]. It must accept at least `train_dat`,
+#'   compute_buffered_task_losses(). It must accept at least `train_dat`,
 #'   `model`, and `response`.
 #' @param predict_fun Prediction function passed to
-#'   [compute_buffered_task_losses()]. It must accept a fitted model object and
+#'   compute_buffered_task_losses(). It must accept a fitted model object and
 #'   `newdata`.
 #' @param verbose Verbosity level.
 #' @param twcv_specs Optional named list of TWCV specifications.

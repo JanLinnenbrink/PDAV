@@ -191,7 +191,6 @@ rake_weights <- function(balance_df, target_margins, base_weights = NULL, max_it
 
 			valid <- !is.na(adj[x])
 			w[valid] <- w[valid] * adj[x[valid]]
-			print(paste(m, w))
 		}
 
 		# Compute the relative strength of the absolute change of weights from base (or previous) to new weights

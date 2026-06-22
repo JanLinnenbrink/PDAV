@@ -84,7 +84,7 @@ plot_task_density_bands <- function(
 
 		if (nrow(ranges) == 1) {
 			return(
-				tibble::tibble(
+				data.frame(
 					cat = ranges$cat,
 					xmin = xlim[1],
 					xmax = xlim[2]
@@ -96,7 +96,7 @@ plot_task_density_bands <- function(
 		# Exact quantile cut points are not stored, so these are reconstructed.
 		cuts <- (head(ranges$hi, -1) + tail(ranges$lo, -1)) / 2
 
-		tibble::tibble(
+		data.frame(
 			cat = ranges$cat,
 			xmin = c(xlim[1], cuts),
 			xmax = c(cuts, xlim[2])
@@ -108,8 +108,8 @@ plot_task_density_bands <- function(
 	#-----------------------------
 
 	make_density_band_plot <- function(dat, bands, title, x_var, x_lab, fill_lab, palette) {
-		p <- ggplot(dat, aes(x = .data[[x_var]])) +
-			geom_rect(
+		p <- ggplot2::ggplot(dat, aes(x = .data[[x_var]])) +
+			ggplot2::geom_rect(
 				data = bands,
 				aes(
 					xmin = xmin,
@@ -121,34 +121,34 @@ plot_task_density_bands <- function(
 				inherit.aes = FALSE,
 				alpha = 0.18
 			) +
-			geom_density(
+			ggplot2::geom_density(
 				fill = "grey70",
 				color = "grey20",
 				alpha = 0.35,
 				linewidth = 1,
 				na.rm = TRUE
 			) +
-			coord_cartesian(
+			ggplot2::coord_cartesian(
 				xlim = range(c(bands$xmin, bands$xmax), na.rm = TRUE)
 			) +
-			scale_fill_brewer(
+			ggplot2::scale_fill_brewer(
 				palette = palette,
 				drop = FALSE
 			) +
-			labs(
+			ggplot2::labs(
 				title = title,
 				x = x_lab,
 				y = "Density",
 				fill = fill_lab
 			) +
-			theme_minimal() +
-			theme(
+			ggplot2::theme_minimal() +
+			ggplot2::theme(
 				legend.position = "bottom"
 			)
 
 		if (nrow(bands) > 1) {
 			p <- p +
-				geom_vline(
+				ggplot2::geom_vline(
 					data = bands[-nrow(bands), , drop = FALSE],
 					aes(xintercept = xmax),
 					inherit.aes = FALSE,
@@ -217,8 +217,8 @@ plot_task_density_bands <- function(
 			)
 	)
 
-	p_sample_noleg <- p_sample + theme(legend.position = "none")
-	p_grid_noleg <- p_grid + theme(legend.position = "none")
+	p_sample_noleg <- p_sample + ggplot2::theme(legend.position = "none")
+	p_grid_noleg <- p_grid + ggplot2::theme(legend.position = "none")
 
 	combined_plot <- cowplot::plot_grid(
 		cowplot::plot_grid(
