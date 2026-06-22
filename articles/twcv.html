@@ -829,18 +829,28 @@ section 8 and Figure 2.</p>
 <span>    twcv_specs <span class="op">=</span> <span class="va">twcv_specs</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Unweighted error:</span></span>
-<span><span class="va">unweighted_losses</span></span>
-<span><span class="co">#&gt; $unweighted</span></span>
-<span><span class="co">#&gt;       bias        mse       rmse        mae </span></span>
-<span><span class="co">#&gt; -0.1167823 48.9339478  6.9952804  5.4573869</span></span>
+<span><span class="co"># True error:</span></span>
+<span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu">fit_fun</span><span class="op">(</span></span>
+<span>    <span class="va">sample_dat</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="fu"><a href="https://tidyselect.r-lib.org/reference/all_of.html" class="external-link">all_of</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">predictor_vars</span>, <span class="va">response</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>    model <span class="op">=</span> <span class="va">model</span>,</span>
+<span>    response <span class="op">=</span> <span class="va">response</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">prediction</span> <span class="op">&lt;-</span> <span class="fu">terra</span><span class="fu">::</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/predict.html" class="external-link">predict</a></span><span class="op">(</span></span>
+<span>    <span class="va">predictor_stack</span>,</span>
+<span>    <span class="va">fit</span>,</span>
+<span>    fun <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">model</span>, <span class="va">data</span>, <span class="va">...</span><span class="op">)</span> <span class="op">{</span></span>
+<span>        <span class="fu"><a href="https://rspatial.github.io/terra/reference/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">model</span>, data <span class="op">=</span> <span class="va">data</span><span class="op">)</span><span class="op">$</span><span class="va">predictions</span></span>
+<span>    <span class="op">}</span>,</span>
+<span>    na.rm <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">samples_pred</span> <span class="op">&lt;-</span> <span class="fu">terra</span><span class="fu">::</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/as.points.html" class="external-link">as.points</a></span><span class="op">(</span><span class="va">prediction</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>    <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_as_sf.html" class="external-link">st_as_sf</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/rename.html" class="external-link">rename</a></span><span class="op">(</span><span class="st">"prediction"</span> <span class="op">=</span> <span class="va">lyr1</span><span class="op">)</span></span>
+<span><span class="va">samples_pred</span> <span class="op">&lt;-</span> <span class="fu">terra</span><span class="fu">::</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/extract.html" class="external-link">extract</a></span><span class="op">(</span><span class="va">r</span><span class="op">$</span><span class="va">outcome</span>, <span class="va">samples_pred</span>, bind <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Weighted error:</span></span>
-<span><span class="va">result</span><span class="op">$</span><span class="va">estimators</span></span>
-<span><span class="co">#&gt;      bias       mse      rmse       mae </span></span>
-<span><span class="co">#&gt; -2.940997 37.332076  6.109998  4.871784</span></span></code></pre></div>
-<p>True error:</p>
-<pre><code><span><span class="co">#&gt; [1] 7.387563</span></span></code></pre>
+<span><span class="va">map_error</span> <span class="op">&lt;-</span> <span class="fu">caret</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/caret/man/postResample.html" class="external-link">postResample</a></span><span class="op">(</span>pred <span class="op">=</span> <span class="va">samples_pred</span><span class="op">$</span><span class="va">prediction</span>, obs <span class="op">=</span> <span class="va">samples_pred</span><span class="op">$</span><span class="va">outcome</span><span class="op">)</span></span></code></pre></div>
+<p>The unweighted CV error is 6.11, while the weighted error is 6.995.
+The true map error is 7.468.</p>
 </div>
 <div class="section level3">
 <h3 id="sec-problems">8. Check if the inputs were supported for raking<a class="anchor" aria-label="anchor" href="#sec-problems"></a>
@@ -857,7 +867,7 @@ normalizing the weights by their mean can make the output look
 reasonable on average, even though most individual weights have
 collapsed towards zero — so this issue is easy to overlook without
 diagnostics such as the effective sample size.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">check_balance_support</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">balance_df</span>, <span class="va">target_margins</span>, <span class="va">eps</span> <span class="op">=</span> <span class="fl">1e-12</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="va">out</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">target_margins</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">m</span><span class="op">)</span> <span class="op">{</span></span>
 <span>        <span class="va">levs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_along</a></span><span class="op">(</span><span class="va">target_margins</span><span class="op">[[</span><span class="va">m</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
@@ -927,7 +937,11 @@ diagnostics such as the effective sample size.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> prod                         0             1.43</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> slope                        0             1.33</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> solar                        0             1.33</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span> temp                         0             6.67</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span> temp                         0             6.67</span></span>
+<span></span>
+<span><span class="va">zero_idx</span> <span class="op">&lt;-</span> <span class="va">tw</span><span class="op">$</span><span class="va">weights_raw</span> <span class="op">&lt;</span> <span class="fl">0.05</span> <span class="op">*</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/summarize-generics.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">tw</span><span class="op">$</span><span class="va">weights_raw</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">zero_idx</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 67</span></span></code></pre></div>
 <div id="refs" class="references csl-bib-body hanging-indent">
 <div id="ref-Brenning2026" class="csl-entry">
 Brenning, Alexander, and Thomas Suesse. 2026. <em>Aligning

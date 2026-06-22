@@ -456,21 +456,30 @@ result <- list(
     twcv_specs = twcv_specs
 )
 
-# Unweighted error:
-unweighted_losses
-#> $unweighted
-#>       bias        mse       rmse        mae 
-#> -0.1167823 48.9339478  6.9952804  5.4573869
+# True error:
+fit <- fit_fun(
+    sample_dat |> select(all_of(c(predictor_vars, response))),
+    model = model,
+    response = response
+)
+prediction <- terra::predict(
+    predictor_stack,
+    fit,
+    fun = function(model, data, ...) {
+        predict(model, data = data)$predictions
+    },
+    na.rm = TRUE
+)
+samples_pred <- terra::as.points(prediction) |>
+    st_as_sf() |>
+    rename("prediction" = lyr1)
+samples_pred <- terra::extract(r$outcome, samples_pred, bind = TRUE)
 
-# Weighted error:
-result$estimators
-#>      bias       mse      rmse       mae 
-#> -2.940997 37.332076  6.109998  4.871784
+map_error <- caret::postResample(pred = samples_pred$prediction, obs = samples_pred$outcome)
 ```
 
-True error:
-
-    #> [1] 7.387563
+The unweighted CV error is 6.11, while the weighted error is 6.995. The
+true map error is 7.468.
 
 ### 8. Check if the inputs were supported for raking
 
@@ -558,6 +567,10 @@ support_check |>
 #>  9 slope                        0             1.33
 #> 10 solar                        0             1.33
 #> 11 temp                         0             6.67
+
+zero_idx <- tw$weights_raw < 0.05 * mean(tw$weights_raw)
+sum(zero_idx)
+#> [1] 67
 ```
 
 Brenning, Alexander, and Thomas Suesse. 2026. *Aligning Validation with
