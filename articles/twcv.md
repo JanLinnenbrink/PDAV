@@ -512,27 +512,7 @@ diagnostics such as the effective sample size.
 
 ``` r
 
-check_balance_support <- function(balance_df, target_margins, eps = 1e-12) {
-    out <- lapply(names(target_margins), function(m) {
-        levs <- seq_along(target_margins[[m]])
-
-        sample_counts <- table(
-            factor(as.integer(balance_df[[m]]), levels = levs)
-        )
-
-        data.frame(
-            var = m,
-            level = levs,
-            sample_n = as.numeric(sample_counts),
-            target_prop = as.numeric(target_margins[[m]]),
-            unsupported = as.numeric(sample_counts) == 0 &
-                as.numeric(target_margins[[m]]) > eps
-        )
-    })
-
-    dplyr::bind_rows(out)
-}
-support_check <- check_balance_support(balance_df, target_margins)
+support_check <- PDAV:::check_balance_support(balance_df, target_margins)
 support_check |>
     dplyr::group_by(var) |>
     dplyr::summarise(

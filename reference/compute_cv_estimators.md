@@ -22,6 +22,7 @@ compute_cv_estimators(
   twcv_specs = NULL,
   predictor_vars = NULL,
   env_vars = NULL,
+  use_dist = TRUE,
   ...
 )
 ```
@@ -31,7 +32,8 @@ compute_cv_estimators(
 - sample_dat:
 
   Data frame of sampled observations used for validation. Must contain
-  an ID column and the response variable.
+  an ID column and the response variable, as well as "x" and "y" columns
+  for the coordinates.
 
 - grid_dat:
 
@@ -80,6 +82,11 @@ compute_cv_estimators(
 
   Optional character vector of environmental variables used as task
   descriptors. Defaults to `predictor_vars`.
+
+- use_dist:
+
+  Should geographical distances be accounted for during raking? Defaults
+  to TRUE.
 
 - ...:
 

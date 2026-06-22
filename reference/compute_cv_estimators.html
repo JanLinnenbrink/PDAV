@@ -69,6 +69,7 @@ target-weighted CV (TWCV), and optionally importance-weighted CV (IWCV).</p>
 <span>  twcv_specs <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  predictor_vars <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  env_vars <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  use_dist <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -79,7 +80,7 @@ target-weighted CV (TWCV), and optionally importance-weighted CV (IWCV).</p>
 
 <dl><dt id="arg-sample-dat">sample_dat<a class="anchor" aria-label="anchor" href="#arg-sample-dat"></a></dt>
 <dd><p>Data frame of sampled observations used for validation.
-Must contain an ID column and the response variable.</p></dd>
+Must contain an ID column and the response variable, as well as "x" and "y" columns for the coordinates.</p></dd>
 
 
 <dt id="arg-grid-dat">grid_dat<a class="anchor" aria-label="anchor" href="#arg-grid-dat"></a></dt>
@@ -128,6 +129,10 @@ variables are inferred from <code>sample_dat</code> and <code>grid_dat</code>.</
 <dt id="arg-env-vars">env_vars<a class="anchor" aria-label="anchor" href="#arg-env-vars"></a></dt>
 <dd><p>Optional character vector of environmental variables used as
 task descriptors. Defaults to <code>predictor_vars</code>.</p></dd>
+
+
+<dt id="arg-use-dist">use_dist<a class="anchor" aria-label="anchor" href="#arg-use-dist"></a></dt>
+<dd><p>Should geographical distances be accounted for during raking? Defaults to TRUE.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
