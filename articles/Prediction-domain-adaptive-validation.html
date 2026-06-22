@@ -177,7 +177,7 @@ situation)</td>
 <span><span class="co">#&gt; Loading required package: ggplot2</span></span>
 <span><span class="co">#&gt; Loading required package: lattice</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://rspatial.org/" class="external-link">terra</a></span><span class="op">)</span></span>
-<span><span class="co">#&gt; terra 1.9.27</span></span>
+<span><span class="co">#&gt; terra 1.9.34</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-spatial.github.io/sf/" class="external-link">sf</a></span><span class="op">)</span></span>
 <span><span class="co">#&gt; Linking to GEOS 3.12.1, GDAL 3.8.4, PROJ 9.4.0; sf_use_s2() is TRUE</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">simsam</span><span class="op">)</span></span>
@@ -249,12 +249,12 @@ similar to the training samples, and no extrapolation correction is
 required, as shown in the following map. Consequently, all weight is
 assigned to random CV.</p>
 <p>For clustered samples, the AV classifier achieves a performance of
-AUC = 0.82. This leads to D = (0.82 - 0.5) / (1 - 0.5) = 0.64. The
-threshold is then T(D) = 0.5 × 0.64 = 0.32. Hence, all prediction cells
-with a similarity score lower than 0.32 are classified as dissimilar.
+AUC = 0.77. This leads to D = (0.77 - 0.5) / (1 - 0.5) = 0.54. The
+threshold is then T(D) = 0.5 × 0.54 = 0.27. Hence, all prediction cells
+with a similarity score lower than 0.27 are classified as dissimilar.
 The relative fraction of prediction locations classified as similar to
-the sampling locations is 0.5, while the fraction classified as
-dissimilar is 0.5.</p>
+the sampling locations is 0.64, while the fraction classified as
+dissimilar is 0.36.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">samples</span><span class="op">$</span><span class="va">sampling</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">smpling</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="fu"><a href="../reference/plot.html">plot</a></span><span class="op">(</span><span class="va">results</span><span class="op">[[</span><span class="va">smpling</span><span class="op">]</span><span class="op">]</span><span class="op">)</span> <span class="op">+</span></span>
@@ -333,10 +333,11 @@ to calculate the weighted RMSE of a spatial predictive model.</p>
 <span><span class="co">#&gt; Registered S3 methods overwritten by 'CAST':</span></span>
 <span><span class="co">#&gt;   method     from</span></span>
 <span><span class="co">#&gt;   plot.knndm PDAV</span></span>
-<span><span class="co">#&gt;   plot.nndm  PDAV</span></span></code></pre></div>
+<span><span class="co">#&gt;   plot.nndm  PDAV</span></span>
+<span><span class="co">#&gt; [1] "warning: k is higher than number of unique locations. k is set to 4"</span></span></code></pre></div>
 <p><img src="Prediction-domain-adaptive-validation_files/figure-html/unnamed-chunk-8-1.png" class="r-plt" alt="" width="576"></p>
-<p>The RMSE obtained by DA-CV are 6.127 for the random sampling design,
-4.222 for the biased sampling and 5.317 for the clustered design.</p>
+<p>The RMSE obtained by DA-CV are 6.292 for the random sampling design,
+5.09 for the biased sampling and 6.139 for the clustered design.</p>
 </div>
 <div class="section level3">
 <h3 id="knndm-cv">kNNDM CV<a class="anchor" aria-label="anchor" href="#knndm-cv"></a>

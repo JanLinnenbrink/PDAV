@@ -54,7 +54,7 @@ library(caret)
 #> Loading required package: ggplot2
 #> Loading required package: lattice
 library(terra)
-#> terra 1.9.27
+#> terra 1.9.34
 library(sf)
 #> Linking to GEOS 3.12.1, GDAL 3.8.4, PROJ 9.4.0; sf_use_s2() is TRUE
 library(simsam)
@@ -132,7 +132,7 @@ predict_fun <- function(fit, newdata, ...) {
     predict(fit, data = newdata)$predictions
 }
 
-model = "rf"
+model <- "rf"
 
 folds <- sample(rep(1:5, length.out = n_sample))
 ```
@@ -178,14 +178,14 @@ cv_losses <- data.frame(
 knitr::kable(head(cv_losses))
 ```
 
-|  id | fold |      obs |     pred |      error |         se |        ae |
-|----:|-----:|---------:|---------:|-----------:|-----------:|----------:|
-|   1 |    5 | 44.28207 | 43.82087 |  0.4611929 |  0.2126989 | 0.4611929 |
-|   2 |    2 | 44.17117 | 49.99404 | -5.8228636 | 33.9057405 | 5.8228636 |
-|   3 |    3 | 53.25563 | 53.99884 | -0.7432053 |  0.5523542 | 0.7432053 |
-|   4 |    2 | 42.51499 | 46.98822 | -4.4732310 | 20.0097955 | 4.4732310 |
-|   5 |    2 | 53.21769 | 49.30701 |  3.9106775 | 15.2933984 | 3.9106775 |
-|   6 |    2 | 53.90230 | 46.42331 |  7.4789830 | 55.9351869 | 7.4789830 |
+|  id | fold |      obs |     pred |     error |        se |       ae |
+|----:|-----:|---------:|---------:|----------:|----------:|---------:|
+|   1 |    4 | 43.86851 | 35.89420 |  7.974311 | 63.589631 | 7.974311 |
+|   2 |    4 | 42.79048 | 40.06923 |  2.721253 |  7.405216 | 2.721253 |
+|   3 |    3 | 55.96345 | 52.26969 |  3.693756 | 13.643835 | 3.693756 |
+|   4 |    3 | 30.84508 | 37.53789 | -6.692808 | 44.793686 | 6.692808 |
+|   5 |    3 | 34.29852 | 38.66652 | -4.368001 | 19.079436 | 4.368001 |
+|   6 |    2 | 30.15781 | 36.53860 | -6.380787 | 40.714441 | 6.380787 |
 
 ### 2. Compute the CV validation task and the prediction task
 
@@ -257,12 +257,12 @@ knitr::kable(head(aug$losses))
 
 | id | fold | obs | pred | error | se | ae | temp | moisture | ph | slope | solar | dist_road | prod | elev | forest | grass | d |
 |---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| 1 | 5 | 44.28207 | 43.82087 | 0.4611929 | 0.2126989 | 0.4611929 | 46.76168 | 33.78805 | 44.62300 | 46.50822 | 50.10956 | 61.96061 | 60.75672 | 45.15465 | 1 | 1 | 14.422205 |
-| 2 | 2 | 44.17117 | 49.99404 | -5.8228636 | 33.9057405 | 5.8228636 | 51.25996 | 54.53092 | 50.67009 | 47.29233 | 58.28259 | 52.55031 | 65.24689 | 46.87057 | 1 | 1 | 19.235384 |
-| 3 | 3 | 53.25563 | 53.99884 | -0.7432053 | 0.5523542 | 0.7432053 | 38.82998 | 46.77043 | 41.82119 | 56.02720 | 35.20767 | 54.98906 | 59.52938 | 47.50634 | 1 | 1 | 4.123106 |
-| 4 | 2 | 42.51499 | 46.98822 | -4.4732310 | 20.0097955 | 4.4732310 | 49.48175 | 34.19502 | 46.44462 | 46.57739 | 49.54025 | 44.47137 | 57.23566 | 38.47061 | 1 | 1 | 16.031219 |
-| 5 | 2 | 53.21769 | 49.30701 | 3.9106775 | 15.2933984 | 3.9106775 | 40.43763 | 31.31003 | 47.23048 | 51.68053 | 51.58667 | 61.96604 | 55.45958 | 47.84091 | 1 | 1 | 14.422205 |
-| 6 | 2 | 53.90230 | 46.42331 | 7.4789830 | 55.9351869 | 7.4789830 | 46.13120 | 31.85287 | 40.65304 | 49.93170 | 43.47339 | 67.90408 | 49.48730 | 32.93662 | 1 | 0 | 8.246211 |
+| 1 | 4 | 43.86851 | 35.89420 | 7.974311 | 63.589631 | 7.974311 | 58.65872 | 49.55558 | 31.40340 | 41.89452 | 46.79640 | 54.96806 | 68.77220 | 16.85107 | 1 | 1 | 5.000000 |
+| 2 | 4 | 42.79048 | 40.06923 | 2.721253 | 7.405216 | 2.721253 | 48.22472 | 33.45135 | 47.35910 | 45.57008 | 37.40257 | 61.39853 | 67.77885 | 47.02244 | 1 | 1 | 2.236068 |
+| 3 | 3 | 55.96345 | 52.26969 | 3.693756 | 13.643835 | 3.693756 | 46.16339 | 37.06791 | 47.88919 | 55.71479 | 49.57767 | 41.10692 | 65.54921 | 33.18069 | 1 | 1 | 5.000000 |
+| 4 | 3 | 30.84508 | 37.53789 | -6.692808 | 44.793686 | 6.692808 | 49.47221 | 43.60763 | 39.77998 | 39.09646 | 45.97753 | 62.35091 | 72.40195 | 41.65279 | 1 | 1 | 5.099019 |
+| 5 | 3 | 34.29852 | 38.66652 | -4.368001 | 19.079436 | 4.368001 | 53.41327 | 42.87292 | 44.17551 | 42.92340 | 39.52471 | 60.93626 | 70.42711 | 40.54993 | 1 | 1 | 3.000000 |
+| 6 | 2 | 30.15781 | 36.53860 | -6.380787 | 40.714441 | 6.380787 | 41.62583 | 42.93876 | 43.63028 | 38.55518 | 49.82985 | 55.82698 | 54.30327 | 44.12113 | 1 | 1 | 8.944272 |
 
 ``` r
 
@@ -271,12 +271,12 @@ knitr::kable(head(aug$grid_tasks))
 
 | id | d | temp | moisture | ph | slope | solar | dist_road | prod | elev | forest | grass |
 |---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| 1 | 65.30697 | 42.93632 | 66.18163 | 53.24734 | 48.42772 | 34.63536 | 43.43660 | 49.23057 | 12.29096 | 1 | 1 |
-| 2 | 62.96825 | 47.40429 | 55.60081 | 51.50022 | 45.05933 | 39.41212 | 36.94975 | 53.64332 | 19.57157 | 1 | 1 |
-| 3 | 61.13101 | 47.94994 | 50.36401 | 50.12981 | 46.43496 | 46.35029 | 32.63284 | 58.30790 | 27.51362 | 1 | 1 |
-| 4 | 59.84146 | 51.40902 | 38.91773 | 50.01556 | 46.06878 | 50.02884 | 35.30530 | 58.72353 | 32.40647 | 1 | 1 |
-| 5 | 58.79626 | 53.17910 | 44.21832 | 43.83926 | 47.86035 | 56.95484 | 30.75681 | 53.42314 | 20.88684 | 1 | 1 |
-| 6 | 54.45181 | 55.71695 | 43.72394 | 47.65885 | 50.01531 | 51.39663 | 35.48978 | 55.83273 | 26.59958 | 1 | 1 |
+| 1 | 29.15476 | 42.93632 | 66.18163 | 53.24734 | 48.42772 | 34.63536 | 43.43660 | 49.23057 | 12.29096 | 1 | 1 |
+| 2 | 24.20744 | 47.40429 | 55.60081 | 51.50022 | 45.05933 | 39.41212 | 36.94975 | 53.64332 | 19.57157 | 1 | 1 |
+| 3 | 19.84943 | 47.94994 | 50.36401 | 50.12981 | 46.43496 | 46.35029 | 32.63284 | 58.30790 | 27.51362 | 1 | 1 |
+| 4 | 16.55295 | 51.40902 | 38.91773 | 50.01556 | 46.06878 | 50.02884 | 35.30530 | 58.72353 | 32.40647 | 1 | 1 |
+| 5 | 15.00000 | 53.17910 | 44.21832 | 43.83926 | 47.86035 | 56.95484 | 30.75681 | 53.42314 | 20.88684 | 1 | 1 |
+| 6 | 16.15549 | 55.71695 | 43.72394 | 47.65885 | 50.01531 | 51.39663 | 35.48978 | 55.83273 | 26.59958 | 1 | 1 |
 
 ### 3. Calculate quantiles of the balancing variables
 
@@ -342,24 +342,25 @@ target_margins$elev
 levs <- seq_along(target_margins[["elev"]])
 freq_samples <- table(factor(as.integer(balance_df[["elev"]]), levels = levs))
 as.numeric(freq_samples) / sum(freq_samples)
-#> [1] 0.18 0.32 0.36 0.14 0.00
+#> [1] 0.28 0.28 0.31 0.13 0.00
 ```
 
 ### 5. Apply Raking
 
 In this example, one elevation quintile of the prediction locations is
 not covered by the training points. However, this does not return an
-error. Instead, if a quintile is not covered by the training points, the
-weights shrink towards 0 and the algorithm “converges” A better approach
-would likely be to stop the algorithm and return an error message
-hinting towards avoiding this extreme extrapolation. See section 8 and
-Figure 2.
+error. Instead, if a quintile is not covered by the training points,
+raking keeps trying to assign importance to a region it cannot
+represent, and drives the weight of most training points toward zero. A
+better approach would likely be to stop the algorithm and return an
+error message hinting towards avoiding this extreme extrapolation. See
+section 8 and Figure 2.
 
 ``` r
 
 margin_names <- names(target_margins)
 max_iter <- 500
-tol = 1e-6
+tol <- 1e-6
 n <- nrow(balance_df)
 w <- rep(1, n)
 
@@ -426,10 +427,10 @@ ggplot() +
 ``` r
 
 # Weights are normalized by their mean and shrinked towards 1 to mitigate extreme values
-shrink_lambda <- 0
+shrink_lambda <- twcv_specs$twcv_extended$shrink_lambda
 tw$weights_raw <- PDAV:::normalize_weights(tw$weights)
 tw$weights <- PDAV:::shrink_weights(tw$weights_raw, lambda = shrink_lambda)
-tw$shrink_lambda <- twcv_specs$twcv_extended$shrink_lambda
+tw$shrink_lambda <- shrink_lambda
 tw$balancing_vars <- twcv_specs$twcv_extended$balancing_vars
 
 ggplot() +
@@ -458,29 +459,32 @@ result <- list(
 # Unweighted error:
 unweighted_losses
 #> $unweighted
-#>        bias         mse        rmse         mae 
-#> -0.01230107 37.65568875  6.13642312  4.63613016
+#>       bias        mse       rmse        mae 
+#> -0.1167823 48.9339478  6.9952804  5.4573869
 
 # Weighted error:
 result$estimators
-#>       bias        mse       rmse        mae 
-#>   1.049788 107.893390  10.387174   8.222190
+#>      bias       mse      rmse       mae 
+#> -2.940997 37.332076  6.109998  4.871784
 ```
 
 True error:
 
-    #> [1] 9.163015
+    #> [1] 7.387563
 
 ### 8. Check if the inputs were supported for raking
 
-Elevation quintile 5 of the prediction points not supported by the
-training points (if clustering was higher, e.g., radius = 30, then
-distance would also be not supported). Raking is infeasible in this
-case, and the prediction domain should be constrained e.g. to the Area
-of Applicability )(Meyer and Pebesma (2021)). At least, the algorithm
-should stop with an error message. The normalization of weights by their
-means creates the illusion that the weights were meaningful and hides
-this problem.
+The highest elevation quintile of the prediction area is not represented
+by any training points (and with stronger clustering, e.g. radius = 30,
+the distance variable would be unsupported as well). Raking cannot
+succeed, because it is asked to assign weight to a region the training
+data does not cover. A possible solution might be to constrain the
+prediction domain, e.g., to the Area of Applicability (Meyer and Pebesma
+(2021)). Ideally, the algorithm would detect this case and stop. It is
+worth noting that normalizing the weights by their mean can make the
+output look reasonable on average, even though most individual weights
+have collapsed towards zero — so this issue is easy to overlook without
+diagnostics such as the effective sample size.
 
 ``` r
 
@@ -526,6 +530,34 @@ support_check |>
 #>  9 slope                   1                      0
 #> 10 solar                   1                      0
 #> 11 temp                    1                      0
+
+# Effective sample size after weighting
+ess <- sum(tw$weights)^2 / sum(tw$weights^2)
+ess_ratio <- ess / length(tw$weights) # warn if << 1, e.g. < 0.3
+ess_ratio
+#> [1] 0.2055392
+
+# How much target mass lands in bins the training data barely covers
+support_check |>
+    group_by(var) |>
+    summarise(
+        target_mass_in_thin_bins = sum(target_prop[sample_n <= 2]), # bins with ≤2 points
+        max_ratio = max(target_prop / pmax(sample_n / sum(sample_n), 1e-9))
+    )
+#> # A tibble: 11 × 3
+#>    var       target_mass_in_thin_bins    max_ratio
+#>    <chr>                        <dbl>        <dbl>
+#>  1 d                            0.199        19.9 
+#>  2 dist_road                    0             1.05
+#>  3 elev                         0.200 200195312.  
+#>  4 forest                       0             1.42
+#>  5 grass                        0             2.77
+#>  6 moisture                     0             1.54
+#>  7 ph                           0             2.86
+#>  8 prod                         0             1.43
+#>  9 slope                        0             1.33
+#> 10 solar                        0             1.33
+#> 11 temp                         0             6.67
 ```
 
 Brenning, Alexander, and Thomas Suesse. 2026. *Aligning Validation with

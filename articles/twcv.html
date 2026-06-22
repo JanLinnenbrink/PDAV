@@ -123,7 +123,7 @@ values.</li>
 <span><span class="co">#&gt; Loading required package: ggplot2</span></span>
 <span><span class="co">#&gt; Loading required package: lattice</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://rspatial.org/" class="external-link">terra</a></span><span class="op">)</span></span>
-<span><span class="co">#&gt; terra 1.9.27</span></span>
+<span><span class="co">#&gt; terra 1.9.34</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-spatial.github.io/sf/" class="external-link">sf</a></span><span class="op">)</span></span>
 <span><span class="co">#&gt; Linking to GEOS 3.12.1, GDAL 3.8.4, PROJ 9.4.0; sf_use_s2() is TRUE</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">simsam</span><span class="op">)</span></span>
@@ -200,7 +200,7 @@ values.</li>
 <span>    <span class="fu"><a href="https://rspatial.github.io/terra/reference/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fit</span>, data <span class="op">=</span> <span class="va">newdata</span><span class="op">)</span><span class="op">$</span><span class="va">predictions</span></span>
 <span><span class="op">}</span></span>
 <span></span>
-<span><span class="va">model</span> <span class="op">=</span> <span class="st">"rf"</span></span>
+<span><span class="va">model</span> <span class="op">&lt;-</span> <span class="st">"rf"</span></span>
 <span></span>
 <span><span class="va">folds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, length.out <span class="op">=</span> <span class="va">n_sample</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
@@ -256,57 +256,57 @@ resulting pointwise CV error:</p>
 <tbody>
 <tr class="odd">
 <td align="right">1</td>
-<td align="right">5</td>
-<td align="right">44.28207</td>
-<td align="right">43.82087</td>
-<td align="right">0.4611929</td>
-<td align="right">0.2126989</td>
-<td align="right">0.4611929</td>
+<td align="right">4</td>
+<td align="right">43.86851</td>
+<td align="right">35.89420</td>
+<td align="right">7.974311</td>
+<td align="right">63.589631</td>
+<td align="right">7.974311</td>
 </tr>
 <tr class="even">
 <td align="right">2</td>
-<td align="right">2</td>
-<td align="right">44.17117</td>
-<td align="right">49.99404</td>
-<td align="right">-5.8228636</td>
-<td align="right">33.9057405</td>
-<td align="right">5.8228636</td>
+<td align="right">4</td>
+<td align="right">42.79048</td>
+<td align="right">40.06923</td>
+<td align="right">2.721253</td>
+<td align="right">7.405216</td>
+<td align="right">2.721253</td>
 </tr>
 <tr class="odd">
 <td align="right">3</td>
 <td align="right">3</td>
-<td align="right">53.25563</td>
-<td align="right">53.99884</td>
-<td align="right">-0.7432053</td>
-<td align="right">0.5523542</td>
-<td align="right">0.7432053</td>
+<td align="right">55.96345</td>
+<td align="right">52.26969</td>
+<td align="right">3.693756</td>
+<td align="right">13.643835</td>
+<td align="right">3.693756</td>
 </tr>
 <tr class="even">
 <td align="right">4</td>
-<td align="right">2</td>
-<td align="right">42.51499</td>
-<td align="right">46.98822</td>
-<td align="right">-4.4732310</td>
-<td align="right">20.0097955</td>
-<td align="right">4.4732310</td>
+<td align="right">3</td>
+<td align="right">30.84508</td>
+<td align="right">37.53789</td>
+<td align="right">-6.692808</td>
+<td align="right">44.793686</td>
+<td align="right">6.692808</td>
 </tr>
 <tr class="odd">
 <td align="right">5</td>
-<td align="right">2</td>
-<td align="right">53.21769</td>
-<td align="right">49.30701</td>
-<td align="right">3.9106775</td>
-<td align="right">15.2933984</td>
-<td align="right">3.9106775</td>
+<td align="right">3</td>
+<td align="right">34.29852</td>
+<td align="right">38.66652</td>
+<td align="right">-4.368001</td>
+<td align="right">19.079436</td>
+<td align="right">4.368001</td>
 </tr>
 <tr class="even">
 <td align="right">6</td>
 <td align="right">2</td>
-<td align="right">53.90230</td>
-<td align="right">46.42331</td>
-<td align="right">7.4789830</td>
-<td align="right">55.9351869</td>
-<td align="right">7.4789830</td>
+<td align="right">30.15781</td>
+<td align="right">36.53860</td>
+<td align="right">-6.380787</td>
+<td align="right">40.714441</td>
+<td align="right">6.380787</td>
 </tr>
 </tbody>
 </table>
@@ -383,9 +383,9 @@ resulting pointwise CV error:</p>
 <col width="3%">
 <col width="5%">
 <col width="5%">
-<col width="7%">
-<col width="7%">
 <col width="6%">
+<col width="6%">
+<col width="5%">
 <col width="5%">
 <col width="5%">
 <col width="5%">
@@ -396,7 +396,7 @@ resulting pointwise CV error:</p>
 <col width="5%">
 <col width="4%">
 <col width="3%">
-<col width="6%">
+<col width="5%">
 </colgroup>
 <thead><tr class="header">
 <th align="right">id</th>
@@ -421,123 +421,123 @@ resulting pointwise CV error:</p>
 <tbody>
 <tr class="odd">
 <td align="right">1</td>
-<td align="right">5</td>
-<td align="right">44.28207</td>
-<td align="right">43.82087</td>
-<td align="right">0.4611929</td>
-<td align="right">0.2126989</td>
-<td align="right">0.4611929</td>
-<td align="right">46.76168</td>
-<td align="right">33.78805</td>
-<td align="right">44.62300</td>
-<td align="right">46.50822</td>
-<td align="right">50.10956</td>
-<td align="right">61.96061</td>
-<td align="right">60.75672</td>
-<td align="right">45.15465</td>
+<td align="right">4</td>
+<td align="right">43.86851</td>
+<td align="right">35.89420</td>
+<td align="right">7.974311</td>
+<td align="right">63.589631</td>
+<td align="right">7.974311</td>
+<td align="right">58.65872</td>
+<td align="right">49.55558</td>
+<td align="right">31.40340</td>
+<td align="right">41.89452</td>
+<td align="right">46.79640</td>
+<td align="right">54.96806</td>
+<td align="right">68.77220</td>
+<td align="right">16.85107</td>
 <td align="right">1</td>
 <td align="right">1</td>
-<td align="right">14.422205</td>
+<td align="right">5.000000</td>
 </tr>
 <tr class="even">
 <td align="right">2</td>
-<td align="right">2</td>
-<td align="right">44.17117</td>
-<td align="right">49.99404</td>
-<td align="right">-5.8228636</td>
-<td align="right">33.9057405</td>
-<td align="right">5.8228636</td>
-<td align="right">51.25996</td>
-<td align="right">54.53092</td>
-<td align="right">50.67009</td>
-<td align="right">47.29233</td>
-<td align="right">58.28259</td>
-<td align="right">52.55031</td>
-<td align="right">65.24689</td>
-<td align="right">46.87057</td>
+<td align="right">4</td>
+<td align="right">42.79048</td>
+<td align="right">40.06923</td>
+<td align="right">2.721253</td>
+<td align="right">7.405216</td>
+<td align="right">2.721253</td>
+<td align="right">48.22472</td>
+<td align="right">33.45135</td>
+<td align="right">47.35910</td>
+<td align="right">45.57008</td>
+<td align="right">37.40257</td>
+<td align="right">61.39853</td>
+<td align="right">67.77885</td>
+<td align="right">47.02244</td>
 <td align="right">1</td>
 <td align="right">1</td>
-<td align="right">19.235384</td>
+<td align="right">2.236068</td>
 </tr>
 <tr class="odd">
 <td align="right">3</td>
 <td align="right">3</td>
-<td align="right">53.25563</td>
-<td align="right">53.99884</td>
-<td align="right">-0.7432053</td>
-<td align="right">0.5523542</td>
-<td align="right">0.7432053</td>
-<td align="right">38.82998</td>
-<td align="right">46.77043</td>
-<td align="right">41.82119</td>
-<td align="right">56.02720</td>
-<td align="right">35.20767</td>
-<td align="right">54.98906</td>
-<td align="right">59.52938</td>
-<td align="right">47.50634</td>
+<td align="right">55.96345</td>
+<td align="right">52.26969</td>
+<td align="right">3.693756</td>
+<td align="right">13.643835</td>
+<td align="right">3.693756</td>
+<td align="right">46.16339</td>
+<td align="right">37.06791</td>
+<td align="right">47.88919</td>
+<td align="right">55.71479</td>
+<td align="right">49.57767</td>
+<td align="right">41.10692</td>
+<td align="right">65.54921</td>
+<td align="right">33.18069</td>
 <td align="right">1</td>
 <td align="right">1</td>
-<td align="right">4.123106</td>
+<td align="right">5.000000</td>
 </tr>
 <tr class="even">
 <td align="right">4</td>
-<td align="right">2</td>
-<td align="right">42.51499</td>
-<td align="right">46.98822</td>
-<td align="right">-4.4732310</td>
-<td align="right">20.0097955</td>
-<td align="right">4.4732310</td>
-<td align="right">49.48175</td>
-<td align="right">34.19502</td>
-<td align="right">46.44462</td>
-<td align="right">46.57739</td>
-<td align="right">49.54025</td>
-<td align="right">44.47137</td>
-<td align="right">57.23566</td>
-<td align="right">38.47061</td>
+<td align="right">3</td>
+<td align="right">30.84508</td>
+<td align="right">37.53789</td>
+<td align="right">-6.692808</td>
+<td align="right">44.793686</td>
+<td align="right">6.692808</td>
+<td align="right">49.47221</td>
+<td align="right">43.60763</td>
+<td align="right">39.77998</td>
+<td align="right">39.09646</td>
+<td align="right">45.97753</td>
+<td align="right">62.35091</td>
+<td align="right">72.40195</td>
+<td align="right">41.65279</td>
 <td align="right">1</td>
 <td align="right">1</td>
-<td align="right">16.031219</td>
+<td align="right">5.099019</td>
 </tr>
 <tr class="odd">
 <td align="right">5</td>
-<td align="right">2</td>
-<td align="right">53.21769</td>
-<td align="right">49.30701</td>
-<td align="right">3.9106775</td>
-<td align="right">15.2933984</td>
-<td align="right">3.9106775</td>
-<td align="right">40.43763</td>
-<td align="right">31.31003</td>
-<td align="right">47.23048</td>
-<td align="right">51.68053</td>
-<td align="right">51.58667</td>
-<td align="right">61.96604</td>
-<td align="right">55.45958</td>
-<td align="right">47.84091</td>
+<td align="right">3</td>
+<td align="right">34.29852</td>
+<td align="right">38.66652</td>
+<td align="right">-4.368001</td>
+<td align="right">19.079436</td>
+<td align="right">4.368001</td>
+<td align="right">53.41327</td>
+<td align="right">42.87292</td>
+<td align="right">44.17551</td>
+<td align="right">42.92340</td>
+<td align="right">39.52471</td>
+<td align="right">60.93626</td>
+<td align="right">70.42711</td>
+<td align="right">40.54993</td>
 <td align="right">1</td>
 <td align="right">1</td>
-<td align="right">14.422205</td>
+<td align="right">3.000000</td>
 </tr>
 <tr class="even">
 <td align="right">6</td>
 <td align="right">2</td>
-<td align="right">53.90230</td>
-<td align="right">46.42331</td>
-<td align="right">7.4789830</td>
-<td align="right">55.9351869</td>
-<td align="right">7.4789830</td>
-<td align="right">46.13120</td>
-<td align="right">31.85287</td>
-<td align="right">40.65304</td>
-<td align="right">49.93170</td>
-<td align="right">43.47339</td>
-<td align="right">67.90408</td>
-<td align="right">49.48730</td>
-<td align="right">32.93662</td>
+<td align="right">30.15781</td>
+<td align="right">36.53860</td>
+<td align="right">-6.380787</td>
+<td align="right">40.714441</td>
+<td align="right">6.380787</td>
+<td align="right">41.62583</td>
+<td align="right">42.93876</td>
+<td align="right">43.63028</td>
+<td align="right">38.55518</td>
+<td align="right">49.82985</td>
+<td align="right">55.82698</td>
+<td align="right">54.30327</td>
+<td align="right">44.12113</td>
 <td align="right">1</td>
-<td align="right">0</td>
-<td align="right">8.246211</td>
+<td align="right">1</td>
+<td align="right">8.944272</td>
 </tr>
 </tbody>
 </table>
@@ -575,7 +575,7 @@ resulting pointwise CV error:</p>
 <tbody>
 <tr class="odd">
 <td align="right">1</td>
-<td align="right">65.30697</td>
+<td align="right">29.15476</td>
 <td align="right">42.93632</td>
 <td align="right">66.18163</td>
 <td align="right">53.24734</td>
@@ -589,7 +589,7 @@ resulting pointwise CV error:</p>
 </tr>
 <tr class="even">
 <td align="right">2</td>
-<td align="right">62.96825</td>
+<td align="right">24.20744</td>
 <td align="right">47.40429</td>
 <td align="right">55.60081</td>
 <td align="right">51.50022</td>
@@ -603,7 +603,7 @@ resulting pointwise CV error:</p>
 </tr>
 <tr class="odd">
 <td align="right">3</td>
-<td align="right">61.13101</td>
+<td align="right">19.84943</td>
 <td align="right">47.94994</td>
 <td align="right">50.36401</td>
 <td align="right">50.12981</td>
@@ -617,7 +617,7 @@ resulting pointwise CV error:</p>
 </tr>
 <tr class="even">
 <td align="right">4</td>
-<td align="right">59.84146</td>
+<td align="right">16.55295</td>
 <td align="right">51.40902</td>
 <td align="right">38.91773</td>
 <td align="right">50.01556</td>
@@ -631,7 +631,7 @@ resulting pointwise CV error:</p>
 </tr>
 <tr class="odd">
 <td align="right">5</td>
-<td align="right">58.79626</td>
+<td align="right">15.00000</td>
 <td align="right">53.17910</td>
 <td align="right">44.21832</td>
 <td align="right">43.83926</td>
@@ -645,7 +645,7 @@ resulting pointwise CV error:</p>
 </tr>
 <tr class="even">
 <td align="right">6</td>
-<td align="right">54.45181</td>
+<td align="right">16.15549</td>
 <td align="right">55.71695</td>
 <td align="right">43.72394</td>
 <td align="right">47.65885</td>
@@ -721,22 +721,23 @@ the prediction points (B).
 <span><span class="va">levs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_along</a></span><span class="op">(</span><span class="va">target_margins</span><span class="op">[[</span><span class="st">"elev"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="va">freq_samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="va">balance_df</span><span class="op">[[</span><span class="st">"elev"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span>, levels <span class="op">=</span> <span class="va">levs</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">freq_samples</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">freq_samples</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.18 0.32 0.36 0.14 0.00</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.28 0.28 0.31 0.13 0.00</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="apply-raking">5. Apply Raking<a class="anchor" aria-label="anchor" href="#apply-raking"></a>
 </h3>
 <p>In this example, one elevation quintile of the prediction locations
 is not covered by the training points. However, this does not return an
-error. Instead, if a quintile is not covered by the training points, the
-weights shrink towards 0 and the algorithm “converges” A better approach
-would likely be to stop the algorithm and return an error message
-hinting towards avoiding this extreme extrapolation. See section 8 and
-Figure 2.</p>
+error. Instead, if a quintile is not covered by the training points,
+raking keeps trying to assign importance to a region it cannot
+represent, and drives the weight of most training points toward zero. A
+better approach would likely be to stop the algorithm and return an
+error message hinting towards avoiding this extreme extrapolation. See
+section 8 and Figure 2.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">margin_names</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">target_margins</span><span class="op">)</span></span>
 <span><span class="va">max_iter</span> <span class="op">&lt;-</span> <span class="fl">500</span></span>
-<span><span class="va">tol</span> <span class="op">=</span> <span class="fl">1e-6</span></span>
+<span><span class="va">tol</span> <span class="op">&lt;-</span> <span class="fl">1e-6</span></span>
 <span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/dimensions.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">balance_df</span><span class="op">)</span></span>
 <span><span class="va">w</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span>, <span class="va">n</span><span class="op">)</span></span>
 <span></span>
@@ -801,10 +802,10 @@ Figure 2.</p>
 </h3>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Weights are normalized by their mean and shrinked towards 1 to mitigate extreme values</span></span>
-<span><span class="va">shrink_lambda</span> <span class="op">&lt;-</span> <span class="fl">0</span></span>
+<span><span class="va">shrink_lambda</span> <span class="op">&lt;-</span> <span class="va">twcv_specs</span><span class="op">$</span><span class="va">twcv_extended</span><span class="op">$</span><span class="va">shrink_lambda</span></span>
 <span><span class="va">tw</span><span class="op">$</span><span class="va">weights_raw</span> <span class="op">&lt;-</span> <span class="fu">PDAV</span><span class="fu">:::</span><span class="fu">normalize_weights</span><span class="op">(</span><span class="va">tw</span><span class="op">$</span><span class="va">weights</span><span class="op">)</span></span>
 <span><span class="va">tw</span><span class="op">$</span><span class="va">weights</span> <span class="op">&lt;-</span> <span class="fu">PDAV</span><span class="fu">:::</span><span class="fu">shrink_weights</span><span class="op">(</span><span class="va">tw</span><span class="op">$</span><span class="va">weights_raw</span>, lambda <span class="op">=</span> <span class="va">shrink_lambda</span><span class="op">)</span></span>
-<span><span class="va">tw</span><span class="op">$</span><span class="va">shrink_lambda</span> <span class="op">&lt;-</span> <span class="va">twcv_specs</span><span class="op">$</span><span class="va">twcv_extended</span><span class="op">$</span><span class="va">shrink_lambda</span></span>
+<span><span class="va">tw</span><span class="op">$</span><span class="va">shrink_lambda</span> <span class="op">&lt;-</span> <span class="va">shrink_lambda</span></span>
 <span><span class="va">tw</span><span class="op">$</span><span class="va">balancing_vars</span> <span class="op">&lt;-</span> <span class="va">twcv_specs</span><span class="op">$</span><span class="va">twcv_extended</span><span class="op">$</span><span class="va">balancing_vars</span></span>
 <span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
@@ -831,27 +832,31 @@ Figure 2.</p>
 <span><span class="co"># Unweighted error:</span></span>
 <span><span class="va">unweighted_losses</span></span>
 <span><span class="co">#&gt; $unweighted</span></span>
-<span><span class="co">#&gt;        bias         mse        rmse         mae </span></span>
-<span><span class="co">#&gt; -0.01230107 37.65568875  6.13642312  4.63613016</span></span>
+<span><span class="co">#&gt;       bias        mse       rmse        mae </span></span>
+<span><span class="co">#&gt; -0.1167823 48.9339478  6.9952804  5.4573869</span></span>
 <span></span>
 <span><span class="co"># Weighted error:</span></span>
 <span><span class="va">result</span><span class="op">$</span><span class="va">estimators</span></span>
-<span><span class="co">#&gt;       bias        mse       rmse        mae </span></span>
-<span><span class="co">#&gt;   1.049788 107.893390  10.387174   8.222190</span></span></code></pre></div>
+<span><span class="co">#&gt;      bias       mse      rmse       mae </span></span>
+<span><span class="co">#&gt; -2.940997 37.332076  6.109998  4.871784</span></span></code></pre></div>
 <p>True error:</p>
-<pre><code><span><span class="co">#&gt; [1] 9.163015</span></span></code></pre>
+<pre><code><span><span class="co">#&gt; [1] 7.387563</span></span></code></pre>
 </div>
 <div class="section level3">
 <h3 id="sec-problems">8. Check if the inputs were supported for raking<a class="anchor" aria-label="anchor" href="#sec-problems"></a>
 </h3>
-<p>Elevation quintile 5 of the prediction points not supported by the
-training points (if clustering was higher, e.g., radius = 30, then
-distance would also be not supported). Raking is infeasible in this
-case, and the prediction domain should be constrained e.g. to the Area
-of Applicability )(<span class="citation">Meyer and Pebesma
-(2021)</span>). At least, the algorithm should stop with an error
-message. The normalization of weights by their means creates the
-illusion that the weights were meaningful and hides this problem.</p>
+<p>The highest elevation quintile of the prediction area is not
+represented by any training points (and with stronger clustering,
+e.g. radius = 30, the distance variable would be unsupported as well).
+Raking cannot succeed, because it is asked to assign weight to a region
+the training data does not cover. A possible solution might be to
+constrain the prediction domain, e.g., to the Area of Applicability
+(<span class="citation">Meyer and Pebesma (2021)</span>). Ideally, the
+algorithm would detect this case and stop. It is worth noting that
+normalizing the weights by their mean can make the output look
+reasonable on average, even though most individual weights have
+collapsed towards zero — so this issue is easy to overlook without
+diagnostics such as the effective sample size.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">check_balance_support</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">balance_df</span>, <span class="va">target_margins</span>, <span class="va">eps</span> <span class="op">=</span> <span class="fl">1e-12</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="va">out</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">target_margins</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">m</span><span class="op">)</span> <span class="op">{</span></span>
@@ -894,7 +899,35 @@ illusion that the weights were meaningful and hides this problem.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> prod                    1                      0</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> slope                   1                      0</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> solar                   1                      0</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span> temp                    1                      0</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span> temp                    1                      0</span></span>
+<span></span>
+<span><span class="co"># Effective sample size after weighting</span></span>
+<span><span class="va">ess</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">tw</span><span class="op">$</span><span class="va">weights</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">tw</span><span class="op">$</span><span class="va">weights</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span></span>
+<span><span class="va">ess_ratio</span> <span class="op">&lt;-</span> <span class="va">ess</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">tw</span><span class="op">$</span><span class="va">weights</span><span class="op">)</span> <span class="co"># warn if &lt;&lt; 1, e.g. &lt; 0.3</span></span>
+<span><span class="va">ess_ratio</span></span>
+<span><span class="co">#&gt; [1] 0.2055392</span></span>
+<span></span>
+<span><span class="co"># How much target mass lands in bins the training data barely covers</span></span>
+<span><span class="va">support_check</span> <span class="op">|&gt;</span></span>
+<span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">var</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarise</a></span><span class="op">(</span></span>
+<span>        target_mass_in_thin_bins <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">target_prop</span><span class="op">[</span><span class="va">sample_n</span> <span class="op">&lt;=</span> <span class="fl">2</span><span class="op">]</span><span class="op">)</span>, <span class="co"># bins with ≤2 points</span></span>
+<span>        max_ratio <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">target_prop</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">pmax</a></span><span class="op">(</span><span class="va">sample_n</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">sample_n</span><span class="op">)</span>, <span class="fl">1e-9</span><span class="op">)</span><span class="op">)</span></span>
+<span>    <span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 11 × 3</span></span></span>
+<span><span class="co">#&gt;    var       target_mass_in_thin_bins    max_ratio</span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> d                            0.199        19.9 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> dist_road                    0             1.05</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> elev                         0.200 200<span style="text-decoration: underline;">195</span>312.  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> forest                       0             1.42</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> grass                        0             2.77</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> moisture                     0             1.54</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> ph                           0             2.86</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> prod                         0             1.43</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> slope                        0             1.33</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> solar                        0             1.33</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span> temp                         0             6.67</span></span></code></pre></div>
 <div id="refs" class="references csl-bib-body hanging-indent">
 <div id="ref-Brenning2026" class="csl-entry">
 Brenning, Alexander, and Thomas Suesse. 2026. <em>Aligning

@@ -40,7 +40,7 @@ The more detailed workflow is:
 
 library(PDAV)
 library(terra)
-#> terra 1.9.27
+#> terra 1.9.34
 library(sf)
 #> Linking to GEOS 3.12.1, GDAL 3.8.4, PROJ 9.4.0; sf_use_s2() is TRUE
 library(simsam)
@@ -294,9 +294,9 @@ for (nk in clustgrid$nk) {
 ![](k-NNDM_files/figure-html/unnamed-chunk-17-1.png)
 
     #>   nk         W
-    #> 1  2 59.830638
-    #> 2 14  9.255344
-    #> 3 98 15.824061
+    #> 1  2 52.160269
+    #> 2 14  9.287419
+    #> 3 98 15.573773
 
 ### 6. Return the configuration yielding the lowest *W*
 

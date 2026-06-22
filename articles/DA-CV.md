@@ -63,7 +63,7 @@ library(caret)
 #> Loading required package: ggplot2
 #> Loading required package: lattice
 library(terra)
-#> terra 1.9.27
+#> terra 1.9.34
 library(sf)
 #> Linking to GEOS 3.12.1, GDAL 3.8.4, PROJ 9.4.0; sf_use_s2() is TRUE
 library(simsam)
@@ -135,12 +135,12 @@ results <- da_cv(
 ```
 
 For the biased sampling design shown here, the AV classifier achieves a
-performance of $`AUC = 0.78`$. This leads to
-$`D = \frac{0.78 - 0.5}{1 - 0.5} = 0.56`$. The threshold is then
-$`T(D) = 0.5* 0.56 = 0.3`$. Hence, all prediction cells with a
-similarity score lower than 0.3 are classified as dissimilar. The
+performance of $`AUC = 0.69`$. This leads to
+$`D = \frac{0.69 - 0.5}{1 - 0.5} = 0.38`$. The threshold is then
+$`T(D) = 0.5* 0.38 = 0.2`$. Hence, all prediction cells with a
+similarity score lower than 0.2 are classified as dissimilar. The
 relative fraction of prediction locations being similar from the
-sampling locations is 0.73, while the fraction being dissimilar is 0.27.
+sampling locations is 0.77, while the fraction being dissimilar is 0.23.
 
 ``` r
 
@@ -224,7 +224,7 @@ err_stats_weighted <- sqrt(
 prediction <- predict(r, rand_mod)
 ```
 
-The RMSE obtained by DA-CV is 5.718. The maps below depict the
+The RMSE obtained by DA-CV is 4.806. The maps below depict the
 difference between predicted and true response:
 
 ![Figure 4: The different CV fold assignments and their respective

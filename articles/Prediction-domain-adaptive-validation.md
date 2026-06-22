@@ -32,7 +32,7 @@ library(caret)
 #> Loading required package: ggplot2
 #> Loading required package: lattice
 library(terra)
-#> terra 1.9.27
+#> terra 1.9.34
 library(sf)
 #> Linking to GEOS 3.12.1, GDAL 3.8.4, PROJ 9.4.0; sf_use_s2() is TRUE
 library(simsam)
@@ -111,12 +111,12 @@ extrapolation correction is required, as shown in the following map.
 Consequently, all weight is assigned to random CV.
 
 For clustered samples, the AV classifier achieves a performance of AUC =
-0.82. This leads to D = (0.82 - 0.5) / (1 - 0.5) = 0.64. The threshold
-is then T(D) = 0.5 × 0.64 = 0.32. Hence, all prediction cells with a
-similarity score lower than 0.32 are classified as dissimilar. The
+0.77. This leads to D = (0.77 - 0.5) / (1 - 0.5) = 0.54. The threshold
+is then T(D) = 0.5 × 0.54 = 0.27. Hence, all prediction cells with a
+similarity score lower than 0.27 are classified as dissimilar. The
 relative fraction of prediction locations classified as similar to the
-sampling locations is 0.5, while the fraction classified as dissimilar
-is 0.5.
+sampling locations is 0.64, while the fraction classified as dissimilar
+is 0.36.
 
 ``` r
 
@@ -202,12 +202,13 @@ weighted_RMSE <- lapply(unique(samples$sampling), function(smpling) {
 #>   method     from
 #>   plot.knndm PDAV
 #>   plot.nndm  PDAV
+#> [1] "warning: k is higher than number of unique locations. k is set to 4"
 ```
 
 ![](Prediction-domain-adaptive-validation_files/figure-html/unnamed-chunk-8-1.png)
 
-The RMSE obtained by DA-CV are 6.127 for the random sampling design,
-4.222 for the biased sampling and 5.317 for the clustered design.
+The RMSE obtained by DA-CV are 6.292 for the random sampling design,
+5.09 for the biased sampling and 6.139 for the clustered design.
 
 ### kNNDM CV
 
