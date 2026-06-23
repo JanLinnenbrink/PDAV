@@ -149,7 +149,7 @@ twcv <- function(
 
 	if (is.null(twcv_specs)) {
 		twcv_specs <- make_twcv_specs(
-			predictor_vars = predictor_vars,
+			predictor_vars = env_vars,
 			include_distance = TRUE,
 			balance_by = 0.2,
 			shrink_lambda = 0.2,
