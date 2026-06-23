@@ -224,7 +224,7 @@ err_stats_weighted <- sqrt(
 prediction <- predict(r, rand_mod)
 ```
 
-The RMSE obtained by DA-CV is 4.806. The maps below depict the
+The RMSE obtained by DA-CV is 4.797. The maps below depict the
 difference between predicted and true response:
 
 ![Figure 4: The different CV fold assignments and their respective
