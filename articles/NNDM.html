@@ -70,8 +70,251 @@
 <div class="section level2">
 <h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
+<p>Nearest-neighbour distance matching (NNDM) leave-one-out (LOO)
+cross-validation was developed by <span class="citation">Milà et al.
+(2022)</span>. It matches the distribution of nearest-neighbour
+distances (NNDs) encountered during CV to the one encountered during
+prediction. This is achieved by excluding a variable number of the
+nearest training points of each left-out point from the training set.
+Because NNDM is LOO-based, it requires as many model fits as there are
+training points. It is therefore more flexible, but also considerably
+slower, than kNNDM. NNDM is best suited to small datasets, and kNNDM
+should be preferred for larger ones.</p>
+<p>Three NND distributions are involved:</p>
+<ul>
+<li>
+<em>Ĝ</em><sub>ij</sub>: the empirical distribution of distances
+from each prediction point to its nearest training point;</li>
+<li>
+<em>Ĝ</em><sub>j</sub>: the empirical distribution of distances from
+each training point to its nearest other training point, i.e. the NND
+distribution of plain LOO CV;</li>
+<li>
+<em>Ĝ</em><sub>j</sub><sup>*</sup>: the modified version of
+<em>Ĝ</em><sub>j</sub> produced by NNDM, which is matched to
+<em>Ĝ</em><sub>ij</sub>.</li>
+</ul>
+The more detailed workflow is:
+<ol>
+<li>
+Compute <em>Ĝ<sub>ij</sub></em> and <em>Ĝ<sub>j</sub></em>.
+</li>
+<li>
+Choose <em>φ</em>, the distance up to which matching is performed. By
+default (<code>phi = “max”</code>) the maximum observed distance is
+used, so matching covers the entire range. Alternatively, an estimate of
+the autocorrelation range can be supplied; beyond <em>φ</em> no training
+points are excluded and all data are used for training.
+</li>
+<li>
+Derive <em>Ĝ<sub>j</sub><sup><em></em></sup></em>, starting from plain LOO CV
+(<em>Ĝ<sub>j</sub><sup></sup></em> = <em>Ĝ<sub>j</sub></em>) and
+processing all training-point NNDs in increasing order. For the current
+distance <em>r</em>, which belongs to left-out point <em>j</em> and its
+nearest remaining training point <em>k</em>:
+<ol type="a">
+<li>
+check whether removing <em>k</em> from the training set of <em>j</em>
+would still leave <em>Ĝ<sub>j</sub><sup>*</sup></em>(<em>r</em>) ≥
+<em>Ĝ<sub>ij</sub></em>(<em>r</em>), i.e. whether CV distances are still
+shorter than prediction distances at <em>r</em>;
+</li>
+<li>
+check whether fold <em>j</em> would still retain at least
+<code>min_train</code> (default 50%) of the training data;
+</li>
+<li>
+if both conditions hold, exclude <em>k</em> from fold <em>j</em> and
+update <em>Ĝ<sub>j</sub><sup>*</sup></em>; otherwise leave fold
+<em>j</em> unchanged. Exclusions are never undone;
+</li>
+<li>
+move on to the next-smallest NND, and stop once it exceeds <em>φ</em>.
+</li>
+</ol>
+</li>
+<li>
+Return, for each left-out point, the indices of the test point, the
+retained training points and the excluded points
+(<code>indx_test</code>, <code>indx_train</code>,
+<code>indx_exclude</code>). These can be passed directly to caret’s
+<code>trainControl(index = , indexOut = )</code> or used to set up a
+custom resampling strategy in mlr3.
+</li>
+</ol>
 </div>
-  </main>
+<div class="section level2">
+<h2 id="setup">Setup<a class="anchor" aria-label="anchor" href="#setup"></a>
+</h2>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://janlinnenbrink.github.io/PDAV/">PDAV</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://rspatial.org/" class="external-link">terra</a></span><span class="op">)</span></span>
+<span><span class="co">#&gt; terra 1.9.46</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-spatial.github.io/sf/" class="external-link">sf</a></span><span class="op">)</span></span>
+<span><span class="co">#&gt; Linking to GEOS 3.12.1, GDAL 3.8.4, PROJ 9.4.0; sf_use_s2() is TRUE</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">simsam</span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://wilkelab.org/cowplot/" class="external-link">cowplot</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dieghernan.github.io/tidyterra/" class="external-link">tidyterra</a></span><span class="op">)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Attaching package: 'tidyterra'</span></span>
+<span><span class="co">#&gt; The following object is masked from 'package:stats':</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;     filter</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://eliocamp.github.io/ggnewscale/" class="external-link">ggnewscale</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Attaching package: 'dplyr'</span></span>
+<span><span class="co">#&gt; The following objects are masked from 'package:terra':</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;     intersect, union</span></span>
+<span><span class="co">#&gt; The following objects are masked from 'package:stats':</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;     filter, lag</span></span>
+<span><span class="co">#&gt; The following objects are masked from 'package:base':</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;     intersect, setdiff, setequal, union</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">100</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">k</span> <span class="op">&lt;-</span> <span class="fl">2</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="example-data">Example data<a class="anchor" aria-label="anchor" href="#example-data"></a>
+</h2>
+<div class="section level3">
+<h3 id="simulate-predictors-and-response">Simulate predictors and response<a class="anchor" aria-label="anchor" href="#simulate-predictors-and-response"></a>
+</h3>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu">PDAV</span><span class="fu">:::</span><span class="fu">generate_rast</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">samples</span> <span class="op">&lt;-</span> <span class="fu">PDAV</span><span class="fu">:::</span><span class="fu">generate_samples</span><span class="op">(</span><span class="va">r</span>, <span class="fl">100</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">sampling</span> <span class="op">==</span> <span class="st">"biased"</span><span class="op">)</span></span>
+<span><span class="va">samples</span><span class="op">$</span><span class="va">point_id</span> <span class="op">&lt;-</span> <span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/dimensions.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">samples</span><span class="op">)</span></span>
+<span><span class="va">samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">samples</span>, <span class="va">point_id</span><span class="op">)</span></span></code></pre></div>
+<p><img src="NNDM_files/figure-html/unnamed-chunk-3-1.png" class="r-plt" alt="" width="768"><img src="NNDM_files/figure-html/unnamed-chunk-3-2.png" class="r-plt" alt="" width="768"></p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="nndm-in-geographical-space">NNDM in geographical space<a class="anchor" aria-label="anchor" href="#nndm-in-geographical-space"></a>
+</h2>
+<div class="section level3">
+<h3 id="compute-gj-and-gij">1. Compute G<sub>j</sub> and G<sub>ij</sub><a class="anchor" aria-label="anchor" href="#compute-gj-and-gij"></a>
+</h3>
+<p>Firstly, the NNDM algorithm calculates the distribution of NND
+between samples (G<sub>j</sub>), as well as the distribution of NNDs
+between prediction points and samples (G<sub>ij</sub>). The calculation
+of NNDs is shown in the following figure: the nearest neighbour distance
+between samples is shown in the left panel, while the right panel shows
+nearest neighbour distances between prediction points and samples.</p>
+<p><img src="NNDM_files/figure-html/unnamed-chunk-4-1.png" class="r-plt" alt="" width="768"></p>
+<p>To characterize the distribution of these NNDs, their empirical
+cumulative density functions (ECDFs) are calculated:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Compute nearest neighbour distances between training and prediction points</span></span>
+<span><span class="va">Gij</span> <span class="op">&lt;-</span> <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/geos_measures.html" class="external-link">st_distance</a></span><span class="op">(</span><span class="va">prediction_points</span>, <span class="va">samples</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rspatial.github.io/terra/reference/units.html" class="external-link">units</a></span><span class="op">(</span><span class="va">Gij</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="cn">NULL</span></span>
+<span><span class="va">Gij</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">Gij</span>, <span class="fl">1</span>, <span class="va">min</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Compute distance matrix of training points</span></span>
+<span><span class="va">tdist</span> <span class="op">&lt;-</span> <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/geos_measures.html" class="external-link">st_distance</a></span><span class="op">(</span><span class="va">samples</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rspatial.github.io/terra/reference/units.html" class="external-link">units</a></span><span class="op">(</span><span class="va">tdist</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="cn">NULL</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/diag.html" class="external-link">diag</a></span><span class="op">(</span><span class="va">tdist</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="cn">NA</span></span>
+<span><span class="va">Gj</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">tdist</span>, <span class="fl">1</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">x</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p><img src="NNDM_files/figure-html/unnamed-chunk-6-1.png" class="r-plt" alt="" width="384"></p>
+</div>
+<div class="section level3">
+<h3 id="calculate-gj-for-each-left-out-point-starting-from-loo-cv">2. Calculate G<sub>j</sub><sup>*</sup> for each left-out point
+starting from LOO-CV<a class="anchor" aria-label="anchor" href="#calculate-gj-for-each-left-out-point-starting-from-loo-cv"></a>
+</h3>
+<p>Secondly, the algorithm starts with the smallest NND found among the
+training points, i.e. with the left-out point j whose nearest training
+point k is closest. It then tests whether excluding k from the training
+set of j would keep Ĝ<sub>j</sub><sup>*</sup>(r) ≥ Ĝ<sub>ij</sub>(r) at
+that distance r – that is, whether CV distances are still shorter than
+prediction distances there – and whether fold j would still retain at
+least min_train (50% by default) of the training data. If both hold, k
+is excluded from that fold only; it remains available for training in
+all other folds. The algorithm then moves on to the next-smallest NND,
+which usually belongs to a different left-out point. Otherwise the
+exclusion is skipped and the algorithm proceeds to the next-larger NND.
+This continues until the current distance exceeds φ.</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># initialize Gjstar</span></span>
+<span><span class="va">Gjstar</span> <span class="op">&lt;-</span> <span class="va">Gj</span></span>
+<span></span>
+<span><span class="va">min_train</span> <span class="op">&lt;-</span> <span class="fl">0.5</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/dimnames.html" class="external-link">dimnames</a></span><span class="op">(</span><span class="va">tdist</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="cn">NULL</span></span>
+<span><span class="va">tdist0</span> <span class="op">&lt;-</span> <span class="va">tdist</span> <span class="co"># keep an untouched copy for plotting</span></span>
+<span></span>
+<span><span class="co"># select the held-out point (jmin) with the closest distance to its nearest training point (kmin)</span></span>
+<span><span class="va">rmin</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">Gjstar</span><span class="op">)</span></span>
+<span><span class="va">jmin</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/summarize-generics.html" class="external-link">which.min</a></span><span class="op">(</span><span class="va">Gjstar</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span></span>
+<span><span class="va">kmin</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="va">tdist</span><span class="op">[</span><span class="va">jmin</span>, <span class="op">]</span> <span class="op">==</span> <span class="va">rmin</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># set phi to the maximum relevant distance</span></span>
+<span><span class="va">phi</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">Gij</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">tdist</span><span class="op">)</span><span class="op">)</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">+</span> <span class="fl">1e-9</span></span>
+<span></span>
+<span><span class="co"># Check if removing the point yields a higher Gjstar than the target Gij</span></span>
+<span><span class="co"># Target Gij (at the current distance):</span></span>
+<span><span class="va">current_Gij</span> <span class="op">&lt;-</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">Gij</span> <span class="op">&lt;=</span> <span class="va">rmin</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">Gij</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co"># Gjstar that would result from excluding the training point:</span></span>
+<span><span class="va">current_Gjstar</span> <span class="op">&lt;-</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">Gjstar</span> <span class="op">&lt;=</span> <span class="va">rmin</span><span class="op">)</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">Gjstar</span><span class="op">)</span> <span class="co"># -1: if kmin were excluded, the NND of point jmin would exceed rmin,so it would no longer be counted</span></span>
+<span><span class="va">Gjstar_greater_check</span> <span class="op">&lt;-</span> <span class="va">current_Gjstar</span> <span class="op">&gt;=</span> <span class="va">current_Gij</span></span>
+<span></span>
+<span><span class="co"># Check if the minimum number of training data is preserved:</span></span>
+<span><span class="va">min_train_check</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">tdist</span><span class="op">[</span><span class="va">jmin</span>, <span class="op">]</span><span class="op">)</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/dimensions.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">tdist</span><span class="op">)</span> <span class="op">&gt;</span> <span class="va">min_train</span></span>
+<span></span>
+<span><span class="co"># for plotting only: create a list that captures the output of the algorithm</span></span>
+<span><span class="va">snap</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>j <span class="op">=</span> <span class="cn">NA_integer_</span>, k <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span>, r <span class="op">=</span> <span class="cn">NA_real_</span>, Gjstar <span class="op">=</span> <span class="va">Gjstar</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># If both checks pass, proceed with the NNDM algorithm:</span></span>
+<span><span class="kw">while</span> <span class="op">(</span><span class="va">rmin</span> <span class="op">&lt;=</span> <span class="va">phi</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="kw">if</span> <span class="op">(</span></span>
+<span>        <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">Gjstar</span> <span class="op">&lt;=</span> <span class="va">rmin</span><span class="op">)</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">Gjstar</span><span class="op">)</span> <span class="op">&gt;=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">Gij</span> <span class="op">&lt;=</span> <span class="va">rmin</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">Gij</span><span class="op">)</span> <span class="op">&amp;&amp;</span></span>
+<span>            <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">tdist</span><span class="op">[</span><span class="va">jmin</span>, <span class="op">]</span><span class="op">)</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/dimensions.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">tdist</span><span class="op">)</span> <span class="op">&gt;</span> <span class="va">min_train</span></span>
+<span>    <span class="op">)</span> <span class="op">{</span></span>
+<span>        <span class="va">tdist</span><span class="op">[</span><span class="va">jmin</span>, <span class="va">kmin</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">NA</span></span>
+<span>        <span class="va">Gjstar</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">tdist</span>, <span class="fl">1</span>, <span class="va">min</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span>        <span class="va">snap</span><span class="op">[[</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">snap</span><span class="op">)</span> <span class="op">+</span> <span class="fl">1L</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>j <span class="op">=</span> <span class="va">jmin</span>, k <span class="op">=</span> <span class="va">kmin</span>, r <span class="op">=</span> <span class="va">rmin</span>, Gjstar <span class="op">=</span> <span class="va">Gjstar</span><span class="op">)</span></span>
+<span></span>
+<span>        <span class="va">rmin</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">Gjstar</span><span class="op">[</span><span class="va">Gjstar</span> <span class="op">&gt;=</span> <span class="va">rmin</span><span class="op">]</span><span class="op">)</span></span>
+<span>    <span class="op">}</span> <span class="kw">else</span> <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">Gjstar</span> <span class="op">&gt;</span> <span class="va">rmin</span><span class="op">)</span> <span class="op">==</span> <span class="fl">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span>        <span class="kw">break</span></span>
+<span>    <span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
+<span>        <span class="va">rmin</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">Gjstar</span><span class="op">[</span><span class="va">Gjstar</span> <span class="op">&gt;</span> <span class="va">rmin</span><span class="op">]</span><span class="op">)</span></span>
+<span>    <span class="op">}</span></span>
+<span>    <span class="va">jmin</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="va">Gjstar</span> <span class="op">==</span> <span class="va">rmin</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span></span>
+<span>    <span class="va">kmin</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="va">tdist</span><span class="op">[</span><span class="va">jmin</span>, <span class="op">]</span> <span class="op">==</span> <span class="va">rmin</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="va">indx_exclude</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/dimensions.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">tdist</span><span class="op">)</span><span class="op">)</span>, \<span class="op">(</span><span class="va">i</span><span class="op">)</span> <span class="fu"><a href="https://generics.r-lib.org/reference/setops.html" class="external-link">setdiff</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">tdist</span><span class="op">[</span><span class="va">i</span>, <span class="op">]</span><span class="op">)</span><span class="op">)</span>, <span class="va">i</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>The following Figure shows the sequential removal of points in the
+NNDM algorithm. It starts from plain LOO CV (left) to the completed
+matching (right). In each column the algorithm is processing the current
+nearest-neighbour distance <code>r</code> (dashed line in the bottom
+row): the left-out point is blue, the neighbour excluded from its fold
+orange, and faint grey lines show all pairs excluded earlier. The blue
+point differs between columns because distances are processed in
+increasing order across all folds, not fold by fold. <code>r</code>
+grows from left to right, so the orange link becomes longer. In the
+bottom row Ĝ<sub>j</sub><sup>*</sup> is adjusted from short NNDs
+resulting from plain LOO CV towards the target Ĝ<sub>ij</sub>. The right
+panel is the last iteration that produced an exclusion that was accepted
+(the maximum distance allowed by φ would have been 202, but the maximum
+exclusion distance was 87).</p>
+<p><img src="NNDM_files/figure-html/unnamed-chunk-8-1.png" class="r-plt" alt="" width="100%"></p>
+<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-Mila2022" class="csl-entry">
+Milà, Carles, Jorge Mateu, Edzer Pebesma, and Hanna Meyer. 2022.
+<span>“<span class="nocase">Nearest neighbour distance matching
+leave-one-out cross-validation for map validation</span>.”</span>
+<em>Methods in Ecology and Evolution</em> 13 (6): 1304–16. <a href="https://doi.org/10.1111/2041-210X.13851" class="external-link">https://doi.org/10.1111/2041-210X.13851</a>.
+</div>
+</div>
+</div>
+</div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside>
 </div>
 
 
@@ -81,7 +324,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>

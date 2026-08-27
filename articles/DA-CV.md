@@ -63,7 +63,7 @@ library(caret)
 #> Loading required package: ggplot2
 #> Loading required package: lattice
 library(terra)
-#> terra 1.9.34
+#> terra 1.9.46
 library(sf)
 #> Linking to GEOS 3.12.1, GDAL 3.8.4, PROJ 9.4.0; sf_use_s2() is TRUE
 library(simsam)
@@ -224,7 +224,7 @@ err_stats_weighted <- sqrt(
 prediction <- predict(r, rand_mod)
 ```
 
-The RMSE obtained by DA-CV is 4.797. The maps below depict the
+The RMSE obtained by DA-CV is 4.806. The maps below depict the
 difference between predicted and true response:
 
 ![Figure 4: The different CV fold assignments and their respective

@@ -40,7 +40,7 @@ The more detailed workflow is:
 
 library(PDAV)
 library(terra)
-#> terra 1.9.34
+#> terra 1.9.46
 library(sf)
 #> Linking to GEOS 3.12.1, GDAL 3.8.4, PROJ 9.4.0; sf_use_s2() is TRUE
 library(simsam)
@@ -327,7 +327,6 @@ Development* 17 (15): 5897–912.
 <https://doi.org/10.5194/gmd-17-5897-2024>.
 
 Milà, Carles, Jorge Mateu, Edzer Pebesma, and Hanna Meyer. 2022.
-“Nearest Neighbour Distance Matching \<Span
-Style="font-Variant:small-Caps;"\>Leave‐One‐Out
-Cross‐Validation\</Span\> for Map Validation.” *Methods in Ecology and
-Evolution* 13 (6): 1304–16. <https://doi.org/10.1111/2041-210X.13851>.
+“Nearest neighbour distance matching leave-one-out cross-validation for
+map validation.” *Methods in Ecology and Evolution* 13 (6): 1304–16.
+<https://doi.org/10.1111/2041-210X.13851>.
