@@ -26,6 +26,7 @@ The more detailed workflow is:
    5. Repeat this process until the maximum relative change in weights between successive iterations falls below a threshold.
 6. Normalize weights and shrink them towards 1 to mitigate extreme values.
 
+While I will stay close to the original implementation here, note that there is a more user-oriented version available in the R-package [PredictionMatching](https://github.com/JanLinnenbrink/PredictionMatching).
 
 ## Setup
 ```{r, include = FALSE}
@@ -370,7 +371,7 @@ ggplot() +
 ### 6. Normalize and shrink weights
 
 ```{r}
-#| fig-cap: "Figure 4: Histogram showing the distribution of weights after normalization and shrinking".
+#| fig-cap: "Figure 4: Histogram showing the distribution of weights after normalization and shrinking."
 
 # Weights are normalized by their mean and shrinked towards 1 to mitigate extreme values
 shrink_lambda <- twcv_specs$twcv_extended$shrink_lambda
@@ -402,7 +403,7 @@ result <- list(
 )
 class(result) <- "twcv"
 
-plot(result) |>
+PDAV:::plot.twcv(result) |>
 	plot_grid(plotlist = _, ncol = 1, align = "v")
 ```
 

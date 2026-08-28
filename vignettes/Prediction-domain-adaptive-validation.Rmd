@@ -10,7 +10,7 @@ vignette: >
 
 ## Introduction
 
-This vignette provides an overview over the different methods of prediction-domain adaptive evaluation. First, I will briefly summarize the (dis-)advantages of the different methods (based on my subjective impression), and then I will briefly show how they work using a simulated case study with three different sampling designs. For a more detailed description of the methods, please refer to the dedicated vignettes.
+This vignette provides an overview over the different methods of prediction-domain adaptive evaluation. First, I will briefly summarize the (dis-)advantages of the different methods (based on my subjective impression), then I will briefly show how they work using a simulated case study with three different sampling designs. For a more detailed description of the methods, please refer to the dedicated vignettes.
 
 ## Overview of the currently developed methods:
 
@@ -22,7 +22,8 @@ This vignette provides an overview over the different methods of prediction-doma
 | [TWCV](twcv.html) | - applies **weighting** to match the prediction situation, which is more flexible than resampling-based matching of the prediction situation | - **integration of geographic distances** implicit and weighting of the predictor vs geographical space is automatically done by the raking algorithm<br>- is **prone to extrapolation** (raking fails when it encounteres strong extrapolation)<br>- Depends on the resampling method (e.g., random resampling might not create geographical distances that are comparable to the prediction situation)<br>- Not clear if it is needed to weight the predictors based on their importance for the model | - resampling method |
 
 
-## Case Study
+
+## Setup
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
 	collapse = TRUE,
@@ -32,8 +33,6 @@ knitr::opts_chunk$set(
 
 ```{r setup}
 library(PDAV)
-library(dplyr)
-library(caret)
 library(terra)
 library(sf)
 library(simsam)
@@ -41,11 +40,14 @@ library(ggplot2)
 library(cowplot)
 library(tidyterra)
 library(ggnewscale)
+library(dplyr)
+library(caret)
 
 set.seed(100)
 ```
 
-### Simulate predictors and response
+## Case Study
+
 ```{r}
 r <- PDAV:::generate_rast()
 predictor_stack <- r[[setdiff(names(r), "outcome")]]
@@ -57,11 +59,15 @@ samples <- PDAV:::generate_samples(r, 100)
 ```{r}
 #| fig-width: 6
 #| fig-height: 4
+#| fig-cap: "Figure 1: The predictor stack"
 #| echo: false
 ggplot() +
-	geom_spatraster(data = r) +
-	coord_sf(expand = FALSE, datum = st_crs(r)) +
+	geom_spatraster(data = predictor_stack[[-cate_rasters]]) +
 	scale_fill_viridis_c() +
+	new_scale_fill() +
+	geom_spatraster(data = as.factor(predictor_stack[[cate_rasters]])) +
+	scale_fill_viridis_d() +
+	coord_sf(expand = FALSE, datum = st_crs(predictor_stack)) +
 	facet_wrap(~lyr) +
 	theme_bw() +
 	theme(panel.grid = element_blank())
@@ -70,7 +76,8 @@ ggplot() +
 
 ```{r}
 #| fig-width: 6
-#| fig-height: 4
+#| fig-height: 3
+#| fig-cap: "Figure 2: The simulated outcome with training locations."
 #| echo: false
 ggplot() +
 	geom_spatraster(data = r$outcome) +
@@ -84,9 +91,93 @@ ggplot() +
 	theme(panel.grid = element_blank())
 ```
 
+### NNDM CV
+
+Nearest-Neighbour Distance Matching (NNDM, @Mila2022) tries to match the prediction situation during cross-validation using the concept of nearest-neighbour distances (NNDs). It formalizes the prediction situation as the empirical cumulative density function (ECDF) of NNDs between prediction and training locations. It then calculates the ECDF of NNDs between training points, and tries to match this distribution to the one found during prediction by consecutively excluding points the training set in LOO-CV. If excluding a training point results in overly difficult prediction situation during CV (this happens when excluding a point results in a drop in the ECDF of NNDs during CV below the ECDF of NNDs during prediction) the algorithm does not exclude this point.
+
+```{r}
+#| fig-width: 8
+#| fig-height: 4
+#| fig-cap: "Figure 3: Results of NNDM."
+
+results_nndm <- lapply(unique(samples$sampling), function(smpling) {
+	samples_smpl <- samples |>
+		filter(sampling == smpling) |>
+		select(!sampling)
+
+	nndm(
+		tpoints = samples_smpl,
+		modeldomain = predictor_stack,
+		space = "geographical"
+	)
+})
+
+names(results_nndm) <- unique(samples$sampling)
+
+nndm_plots <- lapply(names(results_nndm), function(smpl) {
+	results_nndm_i <- results_nndm[[smpl]]
+	plot(results_nndm_i) +
+		ggtitle(smpl) +
+		theme(
+			legend.position = "bottom",
+			plot.title = element_text(face = "bold", hjust = 0.5)
+		)
+})
+
+nndm_legends <- get_legend(nndm_plots[[1]])[[1]][[1]]
+
+
+nndm_plots <- plot_grid(
+	plotlist = lapply(nndm_plots, function(x) x + theme(legend.position = "None")),
+	nrow = 1
+)
+plot_grid(nndm_plots, nndm_legends, ncol = 1, rel_heights = c(1, 0.1))
+```
+
+### kNNDM CV
+
+k-fold Nearest-Neighbour Distance Matching (kNNDM, @Linnenbrink2024) is the k-fold variant of NNDM. It is much faster, but also less flexible in matching the prediction situation. kNNDM splits the training points into a sequence of initial clusters, where the cluster size ranges between the number of folds *k* and the number of training points. Then, these initial clusters are merged until the number of desired folds *k* is reached (not that for the first configuration no merging is needed). The clusters are merged cyclically along the first principal component of the training points coordinates, ensuring that no neighbouring initial clusters are merged into the same folds (which would result in contiguous blocks). Thus, kNNDM generates a sequence of fold configurations that starts with a spatial block cross-validation (when the number of initial clusters matches the number of folds) over spatially structured but not completely blocked configurations towards randomly assigned folds (when the number of initial clusters matches the number of training points). 
+From this sequence of fold configurations, the one that yields the closest match to the prediction situation is selected. This is measured as the absolute value integral (the Wasserstein statistic) between the ECDF of NNDs between prediction and training points (the prediction situation) and the ECDF of NNDs between CV folds (the CV situation).
+
+```{r}
+#| fig-width: 8
+#| fig-height: 4
+#| fig-cap: "Figure 4: Results of kNNDM."
+
+results_knndm <- lapply(unique(samples$sampling), function(smpling) {
+	samples_smpl <- samples |>
+		filter(sampling == smpling) |>
+		select(!sampling)
+
+	knndm(
+		tpoints = samples_smpl,
+		modeldomain = predictor_stack,
+		space = "geographical"
+	)
+})
+
+names(results_knndm) <- unique(samples$sampling)
+
+knndm_plots <- lapply(names(results_knndm), function(smpl) {
+	results_knndm_i <- results_knndm[[smpl]]
+	plot(results_knndm_i) +
+		ggtitle(smpl) +
+		theme(
+			legend.position = "bottom",
+			plot.title = element_text(face = "bold", hjust = 0.5)
+		)
+})
+
+knndm_legends <- get_legend(knndm_plots[[1]])[[1]][[1]]
+
+knndm_plots <- plot_grid(plotlist = lapply(knndm_plots, function(x) x + theme(legend.position = "None")), nrow = 1)
+plot_grid(knndm_plots, knndm_legends, ncol = 1, rel_heights = c(1, 0.1))
+```
+
+
 ### DA-CV
 
-DA-CV (@Wang2025) uses adversial validation (AV) to predict the probability that a prediction location is similar to the training samples.
+Dissimilarity-Adaptive Cross-Validation (DA-CV, @Wang2025) uses adversial validation (AV) to predict the probability that a prediction location is similar to the training samples.
 Then it calculates a RMSE based on random CV, as well as spatial+ CV (@Wang2023) and weights both of them according to the relative area of similar cells (random CV) and dissimilar cells (spatial+ CV). 
 
 ```{r}
@@ -136,7 +227,7 @@ The relative fraction of prediction locations classified as similar to the sampl
 ``` {r}
 #| fig-width: 12
 #| fig-height: 5
-#| fig-cap: "Figure 3: Similarity maps resulting from the AV classifier."
+#| fig-cap: "Figure 5: Similarity maps resulting from the AV classifier."
 lapply(unique(samples$sampling), function(smpling) {
 	plot(results[[smpling]]) +
 		new_scale_fill() +
@@ -213,7 +304,9 @@ weighted_RMSE <- lapply(unique(samples$sampling), function(smpling) {
 ```{r}
 #| fig-width: 6
 #| fig-height: 8
+#| fig-cap: "Figure 6: Resampling and corresponding weights (currently excluded from tutorial)"
 #| echo: false
+#| eval: false
 samples_long <- lapply(unique(samples$sampling), function(smpling) {
 	samples_smpl <- samples |>
 		filter(sampling == smpling) |>
@@ -251,16 +344,106 @@ ggplot() +
 	labs(x = "", y = "")
 ```
 
-The RMSE obtained by DA-CV are `r round(weighted_RMSE[[1]][[1]], 3)` for the random sampling design, `r round(weighted_RMSE[[2]][[1]], 3)` for the biased sampling and `r round(weighted_RMSE[[3]][[1]], 3)` for the clustered design.
+The RMSE values obtained by DA-CV are `r round(weighted_RMSE[[1]][[1]], 3)` for the random sampling design, `r round(weighted_RMSE[[2]][[1]], 3)` for the biased sampling and `r round(weighted_RMSE[[3]][[1]], 3)` for the clustered design.
 
-
-### kNNDM CV
-
-```{r}
-
-```
-
-
-### NNDM CV
 
 ### TWCV
+
+Target-Weighted Cross Validation (TWCV, @Brenning2026) takes a different viewpoint than the cross-validation approaches above. Instead of adjusting the resampling design (or weighting two contrasting resampling designs), it assigns a weight to each training points based on the distribution of predictor values (and spatial nearest-neighbour distances) in the training and in the prediction data. It uses raking to match the distribution of predictors observed at the training points to those encountered in the prediction area by up-weighting training points that show predictor values underrepresented in the training data (as compared to the prediction area) and down-weighting those points that show overrepresented conditions. These weights are then normalized and multiplied with the (cross-validation) error calculated for each training point. Therefore, it relies on some sort of resampling beforehand to calculate the final resulting error, and is highly sensitive to the choice of resampling (the weights stay the same regardless of the resampling method \footnotetext{At least when spatial NNDs are ignored}, but it makes a huge difference if one uses random CV or spatial CV, since the error that is then weighted can vary widely based on the chosen resampling method).
+
+We provide an experimental implementation of this algorithm, alongside dedicated plotting functions, in the package [PredictionMatching](https://github.com/JanLinnenbrink/PredictionMatching). In our example, we apply TWCV to the results of kNNDM:
+
+
+```{r}
+#| fig-width: 6
+#| fig-height: 4
+#| fig-cap: "Figure 6: The weights assigned by TWCV to the CV errors calculated for each training point."
+#| echo: false
+
+# install.packages("pak")
+# pak::pak("JanLinnenbrink/PredictionMatching")
+library(PredictionMatching)
+
+weights_smpl <- lapply(unique(samples$sampling), function(smpling) {
+	samples_smpl <- samples |>
+		filter(sampling == smpling) |>
+		select(!sampling)
+	# Calculate weights from raking
+	tw_calculate_weights(
+		tpoints = st_drop_geometry(samples_smpl)[, names(predictor_stack)],
+		modeldomain = predictor_stack
+	)
+})
+
+names(weights_smpl) <- unique(samples$sampling)
+```
+
+Now that we obtained the weights for each training point, we can calculate the cross-validation error using kNNDM and then multiply the error with these weights:
+```{r}
+
+pe_samples <- lapply(unique(samples$sampling), function(smpling) {
+	samples_smpl <- samples |>
+		filter(sampling == smpling) |>
+		select(!sampling)
+
+	knndm_folds <- knndm(
+		tpoints = samples_smpl,
+		modeldomain = predictor_stack,
+		space = "geographical"
+	)
+
+	ctrl_knndm <- trainControl(
+		method = "cv",
+		index = knndm_folds$indx_train,
+		indexOut = knndm_folds$indx_test,
+		savePredictions = "final",
+		verboseIter = FALSE
+	)
+
+	# train a random forest model based on kNNDM resampling
+	rf_knndm <- train(
+		x = st_drop_geometry(samples_smpl)[, names(predictor_stack)],
+		y = st_drop_geometry(samples_smpl)[["outcome"]],
+		method = "ranger",
+		trControl = ctrl_knndm,
+		metric = "RMSE",
+		num.trees = 300,
+		importance = "impurity"
+	)
+
+	# Standardize the format of the pointwise errors obtained by kNNDM CV and add an ID column
+	tw_pointwise_error(
+		obs = rf_knndm$pred$obs,
+		pred = rf_knndm$pred$pred,
+		id = rf_knndm$pred$rowIndex
+	)
+})
+
+names(pe_samples) <- unique(samples$sampling)
+
+weighted_rmse <- lapply(unique(samples$sampling), function(smpling) {
+	pe_smpl <- pe_samples[[smpling]]
+	w_smpl <- weights_smpl[[smpling]]
+
+	# Weigh the pointwise errors using the weights obtained from raking
+	tw_weighted_error_stats(w_smpl, pe_smpl)[["rmse"]]
+})
+```
+
+The RMSE values obtained by TWCV are `r round(weighted_rmse[[1]][[1]], 3)` for the random sampling design, `r round(weighted_rmse[[2]][[1]], 3)` for the biased sampling and `r round(weighted_rmse[[3]][[1]], 3)` for the clustered design. The following Figure shows the weights assigned to each CV error, where for biased and clustered sampling a higher weight is given to higher CV errors (hence resulting in a higher weighted error than kNNDM CV along would produce):
+
+```{r}
+#| fig-width: 8
+#| fig-height: 4
+#| fig-cap: "Figure 6: The weights assigned to each CV error in the different sampling designs."
+
+lapply(unique(samples$sampling), function(smpling) {
+	pe_smpl <- pe_samples[[smpling]]
+	w_smpl <- weights_smpl[[smpling]]
+
+	PredictionMatching:::plot.twcv(w_smpl, pointwise_error = pe_smpl)[[2]] +
+		ggtitle(smpling) +
+		theme(plot.title = element_text(face = "bold", hjust = 0.5))
+}) |>
+	plot_grid(plotlist = _, nrow = 1)
+```

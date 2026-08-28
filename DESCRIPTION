@@ -24,7 +24,8 @@ Imports:
     terra,
     twosamples,
     ggplot2,
-    RColorBrewer
+    RColorBrewer,
+    PredictionMatching
 Suggests: 
     knitr,
     rmarkdown,

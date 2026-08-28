@@ -1,11 +1,11 @@
 # PDAV
-This repository is a collection of prediction-domain adaptive validation methods. Due to the growing application of spatial predictive models in geoscientific fields, there is also a growing need for reliable validation of the resulting maps. Prediction-domain adaptive validation methods provide reliable proxies of map accuracies that can be used during model selection and also -- in the absence of an independent probability sample -- as a proxy of the final map accuracy ([Linnenbrink, Nowosad & Meyer, 2026](https://doi.org/10.48550/arXiv.2605.13689)). This repository aims at:
+This repository is a collection of prediction-domain adaptive evaluation methods. Due to the growing application of spatial predictive models in geoscientific fields, there is also a growing need for reliable evaluation of the resulting maps. Prediction-domain adaptive evaluation methods provide reliable proxies of map accuracies that can be used during model selection and also -- in the absence of an independent probability sample -- as a proxy of the final map accuracy ([Linnenbrink, Nowosad & Meyer, 2026](https://doi.org/10.48550/arXiv.2605.13689)). This repository aims at:
 
-1) collecting and consistently [implementing](R/) prediction-domain adaptive validation methods applicable for spatial predictive modelling.
-2) providing [vignettes](vignettes/) that describe their functioning and application.
-3) providing an [overview](vignettes/Prediction-domain-adaptive-validation.Rmd) over the developed methods.
+1) collecting and [describing](vignettes/) prediction-domain adaptive evaluation methods applicable for spatial predictive modelling.
+2) [Implementing](R/) a working version of them in R (however, the main of this package is not to provide the most current version).
+3) providing an [overview](vignettes/Prediction-domain-adaptive-validation.Rmd) over the methods available to date.
 
-As such, the repository is expected to grow and include newly developed methods falling in the class of prediction-domain adaptive validation.
+As such, the repository is expected to grow and include newly developed methods falling in the class of prediction-domain adaptive evaluation.
 It is still work-in-progress, so please reach out if you find inaccuracies or want to add methods.
 
 

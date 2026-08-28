@@ -4,8 +4,8 @@ Prediction-domain adaptive validation methods provide estimates of map accuracy 
 
 The package aims to:
 
-1. provide consistent implementations of prediction-domain adaptive validation methods for spatial predictive modelling;
-2. provide vignettes that describe how the methods work and how they can be applied;
+1. collecting and describe prediction-domain adaptive evaluation methods applicable for spatial predictive modelling;
+2. implement a working version of them in R (however, the main of this package is not to provide the most current version);
 3. provide an [overview](articles/Prediction-domain-adaptive-validation.html) of currently available methods.
 
 ## Available methods
