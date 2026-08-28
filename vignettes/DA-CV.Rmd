@@ -12,28 +12,28 @@ vignette: >
 
 Dissimilarity-adaptive cross-validation (DA-CV) was developed by @Wang2025. 
 It uses adversarial validation (AV) to predict the probability that a prediction location is similar to the training samples.
-Then it calculates an RMSE based on random CV, as well as spatial+ CV (@Wang2023), and weights both of them according to the relative area of similar cells, random CV, and dissimilar cells, spatial+ CV.
+Then it calculates an RMSE based on random CV, as well as spatial+ CV (@Wang2023), and weights both of them according to the relative area of similar cells (random CV) and dissimilar cells (spatial+ CV).
 
 The more detailed workflow is:
 
 1. Generate an AV dataset consisting of the training samples and an equal number of randomly sampled prediction locations.
 2. Train the AV classifier based on the available predictors to predict the probability that a data point belongs to the training samples, using 50% of the AV dataset.
-3. Evaluate the AV classifier on the other 50% and calculate the AUC.
-4. Normalize the AUC to [0, 1] by assigning 0 to AUC = 0.5. This normalized AUC is then interpreted as the overall dissimilarity, D.
-5. Derive the threshold used to distinguish similar from dissimilar areas from the overall dissimilarity as T(D) = 0.5 × D.
+3. Evaluate the AV classifier on the other 50% and calculate the area under the curve (AUC).
+4. Normalize the AUC to [0, 1] by assigning 0 to AUC = 0.5. This normalized AUC is then interpreted as the overall dissimilarity *D*.
+5. Derive the threshold used to distinguish similar from dissimilar areas from the overall dissimilarity as *T(D) = 0.5 × D*.
 6. Predict the similarity of all prediction locations using the AV classifier.
-7. Binarize the similarity map using T(D).
-8. Calculate the weighted RMSE as RMSE<sub>DA</sub> = √(W<sub>RDM</sub> × RMSE<sub>RDM</sub><sup>2</sup> + W<sub>SP</sub> × RMSE<sub>SP</sub><sup>2</sup>).
+7. Binarize the similarity map using the threshold *T(D)*.
+8. Calculate the weighted RMSE as *RMSE<sub>DA</sub> = √(W<sub>RDM</sub> × RMSE<sub>RDM</sub><sup>2</sup> + W<sub>SP</sub> × RMSE<sub>SP</sub><sup>2</sup>)*.
 
 Spatial+ CV works as follows:
 
-1. Divide samples into blocks using agglomerative hierarchical clustering. The maximum linkage, i.e. the maximum distance between samples in one cluster/block, is derived from the semivariogram of the response values measured at the sampling locations, i.e. the spatial autocorrelation range.
+1. Divide samples into blocks using agglomerative hierarchical clustering. The maximum linkage, i.e. the maximum distance between samples in one cluster, is derived from the semivariogram of the response values measured at the sampling locations, i.e. the spatial autocorrelation range.
 2. Average the predictor values, response values, and coordinates of all samples belonging to one block.
 3. Cluster the blocks in three ways:
    1. k-means clustering of the coordinates.
    2. k-prototypes clustering of the predictor values.
    3. k-means clustering of the response.
-4. Combine the three clustering results into k folds using the cluster ensemble function "Hybrid Bipartite Graph Formulation", which finds consistency between the three clustering results.
+4. Combine the three clustering results into *k* folds using the cluster ensemble function "Hybrid Bipartite Graph Formulation", which finds consistency between the three clustering results.
 
 ## Setup
 ```{r, include = FALSE}
@@ -83,7 +83,6 @@ ggplot() +
 	geom_spatraster(data = predictor_stack[[-cate_rasters]]) +
 	scale_fill_viridis_c() +
 	new_scale_fill() +
-	# categorical with a discrete scale
 	geom_spatraster(data = as.factor(predictor_stack[[cate_rasters]])) +
 	scale_fill_viridis_d() +
 	coord_sf(expand = FALSE, datum = st_crs(predictor_stack)) +
@@ -122,7 +121,7 @@ ggplot() +
 
 ## Run DA-CV
 
-Now, we use DA-CV to obtain area estimates of interpolation vs extrapolation areas, that can then be used to derive a weighted RMSE. We leave the autocorrelation threshold at 1, despite the sample variogram showing indicating a range of 5-10, because higher autocorrelation thresholds would result in spatial+ CV-splits that has a smaller size than the sample size. Maybe due to empty clusters?
+Now, we use DA-CV to obtain area estimates of interpolation vs extrapolation areas, that can then be used to derive a weighted RMSE. We leave the autocorrelation threshold at 1, despite the sample variogram indicates a range of 5-10, because higher autocorrelation thresholds would result in a spatial+ CV-split that has a smaller size than the sample size. Maybe due to empty clusters?
 
 ### Adversial validation to obtain relative area size of inter- vs extrapolation
 
@@ -144,7 +143,7 @@ For the biased sampling design shown here, the AV classifier achieves a performa
 ``` {r}
 #| fig-width: 6
 #| fig-height: 5
-#| fig-cap: "Figure 3: The similarity raster resulting from applying the AV classifier to the predictor stack."
+#| fig-cap: "Figure 3: The similarity raster resulting from applying the AV classifier and the threshold T(D) to the predictor stack."
 plot(results) +
 	new_scale_fill() +
 	geom_sf(data = samples, shape = 21, fill = "white") +
@@ -155,8 +154,8 @@ plot(results) +
 	)
 ```
 
-### Calculate CV results and weigh them according to the area proportions
-Lastly, the resulting cross-validation fold assignments could be used to calculate the weighted RMSE of a spatial predictive model.
+### Calculate CV results and weight them according to the area proportions
+Lastly, the resulting cross-validation fold assignments can be used to calculate the weighted RMSE of a spatial predictive model.
 
 ```{r}
 form <- as.formula(paste0("outcome~", paste0(names(predictor_stack), collapse = "+")))
@@ -211,7 +210,7 @@ err_stats_weighted <- sqrt(
 prediction <- predict(r, rand_mod)
 ```
 
-The RMSE obtained by DA-CV is `r round(err_stats_weighted, 3)`. The maps below depict the difference between predicted and true response:
+The RMSE obtained by DA-CV is `r round(err_stats_weighted, 3)`. The maps below show the training points, which folds they were assigned to, and how much weight the respective split received:
 
 ```{r}
 #| fig-width: 8
@@ -239,13 +238,13 @@ ggplot() +
 	geom_sf(data = samples_long, aes(colour = as.factor(value)), size = 1) +
 	geom_text(
 		data = samples_long,
-		aes(x = 40, y = 160, label = paste0("Weight: ", weight)),
+		aes(x = 140, y = 180, label = paste0("Weight: ", weight)),
 		size = 3,
 		fontface = "bold",
 		check_overlap = TRUE
 	) +
 	coord_sf(expand = FALSE, datum = st_crs(samples_long)) +
-	facet_grid(~name) +
+	facet_grid(~name, labeller = labeller(name = c("randomCV" = "random CV", "spatialCV" = "spatial+ CV"))) +
 	scale_color_brewer("Fold", palette = "Set1") +
 	theme_bw() +
 	theme(panel.grid = element_blank(), legend.position = "right") +

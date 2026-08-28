@@ -81,13 +81,16 @@ library(dplyr)
 
 set.seed(100)
 
-k = 2
+k <- 2
 ```
 
 ## Example data
 ### Simulate predictors and response
 ```{r}
 r <- PDAV:::generate_rast()
+predictor_stack <- r[[setdiff(names(r), "outcome")]]
+cate_rasters <- which(names(r) %in% c("forest", "grass"))
+
 samples <- PDAV:::generate_samples(r, 100) |>
 	filter(sampling == "biased")
 samples$point_id <- 1:nrow(samples)
@@ -95,22 +98,32 @@ samples <- select(samples, point_id)
 ```
 
 ```{r}
-#| fig-width: 8
+#| fig-width: 6
 #| fig-height: 4
+#| fig-cap: "Figure 1: The predictor stack"
 #| echo: false
 ggplot() +
-	geom_spatraster(data = r) +
-	coord_sf(expand = FALSE, datum = st_crs(r)) +
+	geom_spatraster(data = predictor_stack[[-cate_rasters]]) +
 	scale_fill_viridis_c() +
+	new_scale_fill() +
+	geom_spatraster(data = as.factor(predictor_stack[[cate_rasters]])) +
+	scale_fill_viridis_d() +
+	coord_sf(expand = FALSE, datum = st_crs(predictor_stack)) +
 	facet_wrap(~lyr) +
 	theme_bw() +
 	theme(panel.grid = element_blank())
+```
 
+```{r}
+#| fig-width: 6
+#| fig-height: 4
+#| fig-cap: "Figure 2: The simulated outcome with training locations."
+#| echo: false
 ggplot() +
 	geom_spatraster(data = r$outcome) +
 	scale_fill_viridis_c("outcome") +
 	new_scale_fill() +
-	geom_sf(data = samples, shape = 21, aes(fill = "training samples"), size = 2) +
+	geom_sf(data = samples, shape = 21, aes(fill = "training samples"), size = 1) +
 	coord_sf(expand = FALSE, datum = st_crs(samples)) +
 	scale_fill_manual("", values = "white") +
 	theme_bw() +
@@ -128,6 +141,7 @@ Firstly, the kNNDM algorithm calcuates the distribution of NND between samples (
 ```{r}
 #| fig-width: 8
 #| fig-height: 4
+#| fig-cap: "Figure 3: Nearest-Neighbour Distances (NNDs) between training points (left) and between prediction and training points (right)."
 #| echo: false
 prediction_points <- spatSample(r, size = 1000, method = "regular", as.points = TRUE) |>
 	st_as_sf()
@@ -172,7 +186,7 @@ NND_samples <- ggplot() +
 	geom_sf(data = lines_sf_s, linewidth = 0.2, color = "black") +
 	scale_shape_manual("", values = c(1, 4)) +
 	coord_sf(expand = FALSE, datum = st_crs(prediction_points)) +
-	ggtitle("NND between samples") +
+	ggtitle("NND between training points") +
 	theme_bw() +
 	theme(legend.position = "None", panel.grid = element_blank(), plot.title = element_text(size = 12))
 
@@ -182,7 +196,7 @@ NND_pred_samples <- ggplot() +
 	geom_sf(data = lines_sf, linewidth = 0.2, color = "lightblue") +
 	scale_shape_manual("", values = c(1, 4)) +
 	coord_sf(expand = FALSE, datum = st_crs(prediction_points)) +
-	ggtitle("NND between prediction points and samples") +
+	ggtitle("NND between prediction and training points") +
 	theme_bw() +
 	theme(legend.position = "None", panel.grid = element_blank(), plot.title = element_text(size = 12))
 
@@ -201,8 +215,9 @@ Gij <- c(FNN::knnx.dist(
 ```
 
 ```{r}
-#| fig-width: 4
+#| fig-width: 6
 #| fig-height: 4
+#| fig-cap: "Figure 4: The Empirical Cumulative Density Functions (ECDFs) of the Nearest-Neighbour Distances between prediction and training points (orange), as well as between training points (green)."
 #| echo: false
 #| warning: false
 myColors <- RColorBrewer::brewer.pal(3, "Dark2")
@@ -225,7 +240,7 @@ ggplot(
 	stat_ecdf(geom = "step", lwd = 0.8) +
 	scale_colour_manual(
 		values = c(myColors[2], myColors[1]),
-		labels = c("prediction-to-sample", "sample-to-sample")
+		labels = c("prediction-to-training", "training-to-training")
 	) +
 	guides(colour = guide_legend(override.aes = list("linewidth" = 1.6))) +
 	theme_bw(base_size = 12) +
@@ -282,6 +297,7 @@ The sampled sequence of <em>q</em> clusters is in this case `r clustgrid$nk`. Th
 ```{r}
 #| fig-width: 8
 #| fig-height: 4
+#| fig-cap: "Figure 5: The training points assigned to 2 (= *k*), 14 and 98 (= number of training points) clusters. Point colours and filled areas show the clusters."
 #| echo: false
 #| warning: false
 for (nk in clustgrid$nk) {
@@ -304,7 +320,7 @@ cluster_polys <- lapply(seq_along(nk_df_sf), function(i) {
 
 	nk_df_focal |>
 		group_by(clust_nk, nk) |>
-		summarise() |>
+		summarise(.groups = "drop") |>
 		st_convex_hull() |>
 		mutate(clust_nk = as.factor(clust_nk), nk = nk)
 })
@@ -339,6 +355,7 @@ pcacoords <- stats::prcomp(sample_coords, center = TRUE, scale. = FALSE, rank = 
 ```{r}
 #| fig-width: 8
 #| fig-height: 4
+#| fig-cap: "Figure 6: The training points coloured by the first Principal Component (PC 1) calculated from their coordinates, which is also shown as a red arrow."
 #| echo: false
 samples$pca <- pcacoords$x
 center <- pcacoords$center
@@ -397,6 +414,7 @@ for (nk in clustgrid$nk) {
 ```{r}
 #| fig-width: 8
 #| fig-height: 4
+#| fig-cap: "Figure 7: The *q* clusters coloured by the projection of their centroid onto the first principal component."
 #| echo: false
 plot_nk <- list()
 for (nk in clustgrid$nk) {
@@ -427,7 +445,7 @@ ggplot() +
 	theme(legend.position = "right", panel.grid = element_blank())
 ```
 
-And lastly, we merge the <em>q</em> clusters along the first principal component:
+And lastly, we merge the <em>q</em> clusters cyclically in the order of the first principal component:
 
 ```{r}
 clust_k <- list()
@@ -464,6 +482,9 @@ for (nk in clustgrid$nk) {
 ```{r}
 #| fig-width: 8
 #| fig-height: 4
+#| fig-cap: "Figure 8: Assignment of the clusters to *k* folds, for each candidate number of clusters *q* (panels). 
+#| 	Clusters larger than *n*/*k* are not merged; the rest are assigned cyclically to the remaining folds in PC1 order,
+#| 	so that spatially adjacent clusters land in different folds. Colours show the fold id, outlines the cluster convex hulls."
 #| echo: false
 tabclust2_clean <- tabclust2[lapply(tabclust2, length) > 0]
 tabclust2_sf <- lapply(tabclust2_clean, function(x) {
@@ -489,15 +510,13 @@ cluster_polys2 <- lapply(seq_along(tabclust2_sf), function(i) {
 }) |>
 	do.call(what = "rbind")
 
+tabclust2_df <- do.call("rbind", tabclust2_sf) |> mutate(clust_k = as.factor(clust_k))
 ggplot() +
 	geom_sf(data = prediction_points, alpha = 0) +
 	geom_sf(data = cluster_polys2, aes(fill = clust_k), alpha = 0.3, color = "transparent") +
-	geom_sf(
-		data = do.call("rbind", tabclust2_sf),
-		aes(colour = as.factor(clust_k))
-	) +
-	ggthemes::scale_color_colorblind("k") +
-	ggthemes::scale_fill_colorblind("k") +
+	geom_sf(data = tabclust2_df, aes(colour = clust_k)) +
+	ggthemes::scale_color_colorblind(name = "Fold") +
+	ggthemes::scale_fill_colorblind(name = "Fold") +
 	facet_wrap(~nk, nrow = 1) +
 	theme_bw(base_size = 12) +
 	coord_sf(expand = FALSE, datum = st_crs(samples)) +
@@ -505,6 +524,8 @@ ggplot() +
 ```
 
 ### 5. Calculate G<sub>j</sub><sup>*</sup> for each <em>q</em> configuration and calculate <em>W</em>
+
+Lastly, we calculate the ECDFs of NNDs between CV folds for each of the three configurations. The absolute value difference between the ECDF of NNDs between CV folds and the ECDF of NNDs between prediction and training points is then quantified as the Wasserstein statistic (W). The configuration yielding the lowest W is then chosen as the final configuration (in this case configuration 2 with *nk* = 14, see table below).
 
 ```{r}
 distclust_euclidean <- function(tr_coords, folds) {
@@ -533,6 +554,7 @@ for (nk in clustgrid$nk) {
 ```{r}
 #| fig-width: 8
 #| fig-height: 6
+#| fig-cap: "Figure 9: The resulting ECDFs from the three different configurations (panels)."
 #| echo: false
 Gplot <- list()
 for (nk in clustgrid$nk) {
@@ -581,6 +603,7 @@ The following plot shows the training samples with their final fold assignment:
 ```{r}
 #| fig-width: 8
 #| fig-height: 4
+#| fig-cap: "Figure 10: The final fold assignment based on the configuration *q* = 14."
 #| echo: false
 samples$fold <- clust
 
@@ -600,6 +623,7 @@ ggplot() +
 ```{r}
 #| fig-width: 12
 #| fig-height: 14
+#| fig-cap: "Figure 11: An overview plot over the steps involved in kNNDM: starting from the initial *q* clusters (left panel), over projecting the first PC of the training point coordinates to these clusters' centroids, to merging them cyclically along the first PC into *k* folds and calculating the ECDF of the resulting CV configurations (right panel)."
 #| warning: false
 #| echo: false
 lapply(seq_along(clustgrid$nk), function(i) {

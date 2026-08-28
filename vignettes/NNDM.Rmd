@@ -32,7 +32,7 @@ The more detailed workflow is:
  </li> <li>if both conditions hold, exclude <em>k</em> from fold <em>j</em> and update <em>Ĝ<sub>j</sub><sup>*</sup></em>; otherwise leave fold <em>j</em> unchanged. Exclusions are never undone;</li>
  <li>move on to the next-smallest NND, and stop once it exceeds <em>φ</em>.</li> 
  </ol> 
- </li> <li>Return, for each left-out point, the indices of the test point, the retained training points and the excluded points (<code>indx_test</code>, <code>indx_train</code>, <code>indx_exclude</code>). These can be passed directly to caret's <code>trainControl(index = , indexOut = )</code> or used to set up a custom resampling strategy in mlr3.</li> 
+ </li> <li>Return, for each left-out point, the indices of the test point, the retained training points and the excluded points (<code>indx_test</code>, <code>indx_train</code>, <code>indx_exclude</code>).
  </ol>
 
 
@@ -64,10 +64,46 @@ k <- 2
 ### Simulate predictors and response
 ```{r}
 r <- PDAV:::generate_rast()
+predictor_stack <- r[[setdiff(names(r), "outcome")]]
+cate_rasters <- which(names(r) %in% c("forest", "grass"))
+
 samples <- PDAV:::generate_samples(r, 100) |>
 	filter(sampling == "biased")
 samples$point_id <- 1:nrow(samples)
 samples <- select(samples, point_id)
+```
+
+```{r}
+#| fig-width: 6
+#| fig-height: 4
+#| fig-cap: "Figure 1: The predictor stack"
+#| echo: false
+ggplot() +
+	geom_spatraster(data = predictor_stack[[-cate_rasters]]) +
+	scale_fill_viridis_c() +
+	new_scale_fill() +
+	geom_spatraster(data = as.factor(predictor_stack[[cate_rasters]])) +
+	scale_fill_viridis_d() +
+	coord_sf(expand = FALSE, datum = st_crs(predictor_stack)) +
+	facet_wrap(~lyr) +
+	theme_bw() +
+	theme(panel.grid = element_blank())
+```
+
+```{r}
+#| fig-width: 6
+#| fig-height: 4
+#| fig-cap: "Figure 2: The simulated outcome with training locations."
+#| echo: false
+ggplot() +
+	geom_spatraster(data = r$outcome) +
+	scale_fill_viridis_c("outcome") +
+	new_scale_fill() +
+	geom_sf(data = samples, shape = 21, aes(fill = "training samples"), size = 1) +
+	coord_sf(expand = FALSE, datum = st_crs(samples)) +
+	scale_fill_manual("", values = "white") +
+	theme_bw() +
+	theme(panel.grid = element_blank())
 ```
 
 ```{r}
@@ -105,6 +141,7 @@ Firstly, the NNDM algorithm calculates the distribution of NND between samples (
 ```{r}
 #| fig-width: 8
 #| fig-height: 4
+#| fig-cap: "Figure 3: The Nearest-Neighbour distances between training points (left) and between prediction and training points (right)."
 #| echo: false
 prediction_points <- spatSample(r, size = 1000, method = "regular", as.points = TRUE) |>
 	st_as_sf()
@@ -182,8 +219,9 @@ Gj <- apply(tdist, 1, function(x) min(x, na.rm = TRUE))
 ```
 
 ```{r}
-#| fig-width: 4
+#| fig-width: 6
 #| fig-height: 4
+#| fig-cap: "Figure 4: The two Empirical Cumulative Density Functions (ECDFs) corresponding to the Nearest-Neighbour Distances (NNDs) between prediction and training points (orange) and between training points (green)."
 #| echo: false
 #| warning: false
 myColors <- RColorBrewer::brewer.pal(3, "Dark2")
@@ -278,6 +316,9 @@ In each column the algorithm is processing the current nearest-neighbour distanc
 ```{r}
 #| fig-width: 8
 #| fig-height: 5.6
+#| fig-cap: "Figure 5: Sequential exclusion of training points in the NNDM algorithm, from plain LOO CV (left) to the final state (right). 
+#| 	Top row: left-out point (blue), the neighbour excluded from its fold (orange) and pairs excluded in earlier iterations (grey lines).
+#|  Bottom row: target Ĝij and current Ĝj*, with the dashed line at the distance r being processed."
 #| out-width: "100%"
 #| echo: false
 

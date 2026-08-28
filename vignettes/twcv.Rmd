@@ -305,6 +305,7 @@ Instead, if a quintile is not covered by the training points, raking keeps tryin
 A better approach would likely be to stop the algorithm and return an error message hinting towards avoiding this extreme extrapolation. See section 8 and Figure 2.
 
 ```{r}
+#| fig-cap: "Figure 3: Histogram showing the before normalization."
 margin_names <- names(target_margins)
 max_iter <- 500
 tol <- 1e-6
@@ -369,6 +370,8 @@ ggplot() +
 ### 6. Normalize and shrink weights
 
 ```{r}
+#| fig-cap: "Figure 4: Histogram showing the distribution of weights after normalization and shrinking".
+
 # Weights are normalized by their mean and shrinked towards 1 to mitigate extreme values
 shrink_lambda <- twcv_specs$twcv_extended$shrink_lambda
 tw$weights_raw <- PDAV:::normalize_weights(tw$weights)
