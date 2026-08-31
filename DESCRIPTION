@@ -24,8 +24,7 @@ Imports:
     terra,
     twosamples,
     ggplot2,
-    RColorBrewer,
-    PredictionMatching
+    RColorBrewer
 Suggests: 
     knitr,
     rmarkdown,
@@ -36,9 +35,11 @@ Suggests:
     tidyr,
     cowplot,
     colorspace,
-    ggthemes
+    ggthemes,
+    PredictionMatching
 VignetteBuilder: knitr
 Remotes:
     Nowosad/simsam
+    JanLinnenbrink/PredictionMatching
 Config/roxygen2/version: 8.1.0
 URL: https://janlinnenbrink.github.io/PDAV/
