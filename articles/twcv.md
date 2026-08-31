@@ -36,6 +36,10 @@ The more detailed workflow is:
 6.  Normalize weights and shrink them towards 1 to mitigate extreme
     values.
 
+While I will stay close to the original implementation here, note that
+there is a more user-oriented version available in the R-package
+[PredictionMatching](https://github.com/JanLinnenbrink/PredictionMatching).
+
 ## Setup
 
 ``` r
@@ -420,7 +424,10 @@ ggplot() +
 #> `stat_bin()` using `bins = 30`. Pick better value `binwidth`.
 ```
 
-![](twcv_files/figure-html/unnamed-chunk-8-1.png)
+![Figure 3: Histogram showing the before
+normalization.](twcv_files/figure-html/unnamed-chunk-8-1.png)
+
+Figure 3: Histogram showing the before normalization.
 
 ### 6. Normalize and shrink weights
 
@@ -440,7 +447,12 @@ ggplot() +
 #> `stat_bin()` using `bins = 30`. Pick better value `binwidth`.
 ```
 
-![](twcv_files/figure-html/unnamed-chunk-9-1.png)
+![Figure 4: Histogram showing the distribution of weights after
+normalization and
+shrinking.](twcv_files/figure-html/unnamed-chunk-9-1.png)
+
+Figure 4: Histogram showing the distribution of weights after
+normalization and shrinking.
 
 ### 7. Return weighted error estimates
 
@@ -463,7 +475,7 @@ result <- list(
 )
 class(result) <- "twcv"
 
-plot(result) |>
+PDAV:::plot.twcv(result) |>
     plot_grid(plotlist = _, ncol = 1, align = "v")
 ```
 

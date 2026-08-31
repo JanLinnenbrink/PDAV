@@ -137,9 +137,7 @@ move on to the next-smallest NND, and stop once it exceeds <em>φ</em>.
 Return, for each left-out point, the indices of the test point, the
 retained training points and the excluded points
 (<code>indx_test</code>, <code>indx_train</code>,
-<code>indx_exclude</code>). These can be passed directly to caret’s
-<code>trainControl(index = , indexOut = )</code> or used to set up a
-custom resampling strategy in mlr3.
+<code>indx_exclude</code>).
 </li>
 </ol>
 </div>
@@ -187,11 +185,24 @@ custom resampling strategy in mlr3.
 </h3>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu">PDAV</span><span class="fu">:::</span><span class="fu">generate_rast</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">predictor_stack</span> <span class="op">&lt;-</span> <span class="va">r</span><span class="op">[[</span><span class="fu"><a href="https://generics.r-lib.org/reference/setops.html" class="external-link">setdiff</a></span><span class="op">(</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">r</span><span class="op">)</span>, <span class="st">"outcome"</span><span class="op">)</span><span class="op">]</span><span class="op">]</span></span>
+<span><span class="va">cate_rasters</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">r</span><span class="op">)</span> <span class="op"><a href="https://rspatial.github.io/terra/reference/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"forest"</span>, <span class="st">"grass"</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
 <span><span class="va">samples</span> <span class="op">&lt;-</span> <span class="fu">PDAV</span><span class="fu">:::</span><span class="fu">generate_samples</span><span class="op">(</span><span class="va">r</span>, <span class="fl">100</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">sampling</span> <span class="op">==</span> <span class="st">"biased"</span><span class="op">)</span></span>
 <span><span class="va">samples</span><span class="op">$</span><span class="va">point_id</span> <span class="op">&lt;-</span> <span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/dimensions.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">samples</span><span class="op">)</span></span>
 <span><span class="va">samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">samples</span>, <span class="va">point_id</span><span class="op">)</span></span></code></pre></div>
-<p><img src="NNDM_files/figure-html/unnamed-chunk-3-1.png" class="r-plt" alt="" width="768"><img src="NNDM_files/figure-html/unnamed-chunk-3-2.png" class="r-plt" alt="" width="768"></p>
+<div class="figure">
+<img src="NNDM_files/figure-html/unnamed-chunk-3-1.png" class="r-plt" alt="Figure 1: The predictor stack" width="576"><p class="caption">
+Figure 1: The predictor stack
+</p>
+</div>
+<div class="figure">
+<img src="NNDM_files/figure-html/unnamed-chunk-4-1.png" class="r-plt" alt="Figure 2: The simulated outcome with training locations." width="576"><p class="caption">
+Figure 2: The simulated outcome with training locations.
+</p>
+</div>
+<p><img src="NNDM_files/figure-html/unnamed-chunk-5-1.png" class="r-plt" alt="" width="768"><img src="NNDM_files/figure-html/unnamed-chunk-5-2.png" class="r-plt" alt="" width="768"></p>
 </div>
 </div>
 <div class="section level2">
@@ -206,7 +217,12 @@ between prediction points and samples (G<sub>ij</sub>). The calculation
 of NNDs is shown in the following figure: the nearest neighbour distance
 between samples is shown in the left panel, while the right panel shows
 nearest neighbour distances between prediction points and samples.</p>
-<p><img src="NNDM_files/figure-html/unnamed-chunk-4-1.png" class="r-plt" alt="" width="768"></p>
+<div class="figure">
+<img src="NNDM_files/figure-html/unnamed-chunk-6-1.png" class="r-plt" alt="Figure 3: The Nearest-Neighbour distances between training points (left) and between prediction and training points (right)." width="768"><p class="caption">
+Figure 3: The Nearest-Neighbour distances between training points (left)
+and between prediction and training points (right).
+</p>
+</div>
 <p>To characterize the distribution of these NNDs, their empirical
 cumulative density functions (ECDFs) are calculated:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
@@ -220,7 +236,14 @@ cumulative density functions (ECDFs) are calculated:</p>
 <span><span class="fu"><a href="https://rspatial.github.io/terra/reference/units.html" class="external-link">units</a></span><span class="op">(</span><span class="va">tdist</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="cn">NULL</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/diag.html" class="external-link">diag</a></span><span class="op">(</span><span class="va">tdist</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="cn">NA</span></span>
 <span><span class="va">Gj</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">tdist</span>, <span class="fl">1</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">x</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="NNDM_files/figure-html/unnamed-chunk-6-1.png" class="r-plt" alt="" width="384"></p>
+<div class="figure">
+<img src="NNDM_files/figure-html/unnamed-chunk-8-1.png" class="r-plt" alt="Figure 4: The two Empirical Cumulative Density Functions (ECDFs) corresponding to the Nearest-Neighbour Distances (NNDs) between prediction and training points (orange) and between training points (green)." width="576"><p class="caption">
+Figure 4: The two Empirical Cumulative Density Functions (ECDFs)
+corresponding to the Nearest-Neighbour Distances (NNDs) between
+prediction and training points (orange) and between training points
+(green).
+</p>
+</div>
 </div>
 <div class="section level3">
 <h3 id="calculate-gj-for-each-left-out-point-starting-from-loo-cv">2. Calculate G<sub>j</sub><sup>*</sup> for each left-out point
@@ -302,7 +325,15 @@ resulting from plain LOO CV towards the target Ĝ<sub>ij</sub>. The right
 panel is the last iteration that produced an exclusion that was accepted
 (the maximum distance allowed by φ would have been 202, but the maximum
 exclusion distance was 87).</p>
-<p><img src="NNDM_files/figure-html/unnamed-chunk-8-1.png" class="r-plt" alt="" width="100%"></p>
+<div class="figure">
+<img src="NNDM_files/figure-html/unnamed-chunk-10-1.png" class="r-plt" alt="Figure 5: Sequential exclusion of training points in the NNDM algorithm, from plain LOO CV (left) to the final state (right). Top row: left-out point (blue), the neighbour excluded from its fold (orange) and pairs excluded in earlier iterations (grey lines). Bottom row: target Ĝij and current Ĝj*, with the dashed line at the distance r being processed." width="100%"><p class="caption">
+Figure 5: Sequential exclusion of training points in the NNDM algorithm,
+from plain LOO CV (left) to the final state (right). Top row: left-out
+point (blue), the neighbour excluded from its fold (orange) and pairs
+excluded in earlier iterations (grey lines). Bottom row: target Ĝij and
+current Ĝj*, with the dashed line at the distance r being processed.
+</p>
+</div>
 <div id="refs" class="references csl-bib-body hanging-indent">
 <div id="ref-Mila2022" class="csl-entry">
 Milà, Carles, Jorge Mateu, Edzer Pebesma, and Hanna Meyer. 2022.

@@ -73,10 +73,9 @@
 <p>This vignette provides an overview over the different methods of
 prediction-domain adaptive evaluation. First, I will briefly summarize
 the (dis-)advantages of the different methods (based on my subjective
-impression), and then I will briefly show how they work using a
-simulated case study with three different sampling designs. For a more
-detailed description of the methods, please refer to the dedicated
-vignettes.</p>
+impression), then I will briefly show how they work using a simulated
+case study with three different sampling designs. For a more detailed
+description of the methods, please refer to the dedicated vignettes.</p>
 </div>
 <div class="section level2">
 <h2 id="overview-of-the-currently-developed-methods">Overview of the currently developed methods:<a class="anchor" aria-label="anchor" href="#overview-of-the-currently-developed-methods"></a>
@@ -161,22 +160,10 @@ on their importance for the model</td>
 </table>
 </div>
 <div class="section level2">
-<h2 id="case-study">Case Study<a class="anchor" aria-label="anchor" href="#case-study"></a>
+<h2 id="setup">Setup<a class="anchor" aria-label="anchor" href="#setup"></a>
 </h2>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://janlinnenbrink.github.io/PDAV/">PDAV</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Attaching package: 'dplyr'</span></span>
-<span><span class="co">#&gt; The following objects are masked from 'package:stats':</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;     filter, lag</span></span>
-<span><span class="co">#&gt; The following objects are masked from 'package:base':</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;     intersect, setdiff, setequal, union</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/topepo/caret/" class="external-link">caret</a></span><span class="op">)</span></span>
-<span><span class="co">#&gt; Loading required package: ggplot2</span></span>
-<span><span class="co">#&gt; Loading required package: lattice</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://rspatial.org/" class="external-link">terra</a></span><span class="op">)</span></span>
 <span><span class="co">#&gt; terra 1.9.46</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-spatial.github.io/sf/" class="external-link">sf</a></span><span class="op">)</span></span>
@@ -191,31 +178,189 @@ on their importance for the model</td>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;     filter</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://eliocamp.github.io/ggnewscale/" class="external-link">ggnewscale</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Attaching package: 'dplyr'</span></span>
+<span><span class="co">#&gt; The following objects are masked from 'package:terra':</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;     intersect, union</span></span>
+<span><span class="co">#&gt; The following objects are masked from 'package:stats':</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;     filter, lag</span></span>
+<span><span class="co">#&gt; The following objects are masked from 'package:base':</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;     intersect, setdiff, setequal, union</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/topepo/caret/" class="external-link">caret</a></span><span class="op">)</span></span>
+<span><span class="co">#&gt; Loading required package: lattice</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">100</span><span class="op">)</span></span></code></pre></div>
-<div class="section level3">
-<h3 id="simulate-predictors-and-response">Simulate predictors and response<a class="anchor" aria-label="anchor" href="#simulate-predictors-and-response"></a>
-</h3>
+</div>
+<div class="section level2">
+<h2 id="case-study">Case Study<a class="anchor" aria-label="anchor" href="#case-study"></a>
+</h2>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu">PDAV</span><span class="fu">:::</span><span class="fu">generate_rast</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">predictor_stack</span> <span class="op">&lt;-</span> <span class="va">r</span><span class="op">[[</span><span class="fu"><a href="https://generics.r-lib.org/reference/setops.html" class="external-link">setdiff</a></span><span class="op">(</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">r</span><span class="op">)</span>, <span class="st">"outcome"</span><span class="op">)</span><span class="op">]</span><span class="op">]</span></span>
 <span><span class="va">cate_rasters</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">r</span><span class="op">)</span> <span class="op"><a href="https://rspatial.github.io/terra/reference/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"forest"</span>, <span class="st">"grass"</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">samples</span> <span class="op">&lt;-</span> <span class="fu">PDAV</span><span class="fu">:::</span><span class="fu">generate_samples</span><span class="op">(</span><span class="va">r</span>, <span class="fl">100</span><span class="op">)</span></span></code></pre></div>
-<p><img src="Prediction-domain-adaptive-validation_files/figure-html/unnamed-chunk-3-1.png" class="r-plt" alt="" width="576"></p>
-<p><img src="Prediction-domain-adaptive-validation_files/figure-html/unnamed-chunk-4-1.png" class="r-plt" alt="" width="576"></p>
+<div class="figure">
+<img src="Prediction-domain-adaptive-validation_files/figure-html/unnamed-chunk-3-1.png" class="r-plt" alt="Figure 1: The predictor stack" width="576"><p class="caption">
+Figure 1: The predictor stack
+</p>
+</div>
+<div class="figure">
+<img src="Prediction-domain-adaptive-validation_files/figure-html/unnamed-chunk-4-1.png" class="r-plt" alt="Figure 2: The simulated outcome with training locations." width="576"><p class="caption">
+Figure 2: The simulated outcome with training locations.
+</p>
+</div>
+<div class="section level3">
+<h3 id="nndm-cv">NNDM CV<a class="anchor" aria-label="anchor" href="#nndm-cv"></a>
+</h3>
+<p>Nearest-Neighbour Distance Matching (NNDM, <span class="citation">Milà et al. (2022)</span>) tries to match the
+prediction situation during cross-validation using the concept of
+nearest-neighbour distances (NNDs). It formalizes the prediction
+situation as the empirical cumulative density function (ECDF) of NNDs
+between prediction and training locations. It then calculates the ECDF
+of NNDs between training points, and tries to match this distribution to
+the one found during prediction by consecutively excluding points the
+training set in LOO-CV. If excluding a training point results in overly
+difficult prediction situation during CV (this happens when excluding a
+point results in a drop in the ECDF of NNDs during CV below the ECDF of
+NNDs during prediction) the algorithm does not exclude this point.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">results_nndm</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">samples</span><span class="op">$</span><span class="va">sampling</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">smpling</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="va">samples_smpl</span> <span class="op">&lt;-</span> <span class="va">samples</span> <span class="op">|&gt;</span></span>
+<span>        <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">sampling</span> <span class="op">==</span> <span class="va">smpling</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>        <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="op">!</span><span class="va">sampling</span><span class="op">)</span></span>
+<span></span>
+<span>    <span class="fu"><a href="../reference/nndm.html">nndm</a></span><span class="op">(</span></span>
+<span>        tpoints <span class="op">=</span> <span class="va">samples_smpl</span>,</span>
+<span>        modeldomain <span class="op">=</span> <span class="va">predictor_stack</span>,</span>
+<span>        space <span class="op">=</span> <span class="st">"geographical"</span></span>
+<span>    <span class="op">)</span></span>
+<span><span class="op">}</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning: [as.polygons] only the first layer is polygonized when 'dissolve=TRUE'</span></span>
+<span><span class="co">#&gt; 1000 prediction points are sampled from the modeldomain</span></span>
+<span><span class="co">#&gt; Warning: [as.polygons] only the first layer is polygonized when 'dissolve=TRUE'</span></span>
+<span><span class="co">#&gt; 1000 prediction points are sampled from the modeldomain</span></span>
+<span><span class="co">#&gt; Warning: [as.polygons] only the first layer is polygonized when 'dissolve=TRUE'</span></span>
+<span><span class="co">#&gt; 1000 prediction points are sampled from the modeldomain</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">results_nndm</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">samples</span><span class="op">$</span><span class="va">sampling</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">nndm_plots</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">results_nndm</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">smpl</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="va">results_nndm_i</span> <span class="op">&lt;-</span> <span class="va">results_nndm</span><span class="op">[[</span><span class="va">smpl</span><span class="op">]</span><span class="op">]</span></span>
+<span>    <span class="fu"><a href="../reference/plot.html">plot</a></span><span class="op">(</span><span class="va">results_nndm_i</span><span class="op">)</span> <span class="op">+</span></span>
+<span>        <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="va">smpl</span><span class="op">)</span> <span class="op">+</span></span>
+<span>        <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span></span>
+<span>            legend.position <span class="op">=</span> <span class="st">"bottom"</span>,</span>
+<span>            plot.title <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>face <span class="op">=</span> <span class="st">"bold"</span>, hjust <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span>
+<span>        <span class="op">)</span></span>
+<span><span class="op">}</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning: `aes_string()` was deprecated in ggplot2 3.0.0.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Please use tidy evaluation idioms with `aes()`.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> See also `vignette("ggplot2-in-packages")` for more information.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> The deprecated feature was likely used in the <span style="color: #0000BB;">PDAV</span> package.</span></span>
+<span><span class="co">#&gt;   Please report the issue to the authors.</span></span>
+<span><span class="co">#&gt; <span style="color: #555555;">This warning is displayed once per session.</span></span></span>
+<span><span class="co">#&gt; <span style="color: #555555;">Call `lifecycle::last_lifecycle_warnings()` to see where this warning was</span></span></span>
+<span><span class="co">#&gt; <span style="color: #555555;">generated.</span></span></span>
+<span></span>
+<span><span class="va">nndm_legends</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://wilkelab.org/cowplot/reference/get_legend.html" class="external-link">get_legend</a></span><span class="op">(</span><span class="va">nndm_plots</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span>
+<span></span>
+<span></span>
+<span><span class="va">nndm_plots</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://wilkelab.org/cowplot/reference/plot_grid.html" class="external-link">plot_grid</a></span><span class="op">(</span></span>
+<span>    plotlist <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">nndm_plots</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="va">x</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"None"</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>    nrow <span class="op">=</span> <span class="fl">1</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://wilkelab.org/cowplot/reference/plot_grid.html" class="external-link">plot_grid</a></span><span class="op">(</span><span class="va">nndm_plots</span>, <span class="va">nndm_legends</span>, ncol <span class="op">=</span> <span class="fl">1</span>, rel_heights <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">0.1</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<div class="figure">
+<img src="Prediction-domain-adaptive-validation_files/figure-html/unnamed-chunk-5-1.png" class="r-plt" alt="Figure 3: Results of NNDM." width="768"><p class="caption">
+Figure 3: Results of NNDM.
+</p>
+</div>
+</div>
+<div class="section level3">
+<h3 id="knndm-cv">kNNDM CV<a class="anchor" aria-label="anchor" href="#knndm-cv"></a>
+</h3>
+<p>k-fold Nearest-Neighbour Distance Matching (kNNDM, <span class="citation">Linnenbrink et al. (2024)</span>) is the k-fold variant
+of NNDM. It is much faster, but also less flexible in matching the
+prediction situation. kNNDM splits the training points into a sequence
+of initial clusters, where the cluster size ranges between the number of
+folds <em>k</em> and the number of training points. Then, these initial
+clusters are merged until the number of desired folds <em>k</em> is
+reached (not that for the first configuration no merging is needed). The
+clusters are merged cyclically along the first principal component of
+the training points coordinates, ensuring that no neighbouring initial
+clusters are merged into the same folds (which would result in
+contiguous blocks). Thus, kNNDM generates a sequence of fold
+configurations that starts with a spatial block cross-validation (when
+the number of initial clusters matches the number of folds) over
+spatially structured but not completely blocked configurations towards
+randomly assigned folds (when the number of initial clusters matches the
+number of training points). From this sequence of fold configurations,
+the one that yields the closest match to the prediction situation is
+selected. This is measured as the absolute value integral (the
+Wasserstein statistic) between the ECDF of NNDs between prediction and
+training points (the prediction situation) and the ECDF of NNDs between
+CV folds (the CV situation).</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">results_knndm</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">samples</span><span class="op">$</span><span class="va">sampling</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">smpling</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="va">samples_smpl</span> <span class="op">&lt;-</span> <span class="va">samples</span> <span class="op">|&gt;</span></span>
+<span>        <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">sampling</span> <span class="op">==</span> <span class="va">smpling</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>        <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="op">!</span><span class="va">sampling</span><span class="op">)</span></span>
+<span></span>
+<span>    <span class="fu"><a href="../reference/knndm.html">knndm</a></span><span class="op">(</span></span>
+<span>        tpoints <span class="op">=</span> <span class="va">samples_smpl</span>,</span>
+<span>        modeldomain <span class="op">=</span> <span class="va">predictor_stack</span>,</span>
+<span>        space <span class="op">=</span> <span class="st">"geographical"</span></span>
+<span>    <span class="op">)</span></span>
+<span><span class="op">}</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning: [as.polygons] only the first layer is polygonized when 'dissolve=TRUE'</span></span>
+<span><span class="co">#&gt; 1000 prediction points are sampled from the modeldomain</span></span>
+<span><span class="co">#&gt; Gij &lt;= Gj; a random CV assignment is returned</span></span>
+<span><span class="co">#&gt; Registered S3 methods overwritten by 'CAST':</span></span>
+<span><span class="co">#&gt;   method     from</span></span>
+<span><span class="co">#&gt;   plot.knndm PDAV</span></span>
+<span><span class="co">#&gt;   plot.nndm  PDAV</span></span>
+<span><span class="co">#&gt; Warning: [as.polygons] only the first layer is polygonized when 'dissolve=TRUE'</span></span>
+<span><span class="co">#&gt; 1000 prediction points are sampled from the modeldomain</span></span>
+<span><span class="co">#&gt; Warning: [as.polygons] only the first layer is polygonized when 'dissolve=TRUE'</span></span>
+<span><span class="co">#&gt; 1000 prediction points are sampled from the modeldomain</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">results_knndm</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">samples</span><span class="op">$</span><span class="va">sampling</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">knndm_plots</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">results_knndm</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">smpl</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="va">results_knndm_i</span> <span class="op">&lt;-</span> <span class="va">results_knndm</span><span class="op">[[</span><span class="va">smpl</span><span class="op">]</span><span class="op">]</span></span>
+<span>    <span class="fu"><a href="../reference/plot.html">plot</a></span><span class="op">(</span><span class="va">results_knndm_i</span><span class="op">)</span> <span class="op">+</span></span>
+<span>        <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="va">smpl</span><span class="op">)</span> <span class="op">+</span></span>
+<span>        <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span></span>
+<span>            legend.position <span class="op">=</span> <span class="st">"bottom"</span>,</span>
+<span>            plot.title <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>face <span class="op">=</span> <span class="st">"bold"</span>, hjust <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span>
+<span>        <span class="op">)</span></span>
+<span><span class="op">}</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">knndm_legends</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://wilkelab.org/cowplot/reference/get_legend.html" class="external-link">get_legend</a></span><span class="op">(</span><span class="va">knndm_plots</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span>
+<span></span>
+<span><span class="va">knndm_plots</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://wilkelab.org/cowplot/reference/plot_grid.html" class="external-link">plot_grid</a></span><span class="op">(</span>plotlist <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">knndm_plots</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="va">x</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"None"</span><span class="op">)</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://wilkelab.org/cowplot/reference/plot_grid.html" class="external-link">plot_grid</a></span><span class="op">(</span><span class="va">knndm_plots</span>, <span class="va">knndm_legends</span>, ncol <span class="op">=</span> <span class="fl">1</span>, rel_heights <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">0.1</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<div class="figure">
+<img src="Prediction-domain-adaptive-validation_files/figure-html/unnamed-chunk-6-1.png" class="r-plt" alt="Figure 4: Results of kNNDM." width="768"><p class="caption">
+Figure 4: Results of kNNDM.
+</p>
+</div>
 </div>
 <div class="section level3">
 <h3 id="da-cv">DA-CV<a class="anchor" aria-label="anchor" href="#da-cv"></a>
 </h3>
-<p>DA-CV (<span class="citation">Wang et al. (2025a)</span>) uses
-adversial validation (AV) to predict the probability that a prediction
-location is similar to the training samples. Then it calculates a RMSE
-based on random CV, as well as spatial+ CV (<span class="citation">Wang
-et al. (2023)</span>) and weights both of them according to the relative
-area of similar cells (random CV) and dissimilar cells (spatial+
-CV).</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<p>Dissimilarity-Adaptive Cross-Validation (DA-CV, <span class="citation">Wang et al. (2025a)</span>) uses adversial validation
+(AV) to predict the probability that a prediction location is similar to
+the training samples. Then it calculates a RMSE based on random CV, as
+well as spatial+ CV (<span class="citation">Wang et al. (2023)</span>)
+and weights both of them according to the relative area of similar cells
+(random CV) and dissimilar cells (spatial+ CV).</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">results</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">samples</span><span class="op">$</span><span class="va">sampling</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">smpling</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="va">samples_smpl</span> <span class="op">&lt;-</span> <span class="va">samples</span> <span class="op">|&gt;</span></span>
 <span>        <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">sampling</span> <span class="op">==</span> <span class="va">smpling</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -232,7 +377,7 @@ CV).</p>
 <span>    <span class="op">)</span></span>
 <span><span class="op">}</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Setting levels: control = 0, case = 1</span></span>
-<span><span class="co">#&gt; Setting direction: controls &lt; cases</span></span>
+<span><span class="co">#&gt; Setting direction: controls &gt; cases</span></span>
 <span><span class="co">#&gt; Setting levels: control = 0, case = 1</span></span>
 <span><span class="co">#&gt; Setting direction: controls &lt; cases</span></span>
 <span><span class="co">#&gt; Setting levels: control = 0, case = 1</span></span>
@@ -254,9 +399,9 @@ AUC = 0.77. This leads to D = (0.77 - 0.5) / (1 - 0.5) = 0.54. The
 threshold is then T(D) = 0.5 × 0.54 = 0.27. Hence, all prediction cells
 with a similarity score lower than 0.27 are classified as dissimilar.
 The relative fraction of prediction locations classified as similar to
-the sampling locations is 0.64, while the fraction classified as
-dissimilar is 0.36.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+the sampling locations is 0.79, while the fraction classified as
+dissimilar is 0.21.</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">samples</span><span class="op">$</span><span class="va">sampling</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">smpling</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="fu"><a href="../reference/plot.html">plot</a></span><span class="op">(</span><span class="va">results</span><span class="op">[[</span><span class="va">smpling</span><span class="op">]</span><span class="op">]</span><span class="op">)</span> <span class="op">+</span></span>
 <span>        <span class="fu"><a href="https://eliocamp.github.io/ggnewscale/reference/new_scale.html" class="external-link">new_scale_fill</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
@@ -270,13 +415,13 @@ dissimilar is 0.36.</p>
 <span><span class="op">}</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>    <span class="fu"><a href="https://wilkelab.org/cowplot/reference/plot_grid.html" class="external-link">plot_grid</a></span><span class="op">(</span>plotlist <span class="op">=</span> <span class="va">_</span>, nrow <span class="op">=</span> <span class="fl">1</span>, align <span class="op">=</span> <span class="st">"vh"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
-<img src="Prediction-domain-adaptive-validation_files/figure-html/unnamed-chunk-6-1.png" class="r-plt" alt="Figure 3: Similarity maps resulting from the AV classifier." width="1152"><p class="caption">
-Figure 3: Similarity maps resulting from the AV classifier.
+<img src="Prediction-domain-adaptive-validation_files/figure-html/unnamed-chunk-8-1.png" class="r-plt" alt="Figure 5: Similarity maps resulting from the AV classifier." width="1152"><p class="caption">
+Figure 5: Similarity maps resulting from the AV classifier.
 </p>
 </div>
 <p>Lastly, the resulting cross-validation fold assignments can be used
 to calculate the weighted RMSE of a spatial predictive model.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">form</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/formula.html" class="external-link">as.formula</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"outcome~"</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">predictor_stack</span><span class="op">)</span>, collapse <span class="op">=</span> <span class="st">"+"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">pgrid</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>mtry <span class="op">=</span> <span class="fl">6</span>, splitrule <span class="op">=</span> <span class="st">"variance"</span>, min.node.size <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
 <span></span>
@@ -330,28 +475,149 @@ to calculate the weighted RMSE of a spatial predictive model.</p>
 <span></span>
 <span>    <span class="va">prediction</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">r</span>, <span class="va">rand_mod</span><span class="op">)</span></span>
 <span>    <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">err_stats_weighted</span>, <span class="va">prediction</span><span class="op">)</span></span>
+<span><span class="op">}</span><span class="op">)</span></span></code></pre></div>
+<p>The RMSE values obtained by DA-CV are 6.014 for the random sampling
+design, 5.041 for the biased sampling and 5.508 for the clustered
+design.</p>
+</div>
+<div class="section level3">
+<h3 id="twcv">TWCV<a class="anchor" aria-label="anchor" href="#twcv"></a>
+</h3>
+<p>Target-Weighted Cross Validation (TWCV, <span class="citation">Brenning and Suesse (2026)</span>) takes a different
+viewpoint than the cross-validation approaches above. Instead of
+adjusting the resampling design (or weighting two contrasting resampling
+designs), it assigns a weight to each training points based on the
+distribution of predictor values (and spatial nearest-neighbour
+distances) in the training and in the prediction data. It uses raking to
+match the distribution of predictors observed at the training points to
+those encountered in the prediction area by up-weighting training points
+that show predictor values underrepresented in the training data (as
+compared to the prediction area) and down-weighting those points that
+show overrepresented conditions. These weights are then normalized and
+multiplied with the (cross-validation) error calculated for each
+training point. Therefore, it relies on some sort of resampling
+beforehand to calculate the final resulting error, and is highly
+sensitive to the choice of resampling (the weights stay the same
+regardless of the resampling method , but it makes a huge difference if
+one uses random CV or spatial CV, since the error that is then weighted
+can vary widely based on the chosen resampling method).</p>
+<p>We provide an experimental implementation of this algorithm,
+alongside dedicated plotting functions, in the package <a href="https://github.com/JanLinnenbrink/PredictionMatching" class="external-link">PredictionMatching</a>.
+In our example, we apply TWCV to the results of kNNDM:</p>
+<pre><code><span><span class="co">#&gt; Registered S3 method overwritten by 'PredictionMatching':</span></span>
+<span><span class="co">#&gt;   method    from</span></span>
+<span><span class="co">#&gt;   plot.twcv PDAV</span></span>
+<span><span class="co">#&gt; Warning: [as.polygons] only the first layer is polygonized when 'dissolve=TRUE'</span></span>
+<span><span class="co">#&gt; 1000 prediction points are sampled from the modeldomain</span></span>
+<span><span class="co">#&gt; predictor values are extracted for prediction points</span></span>
+<span><span class="co">#&gt; Warning: [as.polygons] only the first layer is polygonized when 'dissolve=TRUE'</span></span>
+<span><span class="co">#&gt; 1000 prediction points are sampled from the modeldomain</span></span>
+<span><span class="co">#&gt; predictor values are extracted for prediction points</span></span>
+<span><span class="co">#&gt; Warning: [as.polygons] only the first layer is polygonized when 'dissolve=TRUE'</span></span>
+<span><span class="co">#&gt; 1000 prediction points are sampled from the modeldomain</span></span>
+<span><span class="co">#&gt; predictor values are extracted for prediction points</span></span></code></pre>
+<p>Now that we obtained the weights for each training point, we can
+calculate the cross-validation error using kNNDM and then multiply the
+error with these weights:</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span></span>
+<span><span class="va">pe_samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">samples</span><span class="op">$</span><span class="va">sampling</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">smpling</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="va">samples_smpl</span> <span class="op">&lt;-</span> <span class="va">samples</span> <span class="op">|&gt;</span></span>
+<span>        <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">sampling</span> <span class="op">==</span> <span class="va">smpling</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>        <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="op">!</span><span class="va">sampling</span><span class="op">)</span></span>
+<span></span>
+<span>    <span class="va">knndm_folds</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/knndm.html">knndm</a></span><span class="op">(</span></span>
+<span>        tpoints <span class="op">=</span> <span class="va">samples_smpl</span>,</span>
+<span>        modeldomain <span class="op">=</span> <span class="va">predictor_stack</span>,</span>
+<span>        space <span class="op">=</span> <span class="st">"geographical"</span></span>
+<span>    <span class="op">)</span></span>
+<span></span>
+<span>    <span class="va">ctrl_knndm</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/caret/man/trainControl.html" class="external-link">trainControl</a></span><span class="op">(</span></span>
+<span>        method <span class="op">=</span> <span class="st">"cv"</span>,</span>
+<span>        index <span class="op">=</span> <span class="va">knndm_folds</span><span class="op">$</span><span class="va">indx_train</span>,</span>
+<span>        indexOut <span class="op">=</span> <span class="va">knndm_folds</span><span class="op">$</span><span class="va">indx_test</span>,</span>
+<span>        savePredictions <span class="op">=</span> <span class="st">"final"</span>,</span>
+<span>        verboseIter <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>    <span class="op">)</span></span>
+<span></span>
+<span>    <span class="co"># train a random forest model based on kNNDM resampling</span></span>
+<span>    <span class="va">rf_knndm</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/caret/man/train.html" class="external-link">train</a></span><span class="op">(</span></span>
+<span>        x <span class="op">=</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_geometry.html" class="external-link">st_drop_geometry</a></span><span class="op">(</span><span class="va">samples_smpl</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">predictor_stack</span><span class="op">)</span><span class="op">]</span>,</span>
+<span>        y <span class="op">=</span> <span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_geometry.html" class="external-link">st_drop_geometry</a></span><span class="op">(</span><span class="va">samples_smpl</span><span class="op">)</span><span class="op">[[</span><span class="st">"outcome"</span><span class="op">]</span><span class="op">]</span>,</span>
+<span>        method <span class="op">=</span> <span class="st">"ranger"</span>,</span>
+<span>        trControl <span class="op">=</span> <span class="va">ctrl_knndm</span>,</span>
+<span>        metric <span class="op">=</span> <span class="st">"RMSE"</span>,</span>
+<span>        num.trees <span class="op">=</span> <span class="fl">300</span>,</span>
+<span>        importance <span class="op">=</span> <span class="st">"impurity"</span></span>
+<span>    <span class="op">)</span></span>
+<span></span>
+<span>    <span class="co"># Standardize the format of the pointwise errors obtained by kNNDM CV and add an ID column</span></span>
+<span>    <span class="fu">tw_pointwise_error</span><span class="op">(</span></span>
+<span>        obs <span class="op">=</span> <span class="va">rf_knndm</span><span class="op">$</span><span class="va">pred</span><span class="op">$</span><span class="va">obs</span>,</span>
+<span>        pred <span class="op">=</span> <span class="va">rf_knndm</span><span class="op">$</span><span class="va">pred</span><span class="op">$</span><span class="va">pred</span>,</span>
+<span>        id <span class="op">=</span> <span class="va">rf_knndm</span><span class="op">$</span><span class="va">pred</span><span class="op">$</span><span class="va">rowIndex</span></span>
+<span>    <span class="op">)</span></span>
 <span><span class="op">}</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Registered S3 methods overwritten by 'CAST':</span></span>
-<span><span class="co">#&gt;   method     from</span></span>
-<span><span class="co">#&gt;   plot.knndm PDAV</span></span>
-<span><span class="co">#&gt;   plot.nndm  PDAV</span></span>
-<span><span class="co">#&gt; [1] "warning: k is higher than number of unique locations. k is set to 4"</span></span></code></pre></div>
-<p><img src="Prediction-domain-adaptive-validation_files/figure-html/unnamed-chunk-8-1.png" class="r-plt" alt="" width="576"></p>
-<p>The RMSE obtained by DA-CV are 6.292 for the random sampling design,
-5.09 for the biased sampling and 6.139 for the clustered design.</p>
+<span><span class="co">#&gt; Warning: [as.polygons] only the first layer is polygonized when 'dissolve=TRUE'</span></span>
+<span><span class="co">#&gt; 1000 prediction points are sampled from the modeldomain</span></span>
+<span><span class="co">#&gt; Gij &lt;= Gj; a random CV assignment is returned</span></span>
+<span><span class="co">#&gt; Warning: [as.polygons] only the first layer is polygonized when 'dissolve=TRUE'</span></span>
+<span><span class="co">#&gt; 1000 prediction points are sampled from the modeldomain</span></span>
+<span><span class="co">#&gt; Warning: [as.polygons] only the first layer is polygonized when 'dissolve=TRUE'</span></span>
+<span><span class="co">#&gt; 1000 prediction points are sampled from the modeldomain</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">pe_samples</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">samples</span><span class="op">$</span><span class="va">sampling</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">weighted_rmse</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">samples</span><span class="op">$</span><span class="va">sampling</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">smpling</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="va">pe_smpl</span> <span class="op">&lt;-</span> <span class="va">pe_samples</span><span class="op">[[</span><span class="va">smpling</span><span class="op">]</span><span class="op">]</span></span>
+<span>    <span class="va">w_smpl</span> <span class="op">&lt;-</span> <span class="va">weights_smpl</span><span class="op">[[</span><span class="va">smpling</span><span class="op">]</span><span class="op">]</span></span>
+<span></span>
+<span>    <span class="co"># Weigh the pointwise errors using the weights obtained from raking</span></span>
+<span>    <span class="fu">tw_weighted_error_stats</span><span class="op">(</span><span class="va">w_smpl</span>, <span class="va">pe_smpl</span><span class="op">)</span><span class="op">[[</span><span class="st">"rmse"</span><span class="op">]</span><span class="op">]</span></span>
+<span><span class="op">}</span><span class="op">)</span></span></code></pre></div>
+<p>The RMSE values obtained by TWCV are 4.664 for the random sampling
+design, 6.431 for the biased sampling and 7.24 for the clustered design.
+The following Figure shows the weights assigned to each CV error, where
+for biased and clustered sampling a higher weight is given to higher CV
+errors (hence resulting in a higher weighted error than kNNDM CV along
+would produce):</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">samples</span><span class="op">$</span><span class="va">sampling</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">smpling</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="va">pe_smpl</span> <span class="op">&lt;-</span> <span class="va">pe_samples</span><span class="op">[[</span><span class="va">smpling</span><span class="op">]</span><span class="op">]</span></span>
+<span>    <span class="va">w_smpl</span> <span class="op">&lt;-</span> <span class="va">weights_smpl</span><span class="op">[[</span><span class="va">smpling</span><span class="op">]</span><span class="op">]</span></span>
+<span></span>
+<span>    <span class="fu">PredictionMatching</span><span class="fu">:::</span><span class="fu"><a href="https://rdrr.io/pkg/PredictionMatching/man/plot.html" class="external-link">plot.twcv</a></span><span class="op">(</span><span class="va">w_smpl</span>, pointwise_error <span class="op">=</span> <span class="va">pe_smpl</span><span class="op">)</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span> <span class="op">+</span></span>
+<span>        <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="va">smpling</span><span class="op">)</span> <span class="op">+</span></span>
+<span>        <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>plot.title <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>face <span class="op">=</span> <span class="st">"bold"</span>, hjust <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">}</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>    <span class="fu"><a href="https://wilkelab.org/cowplot/reference/plot_grid.html" class="external-link">plot_grid</a></span><span class="op">(</span>plotlist <span class="op">=</span> <span class="va">_</span>, nrow <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
+<div class="figure">
+<img src="Prediction-domain-adaptive-validation_files/figure-html/unnamed-chunk-13-1.png" class="r-plt" alt="Figure 6: The weights assigned to each CV error in the different sampling designs." width="768"><p class="caption">
+Figure 6: The weights assigned to each CV error in the different
+sampling designs.
+</p>
 </div>
-<div class="section level3">
-<h3 id="knndm-cv">kNNDM CV<a class="anchor" aria-label="anchor" href="#knndm-cv"></a>
-</h3>
-</div>
-<div class="section level3">
-<h3 id="nndm-cv">NNDM CV<a class="anchor" aria-label="anchor" href="#nndm-cv"></a>
-</h3>
-</div>
-<div class="section level3 unnumbered">
-<h3 class="unnumbered" id="twcv">TWCV<a class="anchor" aria-label="anchor" href="#twcv"></a>
-</h3>
 <div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-Brenning2026" class="csl-entry">
+Brenning, Alexander, and Thomas Suesse. 2026. <em>Aligning
+<span>Validation</span> with <span>Deployment</span>:
+<span>Target</span>-<span>Weighted</span>
+<span>Cross</span>-<span>Validation</span> for <span>Spatial</span>
+<span>Prediction</span></em>. arXiv. <a href="https://doi.org/10.48550/ARXIV.2603.29981" class="external-link">https://doi.org/10.48550/ARXIV.2603.29981</a>.
+</div>
+<div id="ref-Linnenbrink2024" class="csl-entry">
+Linnenbrink, Jan, Carles Milà, Marvin Ludwig, and Hanna Meyer. 2024.
+<span>“<span class="nocase">kNNDM</span> <span>CV</span>: <em>K</em>
+-Fold Nearest-Neighbour Distance Matching Cross-Validation for Map
+Accuracy Estimation.”</span> <em>Geoscientific Model Development</em> 17
+(15): 5897–912. <a href="https://doi.org/10.5194/gmd-17-5897-2024" class="external-link">https://doi.org/10.5194/gmd-17-5897-2024</a>.
+</div>
+<div id="ref-Mila2022" class="csl-entry">
+Milà, Carles, Jorge Mateu, Edzer Pebesma, and Hanna Meyer. 2022.
+<span>“<span class="nocase">Nearest neighbour distance matching
+leave-one-out cross-validation for map validation</span>.”</span>
+<em>Methods in Ecology and Evolution</em> 13 (6): 1304–16. <a href="https://doi.org/10.1111/2041-210X.13851" class="external-link">https://doi.org/10.1111/2041-210X.13851</a>.
+</div>
 <div id="ref-Wang2023" class="csl-entry">
 Wang, Yanwen, Mahdi Khodadadzadeh, and Raúl Zurita-Milla. 2023.
 <span>“Spatial+: A New Cross-Validation Method to Evaluate Geospatial

@@ -152,7 +152,7 @@ The fold configuration yielding the lowest W is returned.
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">100</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">k</span> <span class="op">=</span> <span class="fl">2</span></span></code></pre></div>
+<span><span class="va">k</span> <span class="op">&lt;-</span> <span class="fl">2</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="example-data">Example data<a class="anchor" aria-label="anchor" href="#example-data"></a>
@@ -162,11 +162,23 @@ The fold configuration yielding the lowest W is returned.
 </h3>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu">PDAV</span><span class="fu">:::</span><span class="fu">generate_rast</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">predictor_stack</span> <span class="op">&lt;-</span> <span class="va">r</span><span class="op">[[</span><span class="fu"><a href="https://generics.r-lib.org/reference/setops.html" class="external-link">setdiff</a></span><span class="op">(</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">r</span><span class="op">)</span>, <span class="st">"outcome"</span><span class="op">)</span><span class="op">]</span><span class="op">]</span></span>
+<span><span class="va">cate_rasters</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">r</span><span class="op">)</span> <span class="op"><a href="https://rspatial.github.io/terra/reference/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"forest"</span>, <span class="st">"grass"</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
 <span><span class="va">samples</span> <span class="op">&lt;-</span> <span class="fu">PDAV</span><span class="fu">:::</span><span class="fu">generate_samples</span><span class="op">(</span><span class="va">r</span>, <span class="fl">100</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">sampling</span> <span class="op">==</span> <span class="st">"biased"</span><span class="op">)</span></span>
 <span><span class="va">samples</span><span class="op">$</span><span class="va">point_id</span> <span class="op">&lt;-</span> <span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/dimensions.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">samples</span><span class="op">)</span></span>
 <span><span class="va">samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">samples</span>, <span class="va">point_id</span><span class="op">)</span></span></code></pre></div>
-<p><img src="k-NNDM_files/figure-html/unnamed-chunk-3-1.png" class="r-plt" alt="" width="768"><img src="k-NNDM_files/figure-html/unnamed-chunk-3-2.png" class="r-plt" alt="" width="768"></p>
+<div class="figure">
+<img src="k-NNDM_files/figure-html/unnamed-chunk-3-1.png" class="r-plt" alt="Figure 1: The predictor stack" width="576"><p class="caption">
+Figure 1: The predictor stack
+</p>
+</div>
+<div class="figure">
+<img src="k-NNDM_files/figure-html/unnamed-chunk-4-1.png" class="r-plt" alt="Figure 2: The simulated outcome with training locations." width="576"><p class="caption">
+Figure 2: The simulated outcome with training locations.
+</p>
+</div>
 </div>
 </div>
 <div class="section level2">
@@ -181,7 +193,12 @@ between prediction points and samples (G<sub>ij</sub>). The calculation
 of NNDs is shown in the following figure: the nearest neighbour distance
 between samples is shown in the left panel, while the right panel shows
 nearest neighbour distances between prediction points and samples.</p>
-<p><img src="k-NNDM_files/figure-html/unnamed-chunk-4-1.png" class="r-plt" alt="" width="768"></p>
+<div class="figure">
+<img src="k-NNDM_files/figure-html/unnamed-chunk-5-1.png" class="r-plt" alt="Figure 3: Nearest-Neighbour Distances (NNDs) between training points (left) and between prediction and training points (right)." width="768"><p class="caption">
+Figure 3: Nearest-Neighbour Distances (NNDs) between training points
+(left) and between prediction and training points (right).
+</p>
+</div>
 <p>To characterize the distribution of these NNDs, their empirical
 cumulative density functions (ECDFs) are calculated:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
@@ -191,7 +208,13 @@ cumulative density functions (ECDFs) are calculated:</p>
 <span>    data <span class="op">=</span> <span class="va">sample_coords</span>,</span>
 <span>    k <span class="op">=</span> <span class="fl">1</span></span>
 <span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="k-NNDM_files/figure-html/unnamed-chunk-6-1.png" class="r-plt" alt="" width="384"></p>
+<div class="figure">
+<img src="k-NNDM_files/figure-html/unnamed-chunk-7-1.png" class="r-plt" alt="Figure 4: The Empirical Cumulative Density Functions (ECDFs) of the Nearest-Neighbour Distances between prediction and training points (orange), as well as between training points (green)." width="576"><p class="caption">
+Figure 4: The Empirical Cumulative Density Functions (ECDFs) of the
+Nearest-Neighbour Distances between prediction and training points
+(orange), as well as between training points (green).
+</p>
+</div>
 </div>
 <div class="section level3">
 <h3 id="test-wether-gj-gij">2. Test wether G<sub>j</sub> &lt;= G<sub>ij</sub><a class="anchor" aria-label="anchor" href="#test-wether-gj-gij"></a>
@@ -248,15 +271,13 @@ visualization purposes it is reduced to 3 here.</p>
 <p>The sampled sequence of <em>q</em> clusters is in this case 2, 14,
 98. The following figure shows the training points coloured by their
 cluster for each of the <em>q</em> clusters:</p>
-<pre><code><span><span class="co">#&gt; `summarise()` has regrouped the output.</span></span>
-<span><span class="co">#&gt; `summarise()` has regrouped the output.</span></span>
-<span><span class="co">#&gt; `summarise()` has regrouped the output.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Summaries were computed grouped by <span style="color: #0000BB;">clust_nk</span> and <span style="color: #0000BB;">nk</span>.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Output is grouped by <span style="color: #0000BB;">clust_nk</span>.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Use `summarise(.groups = "drop_last")` to silence this message.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Use `summarise(.by = c(clust_nk, nk))` for per-operation grouping</span></span>
-<span><span class="co">#&gt;   (`?dplyr::dplyr_by`) instead.</span></span></code></pre>
-<p><img src="k-NNDM_files/figure-html/unnamed-chunk-9-1.png" class="r-plt" alt="" width="768"></p>
+<div class="figure">
+<img src="k-NNDM_files/figure-html/unnamed-chunk-10-1.png" class="r-plt" alt="Figure 5: The training points assigned to 2 (= *k*), 14 and 98 (= number of training points) clusters. Point colours and filled areas show the clusters." width="768"><p class="caption">
+Figure 5: The training points assigned to 2 (= <em>k</em>), 14 and 98 (=
+number of training points) clusters. Point colours and filled areas show
+the clusters.
+</p>
+</div>
 </div>
 <div class="section level3">
 <h3 id="merge-the-q-clusters-along-their-first-pc-into-k-folds">4. Merge the <em>q</em> clusters along their first PC into
@@ -267,12 +288,18 @@ component of the samples coordinates if <em>q</em> &gt; <em>k</em>. This
 prevents contigous clusters to end up in the same fold.</p>
 <p>Therefore, we first calculate the PCA over the samples coordinates to
 capture the axis of largest spatial variation (first PC, red arrow):</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pcacoords</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/prcomp.html" class="external-link">prcomp</a></span><span class="op">(</span><span class="va">sample_coords</span>, center <span class="op">=</span> <span class="cn">TRUE</span>, scale. <span class="op">=</span> <span class="cn">FALSE</span>, rank <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
-<p><img src="k-NNDM_files/figure-html/unnamed-chunk-11-1.png" class="r-plt" alt="" width="768"></p>
+<div class="figure">
+<img src="k-NNDM_files/figure-html/unnamed-chunk-12-1.png" class="r-plt" alt="Figure 6: The training points coloured by the first Principal Component (PC 1) calculated from their coordinates, which is also shown as a red arrow." width="768"><p class="caption">
+Figure 6: The training points coloured by the first Principal Component
+(PC 1) calculated from their coordinates, which is also shown as a red
+arrow.
+</p>
+</div>
 <p>Then, we order the <em>q</em> clusters according to the first
 principal component:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">for</span> <span class="op">(</span><span class="va">nk</span> <span class="kw">in</span> <span class="va">clustgrid</span><span class="op">$</span><span class="va">nk</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="co"># compute cluster centroids and project that centroid to the first PC</span></span>
 <span>    <span class="va">centr_tpoints</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">sapply</a></span><span class="op">(</span><span class="va">tabclust</span><span class="op">[[</span><span class="va">nk</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">clust_nk</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">{</span></span>
@@ -284,10 +311,15 @@ principal component:</p>
 <span>    <span class="va">tabclust</span><span class="op">[[</span><span class="va">nk</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">centrpca</span> <span class="op">&lt;-</span> <span class="va">centr_tpoints</span></span>
 <span>    <span class="va">tabclust</span><span class="op">[[</span><span class="va">nk</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">tabclust</span><span class="op">[[</span><span class="va">nk</span><span class="op">]</span><span class="op">]</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">tabclust</span><span class="op">[[</span><span class="va">nk</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">centrpca</span><span class="op">)</span>, <span class="op">]</span></span>
 <span><span class="op">}</span></span></code></pre></div>
-<p><img src="k-NNDM_files/figure-html/unnamed-chunk-13-1.png" class="r-plt" alt="" width="768"></p>
-<p>And lastly, we merge the <em>q</em> clusters along the first
-principal component:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="figure">
+<img src="k-NNDM_files/figure-html/unnamed-chunk-14-1.png" class="r-plt" alt="Figure 7: The *q* clusters coloured by the projection of their centroid onto the first principal component." width="768"><p class="caption">
+Figure 7: The <em>q</em> clusters coloured by the projection of their
+centroid onto the first principal component.
+</p>
+</div>
+<p>And lastly, we merge the <em>q</em> clusters cyclically in the order
+of the first principal component:</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">clust_k</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">tabclust2</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="kw">for</span> <span class="op">(</span><span class="va">nk</span> <span class="kw">in</span> <span class="va">clustgrid</span><span class="op">$</span><span class="va">nk</span><span class="op">)</span> <span class="op">{</span></span>
@@ -321,13 +353,29 @@ principal component:</p>
 <span><span class="co">#&gt; <span style="color: #555555;">This warning is displayed once per session.</span></span></span>
 <span><span class="co">#&gt; <span style="color: #555555;">Call `lifecycle::last_lifecycle_warnings()` to see where this warning was</span></span></span>
 <span><span class="co">#&gt; <span style="color: #555555;">generated.</span></span></span></code></pre>
-<p><img src="k-NNDM_files/figure-html/unnamed-chunk-15-1.png" class="r-plt" alt="" width="768"></p>
+<div class="figure">
+<img src="k-NNDM_files/figure-html/unnamed-chunk-16-1.png" class="r-plt" alt="Figure 8: Assignment of the clusters to *k* folds, for each candidate number of clusters *q* (panels). Clusters larger than *n*/*k* are not merged; the rest are assigned cyclically to the remaining folds in PC1 order, so that spatially adjacent clusters land in different folds. Colours show the fold id, outlines the cluster convex hulls." width="768"><p class="caption">
+Figure 8: Assignment of the clusters to <em>k</em> folds, for each
+candidate number of clusters <em>q</em> (panels). Clusters larger than
+<em>n</em>/<em>k</em> are not merged; the rest are assigned cyclically
+to the remaining folds in PC1 order, so that spatially adjacent clusters
+land in different folds. Colours show the fold id, outlines the cluster
+convex hulls.
+</p>
+</div>
 </div>
 <div class="section level3">
 <h3 id="calculate-gj-for-each-q-configuration-and-calculate-w">5. Calculate G<sub>j</sub><sup>*</sup> for each <em>q</em>
 configuration and calculate <em>W</em><a class="anchor" aria-label="anchor" href="#calculate-gj-for-each-q-configuration-and-calculate-w"></a>
 </h3>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<p>Lastly, we calculate the ECDFs of NNDs between CV folds for each of
+the three configurations. The absolute value difference between the ECDF
+of NNDs between CV folds and the ECDF of NNDs between prediction and
+training points is then quantified as the Wasserstein statistic (W). The
+configuration yielding the lowest W is then chosen as the final
+configuration (in this case configuration 2 with <em>nk</em> = 14, see
+table below).</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">distclust_euclidean</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">tr_coords</span>, <span class="va">folds</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="va">alldist</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="cn">NA</span>, <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">folds</span><span class="op">)</span><span class="op">)</span></span>
 <span>    <span class="kw">for</span> <span class="op">(</span><span class="va">f</span> <span class="kw">in</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">folds</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
@@ -349,7 +397,12 @@ configuration and calculate <em>W</em><a class="anchor" aria-label="anchor" href
 <span>        <span class="va">clustgroups</span><span class="op">[[</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"nk"</span>, <span class="va">nk</span><span class="op">)</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">clust_k</span><span class="op">[[</span><span class="va">nk</span><span class="op">]</span><span class="op">]</span></span>
 <span>    <span class="op">}</span></span>
 <span><span class="op">}</span></span></code></pre></div>
-<p><img src="k-NNDM_files/figure-html/unnamed-chunk-17-1.png" class="r-plt" alt="" width="768"></p>
+<div class="figure">
+<img src="k-NNDM_files/figure-html/unnamed-chunk-18-1.png" class="r-plt" alt="Figure 9: The resulting ECDFs from the three different configurations (panels)." width="768"><p class="caption">
+Figure 9: The resulting ECDFs from the three different configurations
+(panels).
+</p>
+</div>
 <pre><code><span><span class="co">#&gt;   nk         W</span></span>
 <span><span class="co">#&gt; 1  2 52.160269</span></span>
 <span><span class="co">#&gt; 2 14  9.287419</span></span>
@@ -358,7 +411,7 @@ configuration and calculate <em>W</em><a class="anchor" aria-label="anchor" href
 <div class="section level3">
 <h3 id="return-the-configuration-yielding-the-lowest-w">6. Return the configuration yielding the lowest <em>W</em><a class="anchor" aria-label="anchor" href="#return-the-configuration-yielding-the-lowest-w"></a>
 </h3>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">k_final</span> <span class="op">&lt;-</span> <span class="va">clustgrid</span><span class="op">$</span><span class="va">nk</span><span class="op">[</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/summarize-generics.html" class="external-link">which.min</a></span><span class="op">(</span><span class="va">clustgrid</span><span class="op">$</span><span class="va">W</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="va">W_final</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">clustgrid</span><span class="op">$</span><span class="va">W</span>, na.rm <span class="op">=</span> <span class="cn">T</span><span class="op">)</span></span>
 <span><span class="va">clust</span> <span class="op">&lt;-</span> <span class="va">clustgroups</span><span class="op">[[</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"nk"</span>, <span class="va">k_final</span><span class="op">)</span><span class="op">]</span><span class="op">]</span></span>
@@ -368,13 +421,26 @@ configuration and calculate <em>W</em><a class="anchor" aria-label="anchor" href
 <span><span class="co">#&gt; [1] 14</span></span></code></pre></div>
 <p>The following plot shows the training samples with their final fold
 assignment:</p>
-<p><img src="k-NNDM_files/figure-html/unnamed-chunk-19-1.png" class="r-plt" alt="" width="768"></p>
+<div class="figure">
+<img src="k-NNDM_files/figure-html/unnamed-chunk-20-1.png" class="r-plt" alt="Figure 10: The final fold assignment based on the configuration *q* = 14." width="768"><p class="caption">
+Figure 10: The final fold assignment based on the configuration
+<em>q</em> = 14.
+</p>
+</div>
 </div>
 </div>
 <div class="section level2">
 <h2 id="summary">Summary<a class="anchor" aria-label="anchor" href="#summary"></a>
 </h2>
-<p><img src="k-NNDM_files/figure-html/unnamed-chunk-20-1.png" class="r-plt" alt="" width="1152"></p>
+<div class="figure">
+<img src="k-NNDM_files/figure-html/unnamed-chunk-21-1.png" class="r-plt" alt="Figure 11: An overview plot over the steps involved in kNNDM: starting from the initial *q* clusters (left panel), over projecting the first PC of the training point coordinates to these clusters' centroids, to merging them cyclically along the first PC into *k* folds and calculating the ECDF of the resulting CV configurations (right panel)." width="1152"><p class="caption">
+Figure 11: An overview plot over the steps involved in kNNDM: starting
+from the initial <em>q</em> clusters (left panel), over projecting the
+first PC of the training point coordinates to these clusters’ centroids,
+to merging them cyclically along the first PC into <em>k</em> folds and
+calculating the ECDF of the resulting CV configurations (right panel).
+</p>
+</div>
 <div id="refs" class="references csl-bib-body hanging-indent">
 <div id="ref-Linnenbrink2024" class="csl-entry">
 Linnenbrink, Jan, Carles Milà, Marvin Ludwig, and Hanna Meyer. 2024.

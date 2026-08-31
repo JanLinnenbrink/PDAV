@@ -45,9 +45,7 @@ The more detailed workflow is:
     4.  move on to the next-smallest NND, and stop once it exceeds *φ*.
 4.  Return, for each left-out point, the indices of the test point, the
     retained training points and the excluded points (`indx_test`,
-    `indx_train`, `indx_exclude`). These can be passed directly to
-    caret’s `trainControl(index = , indexOut = )` or used to set up a
-    custom resampling strategy in mlr3.
+    `indx_train`, `indx_exclude`).
 
 ## Setup
 
@@ -93,13 +91,26 @@ k <- 2
 ``` r
 
 r <- PDAV:::generate_rast()
+predictor_stack <- r[[setdiff(names(r), "outcome")]]
+cate_rasters <- which(names(r) %in% c("forest", "grass"))
+
 samples <- PDAV:::generate_samples(r, 100) |>
     filter(sampling == "biased")
 samples$point_id <- 1:nrow(samples)
 samples <- select(samples, point_id)
 ```
 
-![](NNDM_files/figure-html/unnamed-chunk-3-1.png)![](NNDM_files/figure-html/unnamed-chunk-3-2.png)
+![Figure 1: The predictor
+stack](NNDM_files/figure-html/unnamed-chunk-3-1.png)
+
+Figure 1: The predictor stack
+
+![Figure 2: The simulated outcome with training
+locations.](NNDM_files/figure-html/unnamed-chunk-4-1.png)
+
+Figure 2: The simulated outcome with training locations.
+
+![](NNDM_files/figure-html/unnamed-chunk-5-1.png)![](NNDM_files/figure-html/unnamed-chunk-5-2.png)
 
 ## NNDM in geographical space
 
@@ -112,7 +123,12 @@ following figure: the nearest neighbour distance between samples is
 shown in the left panel, while the right panel shows nearest neighbour
 distances between prediction points and samples.
 
-![](NNDM_files/figure-html/unnamed-chunk-4-1.png)
+![Figure 3: The Nearest-Neighbour distances between training points
+(left) and between prediction and training points
+(right).](NNDM_files/figure-html/unnamed-chunk-6-1.png)
+
+Figure 3: The Nearest-Neighbour distances between training points (left)
+and between prediction and training points (right).
 
 To characterize the distribution of these NNDs, their empirical
 cumulative density functions (ECDFs) are calculated:
@@ -131,7 +147,15 @@ diag(tdist) <- NA
 Gj <- apply(tdist, 1, function(x) min(x, na.rm = TRUE))
 ```
 
-![](NNDM_files/figure-html/unnamed-chunk-6-1.png)
+![Figure 4: The two Empirical Cumulative Density Functions (ECDFs)
+corresponding to the Nearest-Neighbour Distances (NNDs) between
+prediction and training points (orange) and between training points
+(green).](NNDM_files/figure-html/unnamed-chunk-8-1.png)
+
+Figure 4: The two Empirical Cumulative Density Functions (ECDFs)
+corresponding to the Nearest-Neighbour Distances (NNDs) between
+prediction and training points (orange) and between training points
+(green).
 
 ### 2. Calculate G_(j)^(\*) for each left-out point starting from LOO-CV
 
@@ -215,7 +239,18 @@ The right panel is the last iteration that produced an exclusion that
 was accepted (the maximum distance allowed by φ would have been 202, but
 the maximum exclusion distance was 87).
 
-![](NNDM_files/figure-html/unnamed-chunk-8-1.png)
+![Figure 5: Sequential exclusion of training points in the NNDM
+algorithm, from plain LOO CV (left) to the final state (right). Top row:
+left-out point (blue), the neighbour excluded from its fold (orange) and
+pairs excluded in earlier iterations (grey lines). Bottom row: target
+Ĝij and current Ĝj\*, with the dashed line at the distance r being
+processed.](NNDM_files/figure-html/unnamed-chunk-10-1.png)
+
+Figure 5: Sequential exclusion of training points in the NNDM algorithm,
+from plain LOO CV (left) to the final state (right). Top row: left-out
+point (blue), the neighbour excluded from its fold (orange) and pairs
+excluded in earlier iterations (grey lines). Bottom row: target Ĝij and
+current Ĝj\*, with the dashed line at the distance r being processed.
 
 Milà, Carles, Jorge Mateu, Edzer Pebesma, and Hanna Meyer. 2022.
 “Nearest neighbour distance matching leave-one-out cross-validation for

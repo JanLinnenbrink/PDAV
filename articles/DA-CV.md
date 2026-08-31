@@ -7,8 +7,8 @@ al. (2025). It uses adversarial validation (AV) to predict the
 probability that a prediction location is similar to the training
 samples. Then it calculates an RMSE based on random CV, as well as
 spatial+ CV (Wang et al. (2023)), and weights both of them according to
-the relative area of similar cells, random CV, and dissimilar cells,
-spatial+ CV.
+the relative area of similar cells (random CV) and dissimilar cells
+(spatial+ CV).
 
 The more detailed workflow is:
 
@@ -17,33 +17,34 @@ The more detailed workflow is:
 2.  Train the AV classifier based on the available predictors to predict
     the probability that a data point belongs to the training samples,
     using 50% of the AV dataset.
-3.  Evaluate the AV classifier on the other 50% and calculate the AUC.
+3.  Evaluate the AV classifier on the other 50% and calculate the area
+    under the curve (AUC).
 4.  Normalize the AUC to \[0, 1\] by assigning 0 to AUC = 0.5. This
-    normalized AUC is then interpreted as the overall dissimilarity, D.
+    normalized AUC is then interpreted as the overall dissimilarity *D*.
 5.  Derive the threshold used to distinguish similar from dissimilar
-    areas from the overall dissimilarity as T(D) = 0.5 × D.
+    areas from the overall dissimilarity as *T(D) = 0.5 × D*.
 6.  Predict the similarity of all prediction locations using the AV
     classifier.
-7.  Binarize the similarity map using T(D).
-8.  Calculate the weighted RMSE as RMSE_(DA) = √(W_(RDM) × RMSE_(RDM)² +
-    W_(SP) × RMSE_(SP)²).
+7.  Binarize the similarity map using the threshold *T(D)*.
+8.  Calculate the weighted RMSE as *RMSE_(DA) = √(W_(RDM) ×
+    RMSE_(RDM)² + W_(SP) × RMSE_(SP)²)*.
 
 Spatial+ CV works as follows:
 
 1.  Divide samples into blocks using agglomerative hierarchical
     clustering. The maximum linkage, i.e. the maximum distance between
-    samples in one cluster/block, is derived from the semivariogram of
-    the response values measured at the sampling locations, i.e. the
-    spatial autocorrelation range.
+    samples in one cluster, is derived from the semivariogram of the
+    response values measured at the sampling locations, i.e. the spatial
+    autocorrelation range.
 2.  Average the predictor values, response values, and coordinates of
     all samples belonging to one block.
 3.  Cluster the blocks in three ways:
     1.  k-means clustering of the coordinates.
     2.  k-prototypes clustering of the predictor values.
     3.  k-means clustering of the response.
-4.  Combine the three clustering results into k folds using the cluster
-    ensemble function “Hybrid Bipartite Graph Formulation”, which finds
-    consistency between the three clustering results.
+4.  Combine the three clustering results into *k* folds using the
+    cluster ensemble function “Hybrid Bipartite Graph Formulation”,
+    which finds consistency between the three clustering results.
 
 ## Setup
 
@@ -113,9 +114,9 @@ Figure 2: The simulated outcome with training locations.
 Now, we use DA-CV to obtain area estimates of interpolation vs
 extrapolation areas, that can then be used to derive a weighted RMSE. We
 leave the autocorrelation threshold at 1, despite the sample variogram
-showing indicating a range of 5-10, because higher autocorrelation
-thresholds would result in spatial+ CV-splits that has a smaller size
-than the sample size. Maybe due to empty clusters?
+indicates a range of 5-10, because higher autocorrelation thresholds
+would result in a spatial+ CV-split that has a smaller size than the
+sample size. Maybe due to empty clusters?
 
 ### Adversial validation to obtain relative area size of inter- vs extrapolation
 
@@ -155,15 +156,15 @@ plot(results) +
 ```
 
 ![Figure 3: The similarity raster resulting from applying the AV
-classifier to the predictor
+classifier and the threshold T(D) to the predictor
 stack.](DA-CV_files/figure-html/unnamed-chunk-6-1.png)
 
 Figure 3: The similarity raster resulting from applying the AV
-classifier to the predictor stack.
+classifier and the threshold T(D) to the predictor stack.
 
-### Calculate CV results and weigh them according to the area proportions
+### Calculate CV results and weight them according to the area proportions
 
-Lastly, the resulting cross-validation fold assignments could be used to
+Lastly, the resulting cross-validation fold assignments can be used to
 calculate the weighted RMSE of a spatial predictive model.
 
 ``` r
@@ -224,8 +225,9 @@ err_stats_weighted <- sqrt(
 prediction <- predict(r, rand_mod)
 ```
 
-The RMSE obtained by DA-CV is 4.806. The maps below depict the
-difference between predicted and true response:
+The RMSE obtained by DA-CV is 4.806. The maps below show the training
+points, which folds they were assigned to, and how much weight the
+respective split received:
 
 ![Figure 4: The different CV fold assignments and their respective
 weight.](DA-CV_files/figure-html/unnamed-chunk-8-1.png)

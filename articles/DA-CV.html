@@ -76,7 +76,7 @@ validation (AV) to predict the probability that a prediction location is
 similar to the training samples. Then it calculates an RMSE based on
 random CV, as well as spatial+ CV (<span class="citation">Wang et al.
 (2023)</span>), and weights both of them according to the relative area
-of similar cells, random CV, and dissimilar cells, spatial+ CV.</p>
+of similar cells (random CV) and dissimilar cells (spatial+ CV).</p>
 <p>The more detailed workflow is:</p>
 <ol style="list-style-type: decimal">
 <li>Generate an AV dataset consisting of the training samples and an
@@ -84,24 +84,25 @@ equal number of randomly sampled prediction locations.</li>
 <li>Train the AV classifier based on the available predictors to predict
 the probability that a data point belongs to the training samples, using
 50% of the AV dataset.</li>
-<li>Evaluate the AV classifier on the other 50% and calculate the
-AUC.</li>
+<li>Evaluate the AV classifier on the other 50% and calculate the area
+under the curve (AUC).</li>
 <li>Normalize the AUC to [0, 1] by assigning 0 to AUC = 0.5. This
-normalized AUC is then interpreted as the overall dissimilarity, D.</li>
+normalized AUC is then interpreted as the overall dissimilarity
+<em>D</em>.</li>
 <li>Derive the threshold used to distinguish similar from dissimilar
-areas from the overall dissimilarity as T(D) = 0.5 × D.</li>
+areas from the overall dissimilarity as <em>T(D) = 0.5 × D</em>.</li>
 <li>Predict the similarity of all prediction locations using the AV
 classifier.</li>
-<li>Binarize the similarity map using T(D).</li>
-<li>Calculate the weighted RMSE as RMSE<sub>DA</sub> = √(W<sub>RDM</sub>
-× RMSE<sub>RDM</sub><sup>2</sup> + W<sub>SP</sub> ×
-RMSE<sub>SP</sub><sup>2</sup>).</li>
+<li>Binarize the similarity map using the threshold <em>T(D)</em>.</li>
+<li>Calculate the weighted RMSE as <em>RMSE<sub>DA</sub> =
+√(W<sub>RDM</sub> × RMSE<sub>RDM</sub><sup>2</sup> + W<sub>SP</sub> ×
+RMSE<sub>SP</sub><sup>2</sup>)</em>.</li>
 </ol>
 <p>Spatial+ CV works as follows:</p>
 <ol style="list-style-type: decimal">
 <li>Divide samples into blocks using agglomerative hierarchical
 clustering. The maximum linkage, i.e. the maximum distance between
-samples in one cluster/block, is derived from the semivariogram of the
+samples in one cluster, is derived from the semivariogram of the
 response values measured at the sampling locations, i.e. the spatial
 autocorrelation range.</li>
 <li>Average the predictor values, response values, and coordinates of
@@ -113,9 +114,9 @@ all samples belonging to one block.</li>
 <li>k-means clustering of the response.</li>
 </ol>
 </li>
-<li>Combine the three clustering results into k folds using the cluster
-ensemble function “Hybrid Bipartite Graph Formulation”, which finds
-consistency between the three clustering results.</li>
+<li>Combine the three clustering results into <em>k</em> folds using the
+cluster ensemble function “Hybrid Bipartite Graph Formulation”, which
+finds consistency between the three clustering results.</li>
 </ol>
 </div>
 <div class="section level2">
@@ -185,9 +186,9 @@ Figure 2: The simulated outcome with training locations.
 <p>Now, we use DA-CV to obtain area estimates of interpolation vs
 extrapolation areas, that can then be used to derive a weighted RMSE. We
 leave the autocorrelation threshold at 1, despite the sample variogram
-showing indicating a range of 5-10, because higher autocorrelation
-thresholds would result in spatial+ CV-splits that has a smaller size
-than the sample size. Maybe due to empty clusters?</p>
+indicates a range of 5-10, because higher autocorrelation thresholds
+would result in a spatial+ CV-split that has a smaller size than the
+sample size. Maybe due to empty clusters?</p>
 <div class="section level3">
 <h3 id="adversial-validation-to-obtain-relative-area-size-of-inter--vs-extrapolation">Adversial validation to obtain relative area size of inter- vs
 extrapolation<a class="anchor" aria-label="anchor" href="#adversial-validation-to-obtain-relative-area-size-of-inter--vs-extrapolation"></a>
@@ -225,17 +226,17 @@ being dissimilar is 0.23.</p>
 <span>        plot.title <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>face <span class="op">=</span> <span class="st">"bold"</span>, hjust <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span>
 <span>    <span class="op">)</span></span></code></pre></div>
 <div class="figure">
-<img src="DA-CV_files/figure-html/unnamed-chunk-6-1.png" class="r-plt" alt="Figure 3: The similarity raster resulting from applying the AV classifier to the predictor stack." width="576"><p class="caption">
+<img src="DA-CV_files/figure-html/unnamed-chunk-6-1.png" class="r-plt" alt="Figure 3: The similarity raster resulting from applying the AV classifier and the threshold T(D) to the predictor stack." width="576"><p class="caption">
 Figure 3: The similarity raster resulting from applying the AV
-classifier to the predictor stack.
+classifier and the threshold T(D) to the predictor stack.
 </p>
 </div>
 </div>
 <div class="section level3">
-<h3 id="calculate-cv-results-and-weigh-them-according-to-the-area-proportions">Calculate CV results and weigh them according to the area
-proportions<a class="anchor" aria-label="anchor" href="#calculate-cv-results-and-weigh-them-according-to-the-area-proportions"></a>
+<h3 id="calculate-cv-results-and-weight-them-according-to-the-area-proportions">Calculate CV results and weight them according to the area
+proportions<a class="anchor" aria-label="anchor" href="#calculate-cv-results-and-weight-them-according-to-the-area-proportions"></a>
 </h3>
-<p>Lastly, the resulting cross-validation fold assignments could be used
+<p>Lastly, the resulting cross-validation fold assignments can be used
 to calculate the weighted RMSE of a spatial predictive model.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">form</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/formula.html" class="external-link">as.formula</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"outcome~"</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">predictor_stack</span><span class="op">)</span>, collapse <span class="op">=</span> <span class="st">"+"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
@@ -292,8 +293,9 @@ to calculate the weighted RMSE of a spatial predictive model.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">prediction</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">r</span>, <span class="va">rand_mod</span><span class="op">)</span></span></code></pre></div>
-<p>The RMSE obtained by DA-CV is 4.806. The maps below depict the
-difference between predicted and true response:</p>
+<p>The RMSE obtained by DA-CV is 4.806. The maps below show the training
+points, which folds they were assigned to, and how much weight the
+respective split received:</p>
 <div class="figure">
 <img src="DA-CV_files/figure-html/unnamed-chunk-8-1.png" class="r-plt" alt="Figure 4: The different CV fold assignments and their respective weight." width="768"><p class="caption">
 Figure 4: The different CV fold assignments and their respective weight.

@@ -104,6 +104,8 @@ between successive iterations falls below a threshold.</li>
 <li>Normalize weights and shrink them towards 1 to mitigate extreme
 values.</li>
 </ol>
+<p>While I will stay close to the original implementation here, note
+that there is a more user-oriented version available in the R-package <a href="https://github.com/JanLinnenbrink/PredictionMatching" class="external-link">PredictionMatching</a>.</p>
 </div>
 <div class="section level2">
 <h2 id="setup">Setup<a class="anchor" aria-label="anchor" href="#setup"></a>
@@ -795,7 +797,11 @@ section 8 and Figure 2.</p>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_histogram.html" class="external-link">geom_histogram</a></span><span class="op">(</span>data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>weights <span class="op">=</span> <span class="va">tw</span><span class="op">$</span><span class="va">weights</span><span class="op">)</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">weights</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">geom_vline</a></span><span class="op">(</span>xintercept <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></span>
 <span><span class="co">#&gt; `stat_bin()` using `bins = 30`. Pick better value `binwidth`.</span></span></code></pre></div>
-<p><img src="twcv_files/figure-html/unnamed-chunk-8-1.png" class="r-plt" alt="" width="700"></p>
+<div class="figure">
+<img src="twcv_files/figure-html/unnamed-chunk-8-1.png" class="r-plt" alt="Figure 3: Histogram showing the before normalization." width="700"><p class="caption">
+Figure 3: Histogram showing the before normalization.
+</p>
+</div>
 </div>
 <div class="section level3">
 <h3 id="normalize-and-shrink-weights">6. Normalize and shrink weights<a class="anchor" aria-label="anchor" href="#normalize-and-shrink-weights"></a>
@@ -813,7 +819,12 @@ section 8 and Figure 2.</p>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">xlab</a></span><span class="op">(</span><span class="st">"weights after normalization"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">geom_vline</a></span><span class="op">(</span>xintercept <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></span>
 <span><span class="co">#&gt; `stat_bin()` using `bins = 30`. Pick better value `binwidth`.</span></span></code></pre></div>
-<p><img src="twcv_files/figure-html/unnamed-chunk-9-1.png" class="r-plt" alt="" width="700"></p>
+<div class="figure">
+<img src="twcv_files/figure-html/unnamed-chunk-9-1.png" class="r-plt" alt="Figure 4: Histogram showing the distribution of weights after normalization and shrinking." width="700"><p class="caption">
+Figure 4: Histogram showing the distribution of weights after
+normalization and shrinking.
+</p>
+</div>
 </div>
 <div class="section level3">
 <h3 id="return-weighted-error-estimates">7. Return weighted error estimates<a class="anchor" aria-label="anchor" href="#return-weighted-error-estimates"></a>
@@ -835,7 +846,7 @@ their corresponding errors) received which weight.</p>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/class.html" class="external-link">class</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="st">"twcv"</span></span>
 <span></span>
-<span><span class="fu"><a href="../reference/plot.html">plot</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span><span class="fu">PDAV</span><span class="fu">:::</span><span class="fu"><a href="../reference/plot.html">plot.twcv</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>    <span class="fu"><a href="https://wilkelab.org/cowplot/reference/plot_grid.html" class="external-link">plot_grid</a></span><span class="op">(</span>plotlist <span class="op">=</span> <span class="va">_</span>, ncol <span class="op">=</span> <span class="fl">1</span>, align <span class="op">=</span> <span class="st">"v"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="twcv_files/figure-html/unnamed-chunk-10-1.png" class="r-plt" alt="" width="700"></p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
